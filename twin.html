@@ -1,0 +1,1278 @@
+<title>Gemelo CHAAK · SMAA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: estaciones a pantalla completa; barra de control arriba, ficha de emplazamiento flotante, panel de sensor anclado con línea guía. */
+:root{
+  --bg:#e9efed; --bg2:#d7e2df; --surface:#ffffff; --ink:#11201d; --muted:#566a66; --line:#c9d6d3;
+  --accent:#0a7a6b; --accent-ink:#ffffff; --accent2:#9b3b8f; --rain:#2b67d1; --sun:#d48a0f; --front:#e8b400; --ground:#cfdad7;
+  --ok:#15803d; --warn:#b45309; --bad:#b91c1c;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b1312; --bg2:#13211f; --surface:#15211f; --ink:#e2ece9; --muted:#8ea29d; --line:#27403b;
+  --accent:#2cc2ab; --accent-ink:#06201c; --accent2:#e27fd5; --rain:#6ea2ff; --sun:#f2b544; --front:#f5cc1f; --ground:#1a2a27;
+  --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0b1312; --bg2:#13211f; --surface:#15211f; --ink:#e2ece9; --muted:#8ea29d; --line:#27403b;
+  --accent:#2cc2ab; --accent-ink:#06201c; --accent2:#e27fd5; --rain:#6ea2ff; --sun:#f2b544; --front:#f5cc1f; --ground:#1a2a27;
+  --ok:#4ade80; --warn:#fbbf24; --bad:#f87171; color-scheme:dark }
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px}
+#app{height:100%;display:grid;grid-template-rows:auto 1fr auto}
+.bar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface)}
+.brand{display:flex;align-items:baseline;gap:8px;margin-right:auto}
+.brand b{font-family:var(--f-display);font-size:22px;letter-spacing:.06em;font-weight:700}
+.brand span{font-family:var(--f-display);font-size:15px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.field{display:flex;align-items:center;gap:6px}
+.field label,.field .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+select,input[type=range]{font:inherit;color:var(--ink)}
+select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px;max-width:200px}
+input[type=range]{accent-color:var(--accent);width:120px}
+.hour{font-family:var(--f-mono);font-size:13px;min-width:44px;font-variant-numeric:tabular-nums}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{font:600 12.5px var(--f-body);letter-spacing:.04em;border:0;background:var(--bg);color:var(--ink);padding:6px 11px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.custom{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end;padding-top:8px;border-top:1px dashed var(--line)}
+.custom .f{display:grid;gap:3px}
+.custom .f label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.custom input[type=number],.custom input[type=text]{font:inherit;font-family:var(--f-mono);font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px;width:110px}
+.custom input[type=text]{font-family:var(--f-body);width:150px}
+.custom .msg{flex-basis:100%;font-size:12px;color:var(--muted);min-height:1em}
+.custom .msg.err{color:var(--bad)}
+.btn.sm{padding:6px 11px;font-size:12.5px}
+/* papel de la ficha: aspecto de hoja impresa en ambos temas (decisión deliberada) */
+:root{ --paper:#ffffff; --paper-ink:#151a19; --paper-muted:#56625f; --paper-line:#d3dbd9; }
+.btn.tour{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.btn.tour[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn:disabled{opacity:.6;cursor:progress}
+.refctl{display:grid;gap:8px;padding:0 14px 12px;border-bottom:1px dashed var(--line);margin-bottom:12px}
+.refctl .f{display:grid;gap:4px}
+.refctl label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.refctl select{max-width:none}
+.refctl .inl{display:flex;gap:8px;align-items:center}
+.refctl input[type=range]{flex:1;min-width:0;width:auto}
+.caption{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);max-width:calc(100% - 32px);text-align:center;font-family:var(--f-display);font-weight:600;font-size:clamp(20px,3.2vw,30px);letter-spacing:.03em;line-height:1.15;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 18px;box-shadow:0 8px 28px rgb(0 0 0/.12);pointer-events:none}
+.caption.in{animation:capIn .45s ease-out}
+@keyframes capIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+@media (prefers-reduced-motion: reduce){.caption.in{animation:none}}
+/* modo campo */
+#field{position:absolute;right:14px;top:44px;width:min(320px,calc(100% - 28px));background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 10px 30px rgb(0 0 0/.14);padding:14px;display:grid;gap:10px}
+#field header{display:flex;justify-content:space-between;align-items:start;gap:8px}
+#field h3{margin:2px 0 0;font-family:var(--f-display);font-size:21px;letter-spacing:.04em;line-height:1.05}
+#field .tag{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;color:var(--muted)}
+#field .x{border:0;background:transparent;color:var(--muted);font-size:20px;line-height:1;cursor:pointer;padding:0 2px}
+#dial{width:200px;height:200px;margin:0 auto;display:block;overflow:visible}
+#dial .ring{fill:var(--bg);stroke:var(--line);stroke-width:2}
+#dial .tk{stroke:var(--line);stroke-width:1.5}
+#dial .tk.big{stroke:var(--ink);stroke-width:2.5}
+#dial text{fill:var(--muted);font:600 14px var(--f-display);text-anchor:middle;dominant-baseline:middle}
+#dial text.nn{fill:var(--bad);font-size:17px}
+#dial .tgt{fill:var(--front);stroke:var(--ink);stroke-width:1.2}
+#dial .me{fill:var(--ink)}
+#dial .hub{fill:var(--ink)}
+#field[data-ok="1"] #dial .ring{fill:color-mix(in srgb,var(--ok) 18%,var(--bg));stroke:var(--ok)}
+.fbig{font-family:var(--f-display);font-size:26px;font-weight:700;text-align:center;letter-spacing:.02em}
+#field[data-ok="1"] .fbig{color:var(--ok)}
+.finfo{text-align:center;font-size:12.5px;color:var(--muted)}
+.finfo b{color:var(--ink);font-family:var(--f-mono);font-weight:600}
+.fsteps{margin:0;padding-left:18px;font-size:12.5px;line-height:1.45;display:grid;gap:3px}
+.frow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.frow input{font:13px var(--f-mono);width:72px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+.fmsg{font-size:12px;color:var(--muted)}
+.fmsg.err{color:var(--bad)}
+/* ficha */
+#sheet{position:fixed;inset:0;z-index:20;background:rgb(0 0 0/.45);display:flex;justify-content:center;align-items:flex-start;overflow:auto;padding:24px 16px}
+.sheetwrap{width:min(820px,100%);background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgb(0 0 0/.3)}
+.shbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line)}
+.shbar b{font-family:var(--f-display);font-size:18px;letter-spacing:.05em;text-transform:uppercase}
+.shbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.shbtns .x{border:0;background:transparent;color:var(--muted);font-size:22px;cursor:pointer;padding:0 4px}
+.shnote{padding:8px 14px;font-size:12.5px;color:var(--warn);border-bottom:1px solid var(--line)}
+.paper{background:var(--paper);color:var(--paper-ink);padding:28px clamp(16px,4vw,40px) 30px}
+.paper .ph{border-bottom:2px solid var(--paper-ink);padding-bottom:10px;margin-bottom:16px}
+.paper .pk{font:600 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--paper-muted)}
+.paper h2{margin:4px 0 2px;font-family:var(--f-display);font-size:30px;letter-spacing:.02em;text-wrap:balance}
+.paper .pm{font:12px var(--f-mono);color:var(--paper-muted)}
+.pgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.pgrid img{width:100%;border:1px solid var(--paper-line);border-radius:6px}
+.pgrid dl{margin:0;display:grid;gap:8px}
+.pgrid dt{font:600 10.5px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--paper-muted)}
+.pgrid dd{margin:1px 0 0;font-size:13.5px;line-height:1.35}
+.paper h4{margin:20px 0 8px;font:600 11px var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--paper-muted)}
+.chk{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.chk li{display:grid;grid-template-columns:16px 1fr;gap:10px;font-size:13.5px;line-height:1.4}
+.chk li::before{content:"";width:13px;height:13px;border:1.5px solid var(--paper-ink);border-radius:2px;margin-top:3px}
+.sign{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:34px}
+.sign div{border-top:1px solid var(--paper-ink);padding-top:4px;font-size:11.5px;color:var(--paper-muted)}
+.pfoot{margin:22px 0 0;font-size:11px;color:var(--paper-muted)}
+@media (max-width:700px){
+  #field{left:12px;right:12px;width:auto;top:auto;bottom:12px}
+  #dial{width:160px;height:160px}
+  .pgrid{grid-template-columns:1fr}
+}
+#stage{position:relative;overflow:hidden;min-height:0;background:radial-gradient(120% 90% at 50% 30%,var(--bg) 40%,var(--bg2))}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none}
+#leader{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#leader line{stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 3}
+#leader circle{fill:var(--accent)}
+.hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:5px 12px;pointer-events:none;white-space:nowrap}
+.src{position:absolute;right:14px;top:12px;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;padding:4px 8px;border-radius:5px;border:1px solid var(--line);background:var(--surface);color:var(--muted)}
+.src[data-live="1"]{color:var(--ok);border-color:currentColor}
+/* ficha de emplazamiento */
+#siting{position:absolute;left:14px;top:12px;width:min(340px,calc(100% - 28px));background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 6px 24px rgb(0 0 0/.08)}
+#siting summary{cursor:pointer;list-style:none;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+#siting summary::-webkit-details-marker{display:none}
+#siting summary h2{margin:0;font-family:var(--f-display);font-size:17px;letter-spacing:.05em;text-transform:uppercase}
+#siting summary small{color:var(--muted);font-family:var(--f-mono);font-size:11px;text-align:right}
+#siting .sbody{max-height:56vh;overflow:auto}
+#siting ul{margin:0;padding:0 14px 12px 14px;list-style:none;display:grid;gap:9px}
+#siting li{display:grid;grid-template-columns:22px 1fr;gap:8px;line-height:1.4}
+#siting li i{font-style:normal;font-family:var(--f-mono);font-size:11px;color:var(--accent);padding-top:2px}
+#siting .flag{color:var(--muted);font-size:12px;padding:0 14px 12px}
+.faces{padding:0 14px 12px;display:grid;gap:6px}
+.faces h4{margin:0 0 2px;font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.face{display:grid;grid-template-columns:118px 1fr 36px;gap:8px;align-items:center;font-size:12px}
+.face .track{height:8px;background:var(--bg2);border-radius:4px;overflow:hidden}
+.face .fill{height:100%;background:var(--sun);border-radius:4px}
+.face b{font-family:var(--f-mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+/* panel de sensor */
+#panel{position:absolute;width:286px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 10px 30px rgb(0 0 0/.14);padding:14px 14px 12px}
+#panel header{display:flex;justify-content:space-between;align-items:start;gap:8px}
+#panel .tag{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;color:var(--muted)}
+#panel h3{margin:2px 0 0;font-family:var(--f-display);font-size:21px;letter-spacing:.04em;line-height:1.05}
+#panel .sub{color:var(--muted);font-size:12px;margin-top:2px}
+#panel .x{border:0;background:transparent;color:var(--muted);font-size:20px;line-height:1;cursor:pointer;padding:0 2px}
+.rows{display:grid;gap:6px;margin:12px 0 8px}
+.row{display:grid;grid-template-columns:1fr repeat(var(--n,1),minmax(64px,auto));gap:10px;align-items:baseline;border-bottom:1px dashed var(--line);padding-bottom:5px}
+.row span{color:var(--muted);font-size:12px}
+.row b{font-family:var(--f-mono);font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.row b small{font-size:10.5px;color:var(--muted);font-weight:400;margin-left:3px}
+.row.head{border:0;padding:0}
+.row.head b{font:600 11px var(--f-body);letter-spacing:.08em}
+.c0{color:var(--accent)}.c1{color:var(--accent2)}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid currentColor}
+.pill.ok{color:var(--ok)}.pill.warn{color:var(--warn)}.pill.bad{color:var(--bad)}.pill.info{color:var(--accent)}
+#spark{width:100%;height:44px;display:block;margin-top:8px}
+#spark polyline{fill:none;stroke-width:1.6}
+.foot{display:flex;justify-content:space-between;color:var(--muted);font-family:var(--f-mono);font-size:10.5px;margin-top:6px}
+/* dock */
+.dock{display:flex;flex-wrap:wrap;gap:8px;padding:10px 16px;border-top:1px solid var(--line);background:var(--surface)}
+.btn{font:600 13px var(--f-body);letter-spacing:.02em;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:8px 13px;cursor:pointer}
+.btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:focus-visible,.seg button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.legend{margin-left:auto;display:flex;gap:14px;align-items:center;color:var(--muted);font-size:12px;flex-wrap:wrap}
+.legend em{font-style:normal;display:inline-flex;align-items:center;gap:6px}
+.legend em::before{content:"";width:14px;height:3px;border-radius:2px;background:var(--c)}
+.dock .field select{max-width:170px}
+.dock input[type=range]{width:110px}
+.refcheck{padding:0 14px 12px;display:grid;gap:6px;font-size:12.5px;line-height:1.4}
+.refcheck h4{margin:0 0 2px;font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.refcheck .pills{margin-top:2px}
+@media (max-width:700px){
+  #panel{left:12px!important;right:12px;bottom:12px;top:auto!important;width:auto}
+  #leader{display:none}
+  input[type=range]{width:90px}
+  .legend{display:none}
+  .hint{left:12px;bottom:12px;transform:none;white-space:normal;max-width:calc(100% - 150px)}
+  .src{top:auto;bottom:12px;right:12px}
+}
+</style>
+
+<div id="app">
+  <div class="bar">
+    <div class="brand"><b>Smability</b><span>Gemelo digital</span></div>
+    <div class="field"><span class="lbl" id="stLbl">Estación</span>
+      <div class="seg" role="group" aria-labelledby="stLbl">
+        <button id="vChaak" data-view="chaak" aria-pressed="true">CHAAK</button><button id="vSmaa" data-view="smaa" aria-pressed="false">SMAA</button><button id="vBoth" data-view="both" aria-pressed="false">Ambas</button>
+      </div>
+    </div>
+    <div class="field"><label for="city">Ciudad</label><select id="city"></select></div>
+    <div class="field"><label for="month">Mes</label><select id="month"></select></div>
+    <div class="field"><label for="hour">Hora</label><input id="hour" type="range" min="5" max="20" step="0.25" value="13"><span class="hour" id="hourOut">13:00</span></div>
+    <form class="custom" id="customRow" hidden novalidate>
+      <div class="f"><label for="cName">Nombre del sitio</label><input id="cName" type="text" placeholder="Planta Toluca" maxlength="40"></div>
+      <div class="f"><label for="cLat">Latitud</label><input id="cLat" type="number" step="0.0001" min="-60" max="60" placeholder="19.4326" required></div>
+      <div class="f"><label for="cLon">Longitud</label><input id="cLon" type="number" step="0.0001" min="-180" max="180" placeholder="-99.1332" required></div>
+      <div class="f"><label for="cWind">Viento dominante</label><select id="cWind"></select></div>
+      <div class="f"><label for="cRainWind">Viento en lluvias</label><select id="cRainWind"></select></div>
+      <button class="btn sm" type="submit" id="cApply">Aplicar</button>
+      <button class="btn sm" type="button" id="cGeo">Usar mi ubicación</button>
+      <div class="msg" id="cMsg">Con el sitio publicado, los vientos y meses de lluvia se calculan solos con datos horarios de 2025. Los selectores de viento se usan si no hay conexión.</div>
+    </form>
+  </div>
+
+  <div id="stage">
+    <svg id="leader" aria-hidden="true"><line id="ll" x1="0" y1="0" x2="0" y2="0" visibility="hidden"></line><circle id="lc" r="4" visibility="hidden"></circle></svg>
+    <details id="siting" open>
+      <summary><h2>Guía de emplazamiento</h2><small id="sitingCity"></small></summary>
+      <div class="sbody">
+        <div class="refctl">
+          <div class="f"><label for="ref">Caseta de referencia</label><select id="ref"><option value="none">Sin caseta</option><option value="shelter">Caseta de monitoreo (3.3 m)</option></select></div>
+          <div class="f" id="refPos" hidden><label for="refDir">Rumbo y distancia</label><div class="inl"><select id="refDir"></select><input id="refDist" type="range" min="2" max="30" step="0.5" value="6" aria-label="Distancia a la caseta"><span class="hour" id="refDistOut">6 m</span></div></div>
+        </div>
+        <ul id="sitingList"></ul>
+        <div class="refcheck" id="refCheck" hidden></div>
+        <div class="faces" id="faces"></div>
+        <div class="flag" id="windFlag"></div>
+      </div>
+    </details>
+    <div class="src" id="src">DEMO · datos simulados</div>
+    <div class="caption" id="caption" hidden></div>
+    <aside id="field" hidden data-ok="0" aria-live="polite">
+      <header><div><div class="tag">Modo campo</div><h3>Orienta la cara principal</h3></div><button class="x" id="fClose" aria-label="Cerrar modo campo">×</button></header>
+      <svg id="dial" viewBox="-125 -125 250 250" role="img" aria-label="Brújula: la flecha amarilla marca hacia dónde debe mirar la cara principal"></svg>
+      <div class="fbig" id="fDelta">Activa la brújula</div>
+      <div class="finfo" id="fInfo"></div>
+      <ol class="fsteps">
+        <li>Pon el celular plano sobre el gabinete, con la parte de arriba apuntando hacia afuera de la cara principal.</li>
+        <li>Gira el trípode completo hasta que la flecha amarilla quede arriba y aparezca «Alineado».</li>
+        <li>Aléjalo de partes metálicas y del panel solar: desvían la brújula.</li>
+      </ol>
+      <div class="frow"><label for="fDecl">Declinación magnética</label><input id="fDecl" type="number" step="0.1" min="-30" max="30"><span>° (Este +)</span></div>
+      <button class="btn" id="fStart">Activar brújula</button>
+      <div class="fmsg" id="fMsg"></div>
+    </aside>
+    <div class="hint" id="hint">Toca la estación o un sensor para ver sus datos</div>
+    <aside id="panel" hidden aria-live="polite">
+      <header><div><div class="tag" id="pTag"></div><h3 id="pTitle"></h3><div class="sub" id="pSub"></div></div><button class="x" id="pClose" aria-label="Cerrar panel">×</button></header>
+      <div class="rows" id="pRows"></div>
+      <div class="pills" id="pStatus"></div>
+      <svg id="spark" viewBox="0 0 240 44" preserveAspectRatio="none"></svg>
+      <div class="foot"><span id="pMetric"></span><span id="pTime"></span></div>
+    </aside>
+  </div>
+
+  <div class="dock">
+    <button class="btn tour" id="bTour" aria-pressed="false">Tour</button>
+    <button class="btn" id="bExplode" aria-pressed="false">Vista explosionada</button>
+    <button class="btn" id="bRain" aria-pressed="false">Simular lluvia</button>
+    <button class="btn" id="bPlan" aria-pressed="false">Vista en planta</button>
+    <button class="btn" id="bField" aria-pressed="false">Modo campo</button>
+    <button class="btn" id="bSheet">Ficha de instalación</button>
+    <button class="btn" id="bReset">Reiniciar vista</button>
+    <div class="legend">
+      <em style="--c:var(--front)">Cara principal</em>
+      <em style="--c:var(--accent)">Viento dominante</em>
+      <em style="--c:var(--rain)">Viento en lluvias</em>
+      <em style="--c:var(--sun)">Trayectoria solar</em>
+    </div>
+  </div>
+</div>
+
+<div id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="shTitle">
+  <div class="sheetwrap">
+    <div class="shbar"><b id="shTitle">Ficha de instalación</b>
+      <div class="shbtns"><button class="btn" id="shPdf">Descargar PDF</button><button class="btn" id="shPng">Descargar plano</button><button class="x" id="shClose" aria-label="Cerrar ficha">×</button></div>
+    </div>
+    <div class="shnote" id="shNote" hidden>Vista previa. Las descargas funcionan en el sitio publicado en Netlify.</div>
+    <div class="paper" id="shBody"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+<script>
+"use strict";
+/* ================= CONFIG ================= */
+const API_BASE = "/.netlify/functions/station?id=";   // proxy en Netlify (oculta la API key)
+const POLL_MS  = 15000;
+const CLIMATE_YEAR = 2025;                              // año base para calcular vientos y lluvias (Open-Meteo)
+const STATION_DEFS = {
+  chaak:{id:"CHAAK", modelUrl:"models/chaak.glb", color:"--accent"},
+  smaa: {id:"SMAA",  modelUrl:"models/smaa.glb",  color:"--accent2"},
+};
+const RIG_MODEL = "models/montaje.glb";                 // trípode + mástil compartidos
+
+/* Vientos: PROVISIONALES hasta que se calculan con datos horarios (se reemplazan solos con el sitio publicado).
+   windFrom = de dónde viene el viento dominante (° desde el norte). rainWindFrom = viento con lluvia. rainMonths: 0 = enero. */
+const CITIES = {
+  cdmx:  {country:"México", name:"Ciudad de México", lat:19.43, lon:-99.13, tz:-6, decl:4.3, windFrom:20,  rainWindFrom:60,  rainMonths:[5,6,7,8],     tBase:17},
+  cun:   {country:"México", name:"Cancún",           lat:21.16, lon:-86.85, tz:-5, decl:-1.5, windFrom:110, rainWindFrom:100, rainMonths:[5,6,7,8,9],   tBase:27},
+  dgo:   {country:"México", name:"Durango",          lat:24.02, lon:-104.66,tz:-6, decl:6.6, windFrom:240, rainWindFrom:120, rainMonths:[5,6,7,8],     tBase:18},
+  gdl:   {country:"México", name:"Guadalajara",      lat:20.67, lon:-103.35,tz:-6, decl:5.8, windFrom:260, rainWindFrom:250, rainMonths:[5,6,7,8],     tBase:21},
+  lpz:   {country:"México", name:"La Paz, BCS",      lat:24.14, lon:-110.31,tz:-7, decl:9.6, windFrom:340, rainWindFrom:150, rainMonths:[7,8,9],       tBase:24},
+  mty:   {country:"México", name:"Monterrey",        lat:25.67, lon:-100.31,tz:-6, decl:4.0, windFrom:100, rainWindFrom:110, rainMonths:[7,8],         tBase:24},
+  pue:   {country:"México", name:"Puebla",           lat:19.04, lon:-98.21, tz:-6, decl:3.9, windFrom:30,  rainWindFrom:70,  rainMonths:[5,6,7,8],     tBase:17},
+  tij:   {country:"México", name:"Tijuana",          lat:32.53, lon:-117.02,tz:-8, decl:10.8, windFrom:270, rainWindFrom:230, rainMonths:[11,0,1,2],    tBase:18},
+  tula:  {country:"México", name:"Tula, Hidalgo",    lat:20.05, lon:-99.34, tz:-6, decl:4.4, windFrom:20,  rainWindFrom:60,  rainMonths:[5,6,7,8],     tBase:17},
+  gua:   {country:"Guatemala", name:"Ciudad de Guatemala", lat:14.63, lon:-90.51, tz:-6, decl:0.5, windFrom:25, rainWindFrom:210, rainMonths:[4,5,6,7,8,9], tBase:20},
+  bog:   {country:"Colombia", name:"Bogotá",         lat:4.71,  lon:-74.07, tz:-5, decl:-8.2, windFrom:110, rainWindFrom:120, rainMonths:[3,4,9,10],    tBase:14},
+  cali:  {country:"Colombia", name:"Cali",           lat:3.45,  lon:-76.53, tz:-5, decl:-7.0, windFrom:300, rainWindFrom:300, rainMonths:[3,4,9,10],    tBase:24},
+  mde:   {country:"Colombia", name:"Medellín",       lat:6.24,  lon:-75.58, tz:-5, decl:-7.8, windFrom:350, rainWindFrom:350, rainMonths:[3,4,8,9,10],  tBase:22},
+  suarez:{country:"Colombia", name:"Suárez, Cauca",  lat:2.95,  lon:-76.69, tz:-5, decl:-6.8, windFrom:300, rainWindFrom:290, rainMonths:[3,4,9,10],    tBase:22},
+  lima:  {country:"Perú", name:"Lima",               lat:-12.05,lon:-77.04, tz:-5, decl:-2.2, windFrom:200, rainWindFrom:200, rainMonths:[5,6,7,8],     tBase:19, drizzle:true},
+};
+const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const CARD = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSO","SO","OSO","O","ONO","NO","NNO"];
+const cardinal = d => CARD[Math.round(((d%360)+360)%360/22.5)%16];
+const RAD = Math.PI/180;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const latLabel = l => `${Math.abs(l).toFixed(2)}°${l>=0?"N":"S"}`;
+const $ = id => document.getElementById(id);
+
+/* ================= SOL (NOAA simplificado) ================= */
+function sunPosition(dateUTC, lat, lon){
+  const d = (dateUTC - Date.UTC(2000,0,1,12))/86400000;
+  const g = (357.529 + 0.98560028*d)*RAD;
+  const q = 280.459 + 0.98564736*d;
+  const L = (q + 1.915*Math.sin(g) + 0.020*Math.sin(2*g))*RAD;
+  const e = (23.439 - 0.00000036*d)*RAD;
+  const ra = Math.atan2(Math.cos(e)*Math.sin(L), Math.cos(L));
+  const dec = Math.asin(Math.sin(e)*Math.sin(L));
+  const gmst = ((18.697374558 + 24.06570982441908*d)%24+24)%24;
+  const H = (gmst*15 + lon)*RAD - ra;
+  const la = lat*RAD;
+  const alt = Math.asin(Math.sin(la)*Math.sin(dec) + Math.cos(la)*Math.cos(dec)*Math.cos(H));
+  let az = Math.atan2(-Math.sin(H), Math.tan(dec)*Math.cos(la) - Math.sin(la)*Math.cos(H));
+  az = ((az/RAD)%360+360)%360;
+  return {az, alt:alt/RAD, dec:dec/RAD};
+}
+const cityDate = (c, month, hour) => Date.UTC(2026, month, 15, 0, 0) + (hour - c.tz)*3600000;
+function sunFlipMonths(c){
+  return MONTHS.filter((_,m)=>{ const dec = sunPosition(cityDate(c,m,12),c.lat,c.lon).dec; return c.lat>=0 ? dec > c.lat : dec < c.lat; });
+}
+function faceExposure(city, frontAz){
+  const faces = [["Frente (gabinetes)",frontAz],["Lado derecho",frontAz+90],["Trasera (sensores)",frontAz+180],["Lado izquierdo",frontAz+270]];
+  const cnt = [0,0,0,0]; let n = 0;
+  for(let m=0;m<12;m++) for(let h=5;h<=20;h+=.5){
+    const s = sunPosition(cityDate(city,m,h),city.lat,city.lon); if(s.alt<5) continue; n++;
+    faces.forEach((f,i)=>{ if(Math.cos((s.az-f[1])*RAD) > .17) cnt[i]++; });
+  }
+  return faces.map((f,i)=>({label:f[0], az:((f[1]%360)+360)%360, pct:Math.round(cnt[i]/n*100)}));
+}
+
+/* ================= CLIMA REAL (Open-Meteo, datos horarios de un año) ================= */
+const climateCache = {};
+async function fetchClimate(lat, lon){
+  const k = `${(+lat).toFixed(2)},${(+lon).toFixed(2)}`;
+  if(climateCache[k]) return climateCache[k];
+  try{ const saved = JSON.parse(localStorage.getItem("smab.clim."+k)||"null"); if(saved) return climateCache[k] = saved; }catch(e){}
+  const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${CLIMATE_YEAR}-01-01&end_date=${CLIMATE_YEAR}-12-31&hourly=temperature_2m,precipitation,wind_speed_10m,wind_direction_10m&timezone=auto`;
+  try{
+    const ctl = new AbortController(); const t = setTimeout(()=>ctl.abort(), 15000);
+    const r = await fetch(url,{signal:ctl.signal}); clearTimeout(t);
+    if(!r.ok) return null;
+    const j = await r.json(), H = j.hourly; if(!H || !H.time) return null;
+    const all = new Array(16).fill(0), wet = new Array(16).fill(0), monthP = new Array(12).fill(0);
+    let tSum = 0, tN = 0, wetN = 0;
+    H.time.forEach((ts,i)=>{
+      const ws = H.wind_speed_10m[i], wd = H.wind_direction_10m[i], p = H.precipitation[i], te = H.temperature_2m[i];
+      const m = +ts.slice(5,7) - 1; if(p!=null) monthP[m] += p; if(te!=null){ tSum += te; tN++; }
+      if(ws==null || wd==null || ws < .5) return;
+      const b = Math.round(wd/22.5)%16; all[b] += ws;
+      if(p >= .5){ wet[b] += ws; wetN++; }
+    });
+    const argmax = a => a.indexOf(Math.max(...a));
+    const total = monthP.reduce((a,b)=>a+b,0);
+    let rainMonths = monthP.map((p,m)=>[p,m]).filter(([p])=> p >= Math.max(20, total/12*1.3)).map(([,m])=>m);
+    if(!rainMonths.length) rainMonths = monthP.map((p,m)=>[p,m]).sort((a,b)=>b[0]-a[0]).slice(0,3).map(([,m])=>m).sort((a,b)=>a-b);
+    const out = {
+      windFrom: argmax(all)*22.5, rainWindFrom: (wetN > 30 ? argmax(wet) : argmax(all))*22.5,
+      rainMonths, drizzle: total < 60, tBase: tN ? +(tSum/tN).toFixed(1) : null,
+      tz: (j.utc_offset_seconds ?? Math.round(lon/15)*3600)/3600, annualMm: Math.round(total),
+      windSource:`calculados con datos horarios ${CLIMATE_YEAR} (Open-Meteo)`
+    };
+    try{ localStorage.setItem("smab.clim."+k, JSON.stringify(out)); }catch(e){}
+    return climateCache[k] = out;
+  }catch(e){ return null; }
+}
+async function refineCity(key){
+  const ci = CITIES[key]; if(!ci || ci.climateTried) return;
+  ci.climateTried = true;
+  const cl = await fetchClimate(ci.lat, ci.lon);
+  if(cl){ Object.assign(ci, cl); if(state.city===key) applyCity(); }
+}
+
+/* ================= ESTADO ================= */
+const state = {
+  ref:"none", refAz:45, refDist:6,
+  view:"chaak", city:"cdmx", month:new Date().getMonth(), hour:13, frontAz:0,
+  explode:0, explodeTarget:0, rain:false, plan:false,
+  selected:null, hovered:null, env:{}, lastUpdate:null
+};
+
+/* ================= THREE ================= */
+const stage = $("stage");
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const persp = new THREE.PerspectiveCamera(38, 1, 0.05, 100);
+const ortho = new THREE.OrthographicCamera(-5,5,5,-5,0.1,50);
+ortho.position.set(0,14,0); ortho.up.set(0,0,-1); ortho.lookAt(0,0,0);
+let camera = persp;
+const controls = new THREE.OrbitControls(persp, renderer.domElement);
+controls.enableDamping = true; controls.minDistance = 1.5; controls.maxDistance = 60;
+controls.maxPolarAngle = Math.PI*0.495;
+function resetView(){
+  const far = (stage.clientWidth < 700 ? 1.35 : 1) * (state.ref && state.ref!=="none" ? Math.max(1.6, sceneExtent()/4.5) : 1);
+  persp.position.set(4.0*far, 3.0*far, 4.6*far);
+  controls.target.set(0,1.7,0); controls.update();
+}
+
+const hemi = new THREE.HemisphereLight(0xffffff, 0x8a9a96, 0.55); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff3dd, 1.4);
+sun.castShadow = true; sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-4.5,right:4.5,top:4.5,bottom:-4.5,near:0.5,far:30});
+sun.shadow.bias = -0.0004; scene.add(sun); scene.add(sun.target);
+const sunMarker = new THREE.Mesh(new THREE.SphereGeometry(0.16,24,16), new THREE.MeshBasicMaterial({color:0xf2b544}));
+scene.add(sunMarker);
+
+const groundCanvas = document.createElement("canvas"); groundCanvas.width = groundCanvas.height = 1024;
+const groundTex = new THREE.CanvasTexture(groundCanvas); groundTex.encoding = THREE.sRGBEncoding; groundTex.anisotropy = 4;
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(9,9), new THREE.MeshStandardMaterial({map:groundTex, roughness:1, transparent:true}));
+ground.rotation.x = -Math.PI/2; ground.position.y = .004; ground.receiveShadow = true; scene.add(ground);
+const floorMat = new THREE.MeshStandardMaterial({color:0xcfdad7, roughness:1});
+const floor = new THREE.Mesh(new THREE.CircleGeometry(60,64), floorMat); floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
+function fitShadow(ext){ Object.assign(sun.shadow.camera,{left:-ext,right:ext,top:ext,bottom:-ext,near:1,far:120}); sun.shadow.camera.updateProjectionMatrix(); }
+
+/* ================= MONTAJE COMPARTIDO (modelos provisionales) ================= */
+const M = {
+  white: new THREE.MeshStandardMaterial({color:0xeef1ef, roughness:.55}),
+  alu:   new THREE.MeshStandardMaterial({color:0xa4adb0, metalness:.7, roughness:.35}),
+  dark:  new THREE.MeshStandardMaterial({color:0x2a3134, roughness:.6}),
+  teal:  new THREE.MeshStandardMaterial({color:0x0a7a6b, roughness:.5}),
+  plum:  new THREE.MeshStandardMaterial({color:0x8e3a84, roughness:.5}),
+  pv:    new THREE.MeshStandardMaterial({color:0x1a2b4d, metalness:.4, roughness:.25}),
+};
+const V = (x,y,z)=>new THREE.Vector3(x,y,z);
+function mesh(geo, mat, pos){ const m = new THREE.Mesh(geo, mat.clone()); if(pos) m.position.copy(pos); m.castShadow = m.receiveShadow = true; return m; }
+function rod(a,b,r,mat){ const d = V().subVectors(b,a), L = d.length(); const m = mesh(new THREE.CylinderGeometry(r,r,L,14), mat); m.position.copy(a).addScaledVector(d,.5); m.quaternion.setFromUnitVectors(V(0,1,0), d.normalize()); return m; }
+
+const INFO = {
+  pm:    {title:"Sensor de partículas", sub:"PM2.5 · PM10 · dispersión láser", metric:"pm25"},
+  gas:   {title:"Sensor de gases", sub:"O₃ · NO₂ · electroquímico", metric:"o3"},
+  thr:   {title:"Escudo de radiación", sub:"Temperatura y humedad relativa", metric:"temp"},
+  wind:  {title:"Anemómetro y veleta", sub:"Velocidad y dirección del viento", metric:"ws"},
+  rain:  {title:"Pluviómetro", sub:"Balancín · 0.2 mm por pulso", metric:"rain"},
+  solar: {title:"Panel solar", sub:"Autonomía energética", metric:"solarW"},
+  logger:{title:"Gabinete y datalogger", sub:"Cara principal · electrónica y telemetría 4G", metric:"tInt"},
+  tripod:{title:"Trípode compartido", sub:"CHAAK y SMAA en el mismo montaje", metric:null},
+  mast:  {title:"Mástil compartido", sub:"Aluminio · 3.0 m", metric:null},
+};
+const INLET = {chaak:2.3, smaa:1.7};   // altura de tomas (m), provisional
+
+/* Un solo montaje: body gira según el viento (brazos de sensores = +X, cara principal = −X); solar mira al ecuador */
+const body = new THREE.Group(), solar = new THREE.Group(); scene.add(body); scene.add(solar);
+const RIG = {key:"rig", id:"Montaje", parts:{}};
+const ST = {};
+for(const [k,d] of Object.entries(STATION_DEFS)) ST[k] = {key:k, ...d, parts:{}, v:{}, hist:{}, source:"demo", cups:null, vane:null};
+const OWNERS = () => [RIG, ...Object.values(ST)];
+
+function addPart(owner, key, parent, base, explode){
+  const g = new THREE.Group(); g.position.copy(base); parent.add(g);
+  owner.parts[key] = {group:g, base:base.clone(), explode};
+  g.userData = {station:owner.key, part:key}; return g;
+}
+function radiationShield(g, plates, r){ for(let i=0;i<plates;i++) g.add(mesh(new THREE.CylinderGeometry(r-i*.002,r+.005,.01,28), M.white, V(0,-.03-i*.026,0))); g.add(rod(V(0,-.02,0), V(0,-.03-plates*.026,0), .01, M.alu)); }
+function pvPanel(st, w, d, y, armLen, explode){
+  const g = addPart(st, "solar", solar, V(0,y,0), explode);
+  g.add(rod(V(0,0,0), V(0,0,armLen), .012, M.alu));
+  const pv = new THREE.Group(); pv.position.set(0,.02,armLen+d/2); g.add(pv);
+  pv.add(mesh(new THREE.BoxGeometry(w,.025,d), M.alu));
+  pv.add(mesh(new THREE.BoxGeometry(w-.03,.006,d-.03), M.pv, V(0,.014,0)));
+  st.parts.solar.pv = pv;
+}
+function buildRig(){
+  let g = addPart(RIG, "tripod", body, V(0,0,0), V(0,-0.35,0));
+  const hub = V(0,1.0,0);
+  for(let i=0;i<3;i++){ const a = i*2*Math.PI/3 + Math.PI/6; g.add(rod(hub, V(Math.cos(a)*.95,0,Math.sin(a)*.95), .022, M.alu)); g.add(mesh(new THREE.CylinderGeometry(.05,.05,.02,16), M.dark, V(Math.cos(a)*.95,.01,Math.sin(a)*.95))); }
+  g.add(mesh(new THREE.CylinderGeometry(.06,.06,.12,16), M.dark, hub));
+  g = addPart(RIG, "mast", body, V(0,0,0), V(0,0,0));
+  g.add(rod(V(0,.9,0), V(0,3.0,0), .03, M.alu));
+  g.add(rod(V(0,3.0,0), V(0,3.07,0), .045, M.dark));       // tapa
+}
+/* CHAAK: parte alta del mástil (meteorología + tomas a 2.3 m) */
+function buildChaak(st){
+  let g = addPart(st, "arms", body, V(0,0,0), V(0,0,0));
+  g.add(rod(V(0,2.35,0), V(.62,2.35,0), .016, M.alu));
+  g.add(rod(V(0,2.6,0), V(.42,2.6,0), .014, M.alu));
+  g.add(rod(V(0,2.92,-.34), V(0,2.92,.34), .012, M.alu));
+  g = addPart(st, "logger", body, V(-.17,2.12,0), V(-.6,.15,0));
+  g.add(mesh(new THREE.BoxGeometry(.16,.4,.3), M.white));
+  g.add(mesh(new THREE.BoxGeometry(.012,.07,.2), M.teal, V(-.085,.12,0)));
+  g.add(mesh(new THREE.BoxGeometry(.22,.012,.34), M.white, V(-.03,.21,0)));   // visera
+  g.add(rod(V(.02,.22,.11), V(.02,.48,.11), .006, M.dark));
+  g = addPart(st, "thr", body, V(.54,2.33,0), V(.45,.15,.35)); radiationShield(g, 7, .095);
+  g = addPart(st, "pm", body, V(.27,2.24,0), V(.3,-.1,-.3));
+  g.add(mesh(new THREE.BoxGeometry(.13,.16,.11), M.white));
+  g.add(mesh(new THREE.BoxGeometry(.132,.02,.112), M.teal, V(0,.05,0)));
+  g.add(mesh(new THREE.CylinderGeometry(.018,.018,.08,14), M.dark, V(0,-.12,0)));
+  g = addPart(st, "gas", body, V(.4,2.22,-.15), V(.35,0,-.55));
+  g.add(mesh(new THREE.CylinderGeometry(.05,.05,.16,24), M.white));
+  g.add(mesh(new THREE.CylinderGeometry(.052,.052,.02,24), M.teal, V(0,.03,0)));
+  g.add(mesh(new THREE.CylinderGeometry(.03,.03,.04,16), M.dark, V(0,-.1,0)));
+  g = addPart(st, "wind", body, V(0,2.92,0), V(0,.5,0));
+  const cups = new THREE.Group(); cups.position.set(0,.06,.34); g.add(cups);
+  cups.add(mesh(new THREE.CylinderGeometry(.015,.015,.1,10), M.dark, V(0,-.03,0)));
+  for(let i=0;i<3;i++){ const a=i*2*Math.PI/3; cups.add(rod(V(0,.02,0), V(Math.cos(a)*.13,.02,Math.sin(a)*.13), .004, M.alu));
+    const cup = mesh(new THREE.SphereGeometry(.035,16,10,0,Math.PI*2,0,Math.PI/2), M.white, V(Math.cos(a)*.13,.02,Math.sin(a)*.13)); cup.rotation.z = Math.PI/2; cup.rotation.y = -a; cups.add(cup); }
+  const vane = new THREE.Group(); vane.position.set(0,.06,-.34); g.add(vane);
+  vane.add(mesh(new THREE.CylinderGeometry(.012,.012,.08,10), M.dark, V(0,-.03,0)));
+  vane.add(rod(V(-.16,.02,0), V(.12,.02,0), .005, M.alu));
+  vane.add(mesh(new THREE.BoxGeometry(.09,.07,.004), M.teal, V(-.15,.03,0)));
+  const tip = mesh(new THREE.ConeGeometry(.018,.05,12), M.dark, V(.14,.02,0)); tip.rotation.z = -Math.PI/2; vane.add(tip);
+  st.cups = cups; st.vane = vane;
+  g = addPart(st, "rain", body, V(.42,2.71,0), V(.35,.45,0));
+  g.add(mesh(new THREE.CylinderGeometry(.08,.07,.18,28,1,true), M.white));
+  g.add(mesh(new THREE.CylinderGeometry(.07,.07,.01,28), M.dark, V(0,-.085,0)));
+  const ring = mesh(new THREE.TorusGeometry(.08,.006,8,32), M.teal, V(0,.09,0)); ring.rotation.x = Math.PI/2; g.add(ring);
+  pvPanel(st, .5, .36, 1.62, .2, V(0,.1,.55));
+}
+/* SMAA: parte baja del mástil (calidad del aire, tomas a 1.7 m); gabinete debajo de sus tomas */
+function buildSmaa(st){
+  let g = addPart(st, "arms", body, V(0,0,0), V(0,0,0));
+  g.add(rod(V(0,1.8,0), V(.42,1.8,0), .014, M.alu));
+  g = addPart(st, "logger", body, V(-.13,1.4,0), V(-.5,-.15,0));
+  g.add(mesh(new THREE.BoxGeometry(.13,.32,.26), M.white));
+  g.add(mesh(new THREE.BoxGeometry(.01,.06,.16), M.plum, V(-.07,.09,0)));
+  g.add(mesh(new THREE.BoxGeometry(.008,.08,.14), M.dark, V(-.068,-.03,0)));
+  g.add(mesh(new THREE.BoxGeometry(.2,.012,.3), M.white, V(-.03,.175,0)));   // visera
+  g = addPart(st, "thr", body, V(.35,1.78,0), V(.35,-.05,.35)); radiationShield(g, 5, .07);
+  g = addPart(st, "pm", body, V(.18,1.7,0), V(.28,-.3,-.25));
+  g.add(mesh(new THREE.BoxGeometry(.1,.12,.09), M.white));
+  g.add(mesh(new THREE.BoxGeometry(.102,.016,.092), M.plum, V(0,.04,0)));
+  g.add(mesh(new THREE.CylinderGeometry(.015,.015,.06,14), M.dark, V(0,-.09,0)));
+  g = addPart(st, "gas", body, V(.3,1.68,-.13), V(.3,-.25,-.45));
+  g.add(mesh(new THREE.CylinderGeometry(.04,.04,.12,24), M.white));
+  g.add(mesh(new THREE.CylinderGeometry(.042,.042,.016,24), M.plum, V(0,.025,0)));
+  pvPanel(st, .3, .22, 1.18, .14, V(0,-.15,.45));
+}
+buildRig(); buildChaak(ST.chaak); buildSmaa(ST.smaa);
+/* ================= CARA PRINCIPAL: flecha y etiqueta ================= */
+const frontMark = new THREE.Group(); body.add(frontMark);
+const frontLabelCanvas = document.createElement("canvas"); frontLabelCanvas.width = 512; frontLabelCanvas.height = 112;
+const frontLabelTex = new THREE.CanvasTexture(frontLabelCanvas); frontLabelTex.encoding = THREE.sRGBEncoding;
+function drawFrontLabel(){
+  const g = frontLabelCanvas.getContext("2d");
+  g.fillStyle = "#161616"; g.fillRect(0,0,512,112);
+  g.fillStyle = "#f2c200"; g.fillRect(0,0,24,112); g.fillRect(488,0,24,112);
+  g.font = "700 60px 'Barlow Condensed', 'Arial Narrow', sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText("CARA PRINCIPAL", 256, 60); frontLabelTex.needsUpdate = true;
+}
+(function buildFrontMark(){
+  const mat = new THREE.MeshBasicMaterial({color:0xe8b400});
+  const shaft = new THREE.Mesh(new THREE.BoxGeometry(.9,.01,.07), mat); shaft.position.set(-.8,.012,0); frontMark.add(shaft);
+  const head = new THREE.Mesh(new THREE.ConeGeometry(.13,.26,4), mat); head.rotation.z = Math.PI/2; head.scale.set(.08,1,1); head.position.set(-1.38,.012,0); frontMark.add(head);
+  drawFrontLabel();
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:frontLabelTex, depthTest:false}));
+  sp.scale.set(.95,.21,1); sp.position.set(-1.85,.32,0); sp.renderOrder = 10; frontMark.add(sp);
+})();
+
+/* ================= VOLUMEN DE REFERENCIA ================= */
+const landmark = new THREE.Group(); scene.add(landmark);
+const std = (color, extra) => new THREE.MeshStandardMaterial(Object.assign({color, roughness:.8}, extra||{}));
+function solid(geo, mat, pos){ const m = new THREE.Mesh(geo, mat); if(pos) m.position.copy(pos); m.castShadow = m.receiveShadow = true; return m; }
+const LM = {
+  shelter:{label:"caseta de monitoreo", H:3.3, half:1.3, build(g){
+    const wall = std(0xe7ebe9), dark = std(0x2a3134), alu = std(0xa4adb0,{metalness:.6,roughness:.4});
+    g.add(solid(new THREE.BoxGeometry(3,2.4,2.6), wall, V(0,1.2,0)));
+    g.add(solid(new THREE.BoxGeometry(3.25,.12,2.85), wall, V(0,2.46,0)));
+    g.add(solid(new THREE.BoxGeometry(.9,2,.04), dark, V(-.7,1.0,1.32)));
+    g.add(solid(new THREE.BoxGeometry(.8,.6,.35), alu, V(1.75,1.6,0)));
+    for(let k=0;k<3;k++){ g.add(solid(new THREE.CylinderGeometry(.05,.05,.8,12), alu, V(-.8+k*.8,2.92,0))); g.add(solid(new THREE.CylinderGeometry(.12,.12,.05,16), alu, V(-.8+k*.8,3.3,0))); }
+  }},
+};
+const sceneExtent = () => state.ref && state.ref!=="none" ? state.refDist + 2*LM[state.ref].half + 2 : 5.2;
+function placeLandmark(){
+  while(landmark.children.length) landmark.remove(landmark.children[0]);
+  const kind = state.ref; landmark.visible = kind!=="none"; $("refPos").hidden = kind==="none";
+  if(kind!=="none"){
+    const L = LM[kind], d = state.refDist + L.half, a = state.refAz*RAD;
+    L.build(landmark);
+    landmark.position.set(Math.sin(a)*d, 0, -Math.cos(a)*d);
+    landmark.rotation.y = -a;          // una cara del volumen mira a la estación
+  }
+  fitShadow(Math.max(4.5, sceneExtent() + 2)); resize(); refreshRefCheck();
+}
+/* % de horas de sol en que el volumen tapa el sol a la altura de los gabinetes */
+function refShadeStats(){
+  landmark.updateMatrixWorld(true);
+  const city = c(), meshes = []; landmark.traverse(o=>{ if(o.isMesh) meshes.push(o); });
+  const org = V(0,1.9,0), rc = new THREE.Raycaster(); rc.far = 300;
+  const run = (months, step)=>{ let n = 0, hit = 0;
+    for(const m of months) for(let h=5; h<=20; h+=step){
+      const s = sunPosition(cityDate(city,m,h),city.lat,city.lon); if(s.alt<=2) continue; n++;
+      rc.set(org, V(Math.sin(s.az*RAD)*Math.cos(s.alt*RAD), Math.sin(s.alt*RAD), -Math.cos(s.az*RAD)*Math.cos(s.alt*RAD)));
+      if(rc.intersectObjects(meshes,false).length) hit++; }
+    return n ? Math.round(hit/n*100) : 0; };
+  return {month:run([state.month],.25), year:run([0,1,2,3,4,5,6,7,8,9,10,11],.5)};
+}
+function refreshRefCheck(){
+  const box = $("refCheck"); if(!state.ref || state.ref==="none"){ box.hidden = true; return; }
+  const L = LM[state.ref], city = c(), st = refShadeStats();
+  const protr = Math.max(0, L.H - INLET.chaak), need = Math.round(2*protr*10)/10, ok = state.refDist >= need;
+  const near = (az)=> Math.abs(((state.refAz - az + 540)%360)-180) <= 45;
+  box.hidden = false;
+  box.innerHTML = `<h4>Referencia · ${L.label}</h4>
+    <div>Al ${cardinal(state.refAz)} a ${state.refDist} m. Sobresale ${protr.toFixed(1)} m por encima de las tomas: pide ${need} m o más de separación.</div>
+    <div>Sombra sobre los gabinetes: <b>${st.month}%</b> de las horas de sol en ${MONTHS[state.month].toLowerCase()}, <b>${st.year}%</b> en el año.</div>
+    <div class="pills"><span class="pill ${ok?"ok":"bad"}">${ok?"Separación suficiente":"Muy cerca de las tomas"}</span>${near(city.windFrom)?`<span class="pill warn">Frena el viento dominante</span>`:""}${near(city.rainWindFrom) && state.refDist < L.H ? `<span class="pill warn">Puede tapar la lluvia</span>`:""}</div>`;
+}
+
+
+/* Modelos reales: los tres .glb comparten el mismo sistema de coordenadas (el del ensamble en AutoCAD):
+   Y arriba, metros, origen en la base del trípode, brazos de sensores hacia +X, cara principal hacia −X. */
+const KEYMAP = [["pm","pm"],["particul","pm"],["gas","gas"],["thr","thr"],["escudo","thr"],["anem","wind"],["vele","wind"],["wind","wind"],
+  ["pluv","rain"],["rain","rain"],["solar","solar"],["panel","solar"],["gabinete","logger"],["logger","logger"],["brazo","arms"],["tripod","tripod"],["mast","mast"]];
+async function tryLoadGLB(owner, url, fallbackKey){
+  if(!THREE.GLTFLoader) return;
+  try{ const r = await fetch(url,{method:"HEAD",cache:"no-store"}); if(!r.ok || /html/.test(r.headers.get("content-type")||"")) return; }catch(e){ return; }
+  const loader = new THREE.GLTFLoader();
+  if(THREE.DRACOLoader){ const dl = new THREE.DRACOLoader(); dl.setDecoderPath("https://www.gstatic.com/draco/versioned/decoders/1.5.6/"); loader.setDRACOLoader(dl); }
+  loader.load(url, gltf=>{
+    Object.values(owner.parts).forEach(p=>p.group.parent.remove(p.group));
+    owner.parts = {}; if(owner.cups!==undefined){ owner.cups = owner.vane = null; }
+    const root = gltf.scene, center = new THREE.Box3().setFromObject(root).getCenter(V());
+    const meshes = []; root.traverse(o=>{ if(o.isMesh) meshes.push(o); });
+    meshes.forEach(o=>{
+      const n = (o.name+" "+(o.parent?o.parent.name:"")).toLowerCase(); let key = fallbackKey;
+      for(const [frag,k] of KEYMAP) if(n.includes(frag)){ key = k; break; }
+      if(!owner.parts[key]) addPart(owner, key, key==="solar"?solar:body, V(0,0,0), V());
+      o.castShadow = o.receiveShadow = true; o.material = o.material.clone();
+      owner.parts[key].group.attach(o);
+    });
+    Object.values(owner.parts).forEach(p=>{ const d = new THREE.Box3().setFromObject(p.group).getCenter(V()).sub(center); d.y *= .4; p.explode = owner===RIG ? V(0, p===owner.parts.tripod?-.35:0, 0) : (d.lengthSq()>1e-4 ? d.normalize().multiplyScalar(.55) : V()); });
+    setView(state.view); applyCity();
+    $("hint").textContent = `Modelo ${owner.id} cargado · toca un sensor`;
+  }, undefined, err=>console.warn("GLB no cargado:", url, err));
+}
+
+/* ================= LLUVIA ================= */
+const DROPS = reduceMotion ? 500 : 1600;
+const rainPos = new Float32Array(DROPS*6), rainSeed = new Float32Array(DROPS*3);
+const rainGeo = new THREE.BufferGeometry(); rainGeo.setAttribute("position", new THREE.BufferAttribute(rainPos,3));
+const rainMat = new THREE.LineBasicMaterial({color:0x2b67d1, transparent:true, opacity:.55});
+const rainLines = new THREE.LineSegments(rainGeo, rainMat); rainLines.visible = false; rainLines.frustumCulled = false; scene.add(rainLines);
+for(let i=0;i<DROPS;i++){ rainSeed[i*3]=(Math.random()-.5)*8; rainSeed[i*3+1]=Math.random()*6; rainSeed[i*3+2]=(Math.random()-.5)*8; }
+const dirOf = az => V(Math.sin(az*RAD),0,-Math.cos(az*RAD));
+const rainDrift = V();
+
+/* ================= DATOS ================= */
+const c = () => CITIES[state.city];
+const visible = () => state.view==="both" ? [ST.chaak, ST.smaa] : [ST[state.view]];
+function push(st,k,val){ (st.hist[k] ||= []).push(val); if(st.hist[k].length>40) st.hist[k].shift(); }
+function rainSeason(){ return c().rainMonths.includes(state.month); }
+function mockTick(){
+  const city = c(), h = state.hour, j = (a)=> (Math.random()-.5)*a, E = state.env;
+  const diurnal = Math.sin((h-9)/24*2*Math.PI);
+  const raining = state.rain || (rainSeason() && h>=15 && h<=20 && Math.random()<.5);
+  E.raining = raining;
+  E.temp = +(city.tBase + 6*diurnal + j(.4)).toFixed(1);
+  E.rh   = Math.round(Math.min(98, Math.max(18, 62 - 22*diurnal + (rainSeason()?15:0) + j(3))));
+  E.ws   = +Math.max(.2, 2.2 + 1.6*Math.max(0,diurnal) + j(.8)).toFixed(1);
+  E.wd   = Math.round(((raining?city.rainWindFrom:city.windFrom) + j(40) + 360)%360);
+  E.rain = raining ? +((city.drizzle?.8:4) + j(city.drizzle?.6:5) + (state.rain?(city.drizzle?1:4):0)).toFixed(1) : 0;
+  const s = sunPosition(cityDate(city,state.month,h), city.lat, city.lon);
+  const traffic = Math.exp(-((h-8)**2)/6) + .7*Math.exp(-((h-19)**2)/6);
+  const irr = s.alt>0 ? Math.max(0, Math.cos(s.alt*RAD)*Math.cos((s.az-state.frontAz)*RAD)) + .5*Math.sin(s.alt*RAD) : 0;
+  for(const st of Object.values(ST)){
+    if(st.source==="live") continue;
+    const v = st.v, small = st.key==="smaa";
+    Object.assign(v, {temp:+(E.temp+j(.3)).toFixed(1), rh:Math.round(E.rh+j(2))});
+    if(st.key==="chaak"){ v.ws = E.ws; v.wd = E.wd; v.rain = E.rain; v.rainDay = +((v.rainDay||0) + E.rain/240).toFixed(1); }
+    v.pm25 = Math.max(3, Math.round(14 + 22*traffic - (raining?8:0) + j(4)));
+    v.pm10 = Math.round(v.pm25*1.8 + j(4));
+    v.no2  = Math.max(4, Math.round(18 + 30*traffic + j(4)));
+    v.o3   = Math.max(5, Math.round(20 + 70*Math.max(0,Math.sin((h-10)/8*Math.PI)) - (raining?20:0) + j(5)));
+    v.tInt = +(v.temp + 3 + (small?16:22)*irr*(raining?.4:1) + j(.5)).toFixed(1);
+    v.solarW = Math.max(0, Math.round((small?10:40)*Math.sin(Math.max(0,s.alt)*RAD)*(raining?.25:1) + j(1)));
+    v.batt = Math.min(100, Math.max(40, Math.round((v.batt||86) + (v.solarW>(small?4:15)?.3:-.2))));
+    v.rssi = Math.round(-71 + j(6));
+  }
+}
+function mapApi(j){
+  // Ajusta aquí los nombres reales del JSON de cada estación.
+  const pick = (...ks)=>{ for(const k of ks){ const val = k.split(".").reduce((o,p)=>o?.[p], j); if(val!=null && !isNaN(val)) return +val; } };
+  const out = {
+    pm25: pick("pm25","pm2_5","PM2_5","data.pm25"), pm10: pick("pm10","PM10","data.pm10"),
+    o3: pick("o3","O3","data.o3"), no2: pick("no2","NO2","data.no2"),
+    temp: pick("temp","temperature","t","data.temp"), rh: pick("rh","humidity","hr","data.rh"),
+    ws: pick("ws","wind_speed","data.ws"), wd: pick("wd","wind_dir","data.wd"),
+    rain: pick("rain","precip","data.rain"), solarW: pick("solar","solar_w"), batt: pick("battery","batt"),
+    rssi: pick("rssi","signal"), tInt: pick("t_int","temp_internal","box_temp")
+  };
+  Object.keys(out).forEach(k=> out[k]===undefined && delete out[k]);
+  return Object.keys(out).length ? out : null;
+}
+async function pollStation(st){
+  let live = null;
+  try{
+    const ctl = new AbortController(); const t = setTimeout(()=>ctl.abort(), 5000);
+    const r = await fetch(API_BASE + st.id,{cache:"no-store", signal:ctl.signal}); clearTimeout(t);
+    if(r.ok && /json/.test(r.headers.get("content-type")||"")) live = mapApi(await r.json());
+  }catch(e){}
+  if(live){ st.source = "live"; Object.assign(st.v, live); } else st.source = "demo";
+}
+function record(){ for(const st of Object.values(ST)) ["pm25","o3","temp","ws","rain","solarW","tInt"].forEach(k=> st.v[k]!=null && push(st,k,st.v[k])); state.lastUpdate = new Date(); }
+
+/* ================= UI ================= */
+function fillCitySelect(){
+  const sel = $("city"); sel.innerHTML = ""; const groups = {};
+  for(const [k,ci] of Object.entries(CITIES)){
+    const gname = ci.custom ? "Otra ubicación" : ci.country;
+    if(!groups[gname]){ groups[gname] = document.createElement("optgroup"); groups[gname].label = gname; sel.append(groups[gname]); }
+    groups[gname].append(new Option(ci.name,k));
+  }
+  if(!groups["Otra ubicación"]){ const og = document.createElement("optgroup"); og.label = "Otra ubicación"; sel.append(og); groups["Otra ubicación"] = og; }
+  groups["Otra ubicación"].append(new Option("Coordenadas…","__new"));
+  sel.value = state.city;
+}
+MONTHS.forEach((m,i)=> $("month").add(new Option(m,i)));
+CARD.forEach((d,i)=>{ $("cWind").add(new Option(`${d} · ${i*22.5}°`, i*22.5)); $("cRainWind").add(new Option(`${d} · ${i*22.5}°`, i*22.5)); });
+try{
+  const saved = localStorage.getItem("smab.city"), v = localStorage.getItem("smab.view");
+  const custom = JSON.parse(localStorage.getItem("smab.custom")||"null"); if(custom) CITIES.custom = custom;
+  if(saved && CITIES[saved]) state.city = saved;
+  if(v && (ST[v]||v==="both")) state.view = v;
+}catch(e){}
+fillCitySelect(); $("month").value = state.month;
+const fmtHour = h => String(Math.floor(h)).padStart(2,"0")+":"+String(Math.round((h%1)*60)).padStart(2,"0");
+$("city").onchange = e=>{
+  const val = e.target.value;
+  if(val==="__new"){ $("customRow").hidden = false; $("cLat").focus(); e.target.value = state.city; return; }
+  state.city = val; $("customRow").hidden = !CITIES[val].custom;
+  try{localStorage.setItem("smab.city",state.city);}catch(_){}
+  Object.values(ST).forEach(st=>st.v.rainDay=0); applyCity(); refineCity(val);
+};
+$("month").onchange = e=>{ state.month = +e.target.value; applyCity(); };
+$("hour").oninput = e=>{ state.hour = +e.target.value; $("hourOut").textContent = fmtHour(state.hour); updateSun(); drawGround(); };
+$("hourOut").textContent = fmtHour(state.hour);
+
+/* Coordenadas personalizadas */
+function msg(t, err){ const m = $("cMsg"); m.textContent = t; m.classList.toggle("err", !!err); }
+if(CITIES.custom){ const cc = CITIES.custom; $("cName").value = cc.name; $("cLat").value = cc.lat; $("cLon").value = cc.lon; $("cWind").value = cc.windFrom; $("cRainWind").value = cc.rainWindFrom; }
+$("customRow").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const lat = parseFloat($("cLat").value), lon = parseFloat($("cLon").value);
+  if(!isFinite(lat) || lat < -60 || lat > 60){ msg("Escribe una latitud entre −60 y 60 (sur en negativo). Ejemplo: 19.4326", true); $("cLat").focus(); return; }
+  if(!isFinite(lon) || lon < -180 || lon > 180){ msg("Escribe una longitud entre −180 y 180 (oeste en negativo). Ejemplo: −99.1332", true); $("cLon").focus(); return; }
+  const name = $("cName").value.trim() || `Sitio ${lat.toFixed(3)}, ${lon.toFixed(3)}`;
+  $("cApply").disabled = true; msg("Calculando vientos y lluvias del sitio…");
+  const cl = await fetchClimate(lat, lon);
+  const south = lat < 0;
+  const base = {country:"Otra ubicación", name, lat, lon, custom:true, tz:Math.round(lon/15), tBase: 30 - Math.abs(lat)*.45,
+    windFrom:+$("cWind").value, rainWindFrom:+$("cRainWind").value, rainMonths: south ? [11,0,1,2] : [5,6,7,8], windSource:"capturados a mano"};
+  CITIES.custom = cl ? {...base, ...cl, tBase: cl.tBase ?? base.tBase, climateTried:true} : base;
+  try{ localStorage.setItem("smab.custom", JSON.stringify(CITIES.custom)); }catch(_){}
+  if(cl){ $("cWind").value = cl.windFrom; $("cRainWind").value = cl.rainWindFrom; }
+  msg(cl ? `Listo: viento dominante del ${cardinal(cl.windFrom)}, con lluvia del ${cardinal(cl.rainWindFrom)}, ${cl.annualMm} mm al año.` : "Sin conexión a los datos climáticos: se usan los vientos de los selectores. Ajústalos con lo que sepas del sitio.", false);
+  $("cApply").disabled = false;
+  state.city = "custom"; fillCitySelect(); try{localStorage.setItem("smab.city","custom");}catch(_){}
+  applyCity();
+});
+$("cGeo").onclick = ()=>{
+  if(!navigator.geolocation){ msg("Este navegador no comparte ubicación. Escribe las coordenadas.", true); return; }
+  msg("Buscando tu ubicación…");
+  navigator.geolocation.getCurrentPosition(p=>{ $("cLat").value = p.coords.latitude.toFixed(4); $("cLon").value = p.coords.longitude.toFixed(4); msg("Ubicación lista. Presiona Aplicar."); },
+    ()=> msg("No se pudo obtener la ubicación. Escribe las coordenadas (en Google Maps: clic derecho sobre el punto).", true), {timeout:8000});
+};
+
+CARD.forEach((d,i)=> $("refDir").add(new Option(d, i*22.5)));
+$("refDir").value = state.refAz;
+$("ref").onchange = e=>{ state.ref = e.target.value; placeLandmark(); resetView(); };
+$("refDir").onchange = e=>{ state.refAz = +e.target.value; placeLandmark(); };
+$("refDist").oninput = e=>{ state.refDist = +e.target.value; $("refDistOut").textContent = state.refDist+" m"; placeLandmark(); };
+function setPressed(btn,on){ btn.setAttribute("aria-pressed", on?"true":"false"); }
+document.querySelectorAll(".seg button").forEach(b=> b.onclick = ()=> setView(b.dataset.view));
+function setView(view){
+  state.view = view; try{localStorage.setItem("smab.view",view);}catch(_){}
+  document.querySelectorAll(".seg button").forEach(b=> setPressed(b, b.dataset.view===view));
+  for(const st of Object.values(ST)){ const on = view==="both" || view===st.key; Object.values(st.parts).forEach(p=> p.group.visible = on); }
+  if(state.selected && state.selected.st!=="rig" && !visible().includes(ST[state.selected.st])) select(null);
+  showSource(); refreshPanel();
+}
+function toggleExplode(){ state.explodeTarget = state.explodeTarget?0:1; setPressed($("bExplode"), !!state.explodeTarget); if(reduceMotion) state.explode = state.explodeTarget; }
+function toggleRain(){ state.rain = !state.rain; setPressed($("bRain"), state.rain); rainLines.visible = state.rain; mockTick(); record(); refreshPanel(); }
+function togglePlan(){ state.plan = !state.plan; setPressed($("bPlan"), state.plan); camera = state.plan?ortho:persp; controls.enabled = !state.plan; resize(); }
+$("bExplode").onclick = ()=>{ stopTour(); toggleExplode(); };
+$("bRain").onclick = ()=>{ stopTour(); toggleRain(); };
+$("bPlan").onclick = ()=>{ stopTour(); togglePlan(); };
+$("bReset").onclick = ()=>{ stopTour(); if(state.plan) togglePlan(); resetView(); };
+
+/* ================= EMPLAZAMIENTO ================= */
+let bodyTargetRot = 0;
+function applyCity(){
+  const city = c(), south = city.lat < 0;
+  // Cara principal (gabinetes, local −X) de espaldas al viento de lluvia → mira a sotavento
+  const frontAz = Math.round(((city.rainWindFrom + 180) % 360)), a = frontAz*RAD; state.frontAz = frontAz;
+  bodyTargetRot = Math.atan2(-Math.cos(a), -Math.sin(a));
+  const tilt = Math.max(10, Math.round(Math.abs(city.lat)));
+  solar.rotation.y = south ? Math.PI : 0;          // paneles miran al ecuador
+  Object.values(ST).forEach(st=>{ if(st.parts.solar?.pv) st.parts.solar.pv.rotation.x = tilt*RAD; });
+  const flip = sunFlipMonths(city).map(m=>m.slice(0,3).toLowerCase());
+  const months = city.rainMonths.map(m=>MONTHS[m].slice(0,3).toLowerCase()).join(", ");
+  const faces = faceExposure(city, frontAz), top = faces.reduce((x,y)=> y.pct>x.pct?y:x);
+  const up = cardinal(city.rainWindFrom), down = cardinal(frontAz);
+  const usual = south ? "norte" : "sur", other = south ? "sur" : "norte";
+  $("sitingCity").textContent = `${city.name} · ${latLabel(city.lat)}`;
+  const items = [
+    ["01", `<b>Trípode libre, no sobre muros.</b> A 1 m o más de cualquier muro y a una distancia de al menos 2 veces la altura de obstáculos cercanos. Un muro calienta los equipos y frena el aire que llega a las tomas.`],
+    ["02", `<b>Cara principal hacia el ${down} (${frontAz}°),</b> de espaldas al viento de lluvia del ${up}. Los gabinetes de CHAAK y SMAA miran al mismo lado; el aguacero pega en la parte trasera y en los brazos de sensores.`],
+    ["03", `<b>Electrónica a la sombra.</b> El lado con más horas de sol directo es ${top.label.toLowerCase()} (${cardinal(top.az)}, ${top.pct}% de las horas de sol). Visera o pantalla de ese lado, sin tapar las tomas. ${flip.length ? `El sol de mediodía pasa al ${other} del cenit en <b>${flip.join(", ")}</b>: la sombra cambia de lado a mitad de año.` : `Aquí el sol de mediodía siempre pasa al ${usual} del cenit.`}`],
+    ["04", city.drizzle
+      ? `<b>Lluvia escasa:</b> llovizna en ${months}, con viento del ${up}. Pluviómetro y tomas del lado ${up}, sin nada encima.`
+      : `<b>La lluvia sí debe mojar el equipo.</b> Pluviómetro y tomas del lado ${up}, sin nada encima. Temporada de lluvias: ${months}.`],
+    ["05", `<b>Mismo mástil, por niveles.</b> CHAAK arriba (anemómetro y pluviómetro en lo más alto, tomas a ${INLET.chaak} m) y SMAA abajo (tomas a ${INLET.smaa} m). Cada gabinete va debajo de sus tomas y de su escudo, porque el calor del gabinete sube.`],
+    ["06", `<b>Paneles solares al ${usual},</b> inclinación de ${tilt}° (10° mínimo para que se laven con la lluvia), sin dar sombra a los escudos de radiación.`],
+    ["07", `<b>Instalación.</b> Nivela el trípode y el pluviómetro con burbuja, lastra o ancla cada pata y conecta el mástil a tierra física. Orienta con el norte verdadero (en la brújula del celular activa el norte geográfico). Lejos de escapes de aire acondicionado, chimeneas y generadores.`],
+  ];
+  $("sitingList").innerHTML = items.map(([n,t])=>`<li><i>${n}</i><span>${t}</span></li>`).join("");
+  $("faces").innerHTML = `<h4>Sol directo por cara del equipo · año completo</h4>` + faces.map(f=>
+    `<div class="face"><span>${f.label} · ${cardinal(f.az)}</span><div class="track"><div class="fill" style="width:${f.pct}%"></div></div><b>${f.pct}%</b></div>`).join("");
+  $("windFlag").textContent = `Vientos y lluvias: ${city.windSource || "valores provisionales; se calculan solos con datos horarios cuando el sitio está publicado"}.`;
+  rainDrift.copy(dirOf(city.rainWindFrom + 180));
+  refreshRefCheck(); if(typeof field!=="undefined" && field.open){ $("fDecl").value = declOf(); renderField(); }
+  updateSun(); drawGround(); mockTick(); record(); refreshPanel();
+}
+
+function updateSun(){
+  const city = c(), s = sunPosition(cityDate(city,state.month,state.hour), city.lat, city.lon);
+  const dir = V(Math.sin(s.az*RAD)*Math.cos(s.alt*RAD), Math.sin(s.alt*RAD), -Math.cos(s.az*RAD)*Math.cos(s.alt*RAD));
+  const up = s.alt > 0;
+  sun.position.copy(dir.clone().multiplyScalar(50)); sun.intensity = up ? .4 + 1.2*Math.min(1, s.alt/40) : 0;
+  hemi.intensity = up ? .55 : .3;
+  sunMarker.visible = up; sunMarker.position.copy(dir.clone().multiplyScalar(6.2));
+  state.sun = s;
+}
+
+const PRINT_PAL = {ink:"#151a19", muted:"#56625f", line:"#c9d2d0", accent:"#0a7a6b", rain:"#2b67d1", sun:"#d48a0f", surf:"#ffffff", front:"#c99700", arm:"#8e3a84"};
+function themePal(){ return {ink:css("--ink"), muted:css("--muted"), line:css("--line"), accent:css("--accent"), rain:css("--rain"), sun:css("--sun"), surf:css("--surface"), front:css("--front"), arm:css("--accent2")}; }
+/* Vista en planta: se dibuja en el suelo 3D y, en versión de impresión, en la ficha de instalación */
+function drawPlan(cv, pal, print){
+  const g = cv.getContext("2d"), W = 1024, C = 512, R = 470, S = 1024/9, city = c();
+  g.clearRect(0,0,W,W);
+  if(print){ g.fillStyle = pal.surf; g.fillRect(0,0,W,W); }
+  const P = (az,r)=>[C + r*Math.sin(az*RAD), C - r*Math.cos(az*RAD)];
+  g.fillStyle = pal.surf; g.globalAlpha = print ? 1 : .55; g.beginPath(); g.arc(C,C,R,0,7); g.fill(); g.globalAlpha = 1;
+  g.strokeStyle = pal.line; g.lineWidth = 2; [1,.75,.5,.25].forEach(f=>{ g.beginPath(); g.arc(C,C,R*f,0,7); g.stroke(); });
+  for(let a=0;a<360;a+=10){ const [x1,y1]=P(a,R), [x2,y2]=P(a,R-(a%90?14:30)); g.strokeStyle = a%90?pal.line:pal.ink; g.lineWidth = a%90?2:4; g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke(); }
+  g.fillStyle = pal.ink; g.font = "700 46px 'Barlow Condensed', sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+  [["N",0],["E",90],["S",180],["O",270]].forEach(([t,a])=>{ const [x,y]=P(a,R-62); g.fillText(t,x,y); });
+  g.strokeStyle = pal.sun; g.lineWidth = 6; g.setLineDash([2,12]); g.lineCap = "round"; g.beginPath(); let first = true;
+  for(let h=4; h<=21; h+=.25){ const s = sunPosition(cityDate(city,state.month,h),city.lat,city.lon); if(s.alt<=0) continue; const [x,y]=P(s.az, R*(90-s.alt)/90); first? g.moveTo(x,y):g.lineTo(x,y); first=false; }
+  g.stroke(); g.setLineDash([]);
+  if(!print && state.sun && state.sun.alt>0){ const [x,y]=P(state.sun.az, R*(90-state.sun.alt)/90); g.fillStyle = pal.sun; g.beginPath(); g.arc(x,y,16,0,7); g.fill(); }
+  const arrow = (from,color,label,off)=>{
+    const [x1,y1]=P(from,R*.97), [x2,y2]=P(from,R*.42);
+    g.strokeStyle = color; g.fillStyle = color; g.lineWidth = 10; g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke();
+    const ang = Math.atan2(y2-y1,x2-x1); g.beginPath(); g.moveTo(x2+Math.cos(ang)*14,y2+Math.sin(ang)*14);
+    g.lineTo(x2-Math.cos(ang-.5)*40,y2-Math.sin(ang-.5)*40); g.lineTo(x2-Math.cos(ang+.5)*40,y2-Math.sin(ang+.5)*40); g.closePath(); g.fill();
+    const [lx,ly]=P(from+off,R*.72); g.font = "600 30px 'Barlow', sans-serif"; g.fillText(label,lx,ly);
+  };
+  const close = Math.abs(((city.windFrom-city.rainWindFrom+540)%360)-180) < 25;
+  arrow(city.windFrom, pal.accent, `Viento ${cardinal(city.windFrom)}`, 14);
+  arrow(city.rainWindFrom + (close?8:0), pal.rain, `Lluvia ${cardinal(city.rainWindFrom)}`, -14);
+  if(print){
+    // huella del trípode y brazo de sensores, girados como en sitio
+    const r = bodyTargetRot, w = (x,z)=>[C + (x*Math.cos(r) + z*Math.sin(r))*S, C + (-x*Math.sin(r) + z*Math.cos(r))*S];
+    g.strokeStyle = pal.muted; g.lineWidth = 6;
+    for(let i=0;i<3;i++){ const a = i*2*Math.PI/3 + Math.PI/6, [x,y] = w(Math.cos(a)*.95, Math.sin(a)*.95);
+      g.beginPath(); g.moveTo(C,C); g.lineTo(x,y); g.stroke(); g.fillStyle = pal.muted; g.beginPath(); g.arc(x,y,9,0,7); g.fill(); }
+    const [ax,ay] = w(.62,0); g.strokeStyle = pal.arm; g.lineWidth = 9; g.beginPath(); g.moveTo(C,C); g.lineTo(ax,ay); g.stroke();
+    const [tx,ty] = w(1.05,0); g.fillStyle = pal.arm; g.font = "600 24px 'Barlow', sans-serif"; g.fillText("Sensores", tx, ty);
+    g.fillStyle = pal.ink; g.beginPath(); g.arc(C,C,10,0,7); g.fill();
+    // escala
+    g.strokeStyle = pal.ink; g.lineWidth = 4; g.beginPath(); g.moveTo(40,990); g.lineTo(40+S,990); g.moveTo(40,980); g.lineTo(40,1000); g.moveTo(40+S,980); g.lineTo(40+S,1000); g.stroke();
+    g.fillStyle = pal.ink; g.font = "500 24px 'JetBrains Mono', monospace"; g.textAlign = "left"; g.fillText("1 m", 40+S+12, 991); g.textAlign = "center";
+  }
+  { const fr = pal.front; const [x2,y2] = P(state.frontAz, R*.3); g.strokeStyle = fr; g.fillStyle = fr; g.lineWidth = 12; g.beginPath(); g.moveTo(C,C); g.lineTo(x2,y2); g.stroke();
+    const ang = Math.atan2(y2-C,x2-C); g.beginPath(); g.moveTo(x2+Math.cos(ang)*16,y2+Math.sin(ang)*16);
+    g.lineTo(x2-Math.cos(ang-.5)*30,y2-Math.sin(ang-.5)*30); g.lineTo(x2-Math.cos(ang+.5)*30,y2-Math.sin(ang+.5)*30); g.closePath(); g.fill();
+    const [lx,ly] = P(state.frontAz, R*.38); g.fillStyle = pal.ink; g.font = "700 28px 'Barlow', sans-serif"; g.fillText(`Cara principal ${state.frontAz}°`, lx, ly + (Math.cos(state.frontAz*RAD)>0?-14:22)); }
+  g.fillStyle = pal.muted; g.font = "500 26px 'JetBrains Mono', monospace";
+  g.fillText(print ? `Trayectoria solar · ${MONTHS[state.month]}` : `${MONTHS[state.month]} · ${fmtHour(state.hour)}`, C, C+R+0);
+}
+function drawGround(){
+  drawPlan(groundCanvas, themePal(), false);
+  groundTex.needsUpdate = true;
+}
+
+/* ================= PANEL ================= */
+const BANDS = {
+  pm25:[[15,"Buena","ok"],[33,"Aceptable","warn"],[1e9,"Mala","bad"]],
+  o3:[[51,"Buena","ok"],[95,"Aceptable","warn"],[1e9,"Mala","bad"]],
+};
+const f = (x,d=0)=> x==null?"—":(+x).toFixed(d);
+const ROWS = {
+  pm:    [["PM2.5",v=>f(v.pm25),"µg/m³"],["PM10",v=>f(v.pm10),"µg/m³"],["Altura de toma",(v,st)=>INLET[st.key],"m"]],
+  gas:   [["Ozono (O₃)",v=>f(v.o3),"ppb"],["NO₂",v=>f(v.no2),"ppb"]],
+  thr:   [["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh),"%"]],
+  wind:  [["Velocidad",v=>f(v.ws,1),"m/s"],["Dirección",v=>v.wd==null?"—":`${cardinal(v.wd)} ${v.wd}`,"°"]],
+  rain:  [["Intensidad",v=>f(v.rain,1),"mm/h"],["Acumulado hoy",v=>f(v.rainDay,1),"mm"]],
+  solar: [["Potencia",v=>f(v.solarW),"W"],["Batería",v=>f(v.batt),"%"]],
+  logger:[["Temperatura interna",v=>f(v.tInt,1),"°C"],["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 4G",v=>f(v.rssi),"dBm"]],
+  arms:  [["Brazo de sensores hacia",()=>cardinal(c().rainWindFrom),""]],
+  tripod:[["Tomas CHAAK",()=>INLET.chaak,"m"],["Tomas SMAA",()=>INLET.smaa,"m"],["Separación a muros",()=>"≥ 1","m"]],
+  mast:  [["Altura total",()=>"3.0","m"],["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Brazos de sensores",()=>cardinal(c().rainWindFrom),""]],
+};
+function statusFor(key, st){
+  const v = st.v || {}, pre = state.view==="both" && st.key!=="rig" ? `${st.id} · ` : "";
+  const band = (val,b)=> b.find(x=>val<=x[0]);
+  if(key==="pm" && v.pm25!=null){ const s = band(v.pm25,BANDS.pm25); return `<span class="pill ${s[2]}">${pre}Aire: ${s[1]}</span>`; }
+  if(key==="gas" && v.o3!=null){ const s = band(v.o3,BANDS.o3); return `<span class="pill ${s[2]}">${pre}Ozono: ${s[1]}</span>`; }
+  if(key==="logger" && v.tInt!=null) return v.tInt<=40 ? `<span class="pill ok">${pre}Electrónica en rango</span>` : v.tInt<=50 ? `<span class="pill warn">${pre}Calentamiento · agregar sombra</span>` : `<span class="pill bad">${pre}Sobrecalentamiento</span>`;
+  if(key==="rain") return v.rain>0 ? `<span class="pill info">Lloviendo · viento del ${cardinal(v.wd)}</span>` : `<span class="pill ok">Sin lluvia</span>`;
+  if(key==="solar") return v.solarW>2 ? `<span class="pill ok">${pre}Cargando</span>` : `<span class="pill warn">${pre}Sin generación</span>`;
+  return "";
+}
+function refreshPanel(){
+  const sel = state.selected, panel = $("panel");
+  if(!sel){ panel.hidden = true; $("ll").setAttribute("visibility","hidden"); $("lc").setAttribute("visibility","hidden"); return; }
+  const key = sel.part, info = key==="arms" ? {title:"Brazos de sensores", sub:"Del lado expuesto a la lluvia", metric:null} : (INFO[key] || {title:key, sub:""});
+  const rig = sel.st==="rig";
+  const cols = rig ? [RIG] : (key==="arms" ? [ST[sel.st]] : visible().filter(st=> st.parts[key]));
+  panel.hidden = false;
+  $("pTag").textContent = rig ? "Montaje compartido" : cols.length>1 ? "CHAAK vs SMAA" : (state.view==="both" ? `Solo ${cols[0].id}` : cols[0].id);
+  $("pTitle").textContent = info.title; $("pSub").textContent = info.sub;
+  const n = cols.length;
+  let html = n>1 ? `<div class="row head" style="--n:${n}"><span></span>${cols.map((st,i)=>`<b class="c${i}">${st.id}</b>`).join("")}</div>` : "";
+  html += (ROWS[key]||[]).map(([l,fn,u])=>`<div class="row" style="--n:${n}"><span>${l}</span>${cols.map(st=>`<b>${fn(st.v||{},st)}<small>${u}</small></b>`).join("")}</div>`).join("");
+  $("pRows").innerHTML = html;
+  $("pStatus").innerHTML = cols.map(st=>statusFor(key,st)).filter((x,i,a)=>x && a.indexOf(x)===i).join("");
+  const series = info.metric ? cols.map(st=>(st.hist||{})[info.metric]||[]).filter(h=>h.length>1) : [];
+  if(series.length){
+    const all = series.flat(), mn = Math.min(...all), mx = Math.max(...all), span = (mx-mn)||1;
+    $("spark").innerHTML = series.map((h,i)=>`<polyline style="stroke:var(${STATION_DEFS[cols[i].key].color})" points="${h.map((y,k)=>`${(k/(h.length-1)*240).toFixed(1)},${(40-(y-mn)/span*34).toFixed(1)}`).join(" ")}"></polyline>`).join("");
+    $("spark").style.display = ""; $("pMetric").textContent = `últimas ${series[0].length} lecturas`;
+  } else { $("spark").style.display = "none"; $("pMetric").textContent = ""; }
+  $("pTime").textContent = rig ? "" : state.lastUpdate ? state.lastUpdate.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit",second:"2-digit"}) : "";
+}
+$("pClose").onclick = ()=> select(null);
+
+/* ================= SELECCIÓN ================= */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+const shown = o => { for(; o; o = o.parent) if(!o.visible) return false; return true; };
+function partAt(ev){
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set(((ev.clientX-r.left)/r.width)*2-1, -((ev.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(ndc, camera);
+  const partOf = o => { for(; o; o = o.parent) if(o.userData.part) return o; return null; };
+  const hit = ray.intersectObjects([body, solar], true).find(h=> shown(h.object) && partOf(h.object));
+  if(!hit) return null;
+  let o = hit.object; while(o && !o.userData.part) o = o.parent;
+  return o ? {st:o.userData.station, part:o.userData.part} : null;
+}
+const ownerOf = k => k==="rig" ? RIG : ST[k];
+const same = (a,b)=> a && b && a.st===b.st && a.part===b.part;
+function tint(sel, color){ const p = sel && ownerOf(sel.st)?.parts[sel.part]; if(p) p.group.traverse(o=>{ if(o.isMesh && o.material.emissive) o.material.emissive.setHex(color); }); }
+function select(sel){ tint(state.selected,0); state.selected = sel; tint(sel, 0x0a5c51); refreshPanel(); $("hint").hidden = !!sel; }
+let down = null;
+renderer.domElement.addEventListener("pointerdown", e=>{ down = [e.clientX,e.clientY]; stopTour(); });
+renderer.domElement.addEventListener("pointerup", e=>{ if(!down) return; const moved = Math.hypot(e.clientX-down[0], e.clientY-down[1]); down = null; if(moved<6) select(partAt(e)); });
+renderer.domElement.addEventListener("pointermove", e=>{
+  if(e.pointerType!=="mouse") return;
+  const k = partAt(e); if(same(k,state.hovered) || (!k && !state.hovered)) return;
+  if(state.hovered && !same(state.hovered,state.selected)) tint(state.hovered,0);
+  state.hovered = k; if(k && !same(k,state.selected)) tint(k,0x1d3330);
+  renderer.domElement.style.cursor = k?"pointer":"grab";
+});
+
+function placePanel(){
+  const sel = state.selected; const p = sel && ownerOf(sel.st)?.parts[sel.part]; if(!p) return;
+  const W = stage.clientWidth, H = stage.clientHeight; if(W < 700) return;
+  const q = new THREE.Box3().setFromObject(p.group).getCenter(V()).project(camera);
+  const x = (q.x+1)/2*W, y = (1-q.y)/2*H, panel = $("panel");
+  const pw = panel.offsetWidth, ph = panel.offsetHeight;
+  let px = x + 70, py = y - ph/2;
+  if(px + pw > W - 14) px = x - 70 - pw;
+  py = Math.max(56, Math.min(H - ph - 14, py)); px = Math.max(14, px);
+  panel.style.left = px+"px"; panel.style.top = py+"px";
+  const ax = px > x ? px : px + pw, ay = Math.min(Math.max(y, py+16), py+ph-16);
+  const ll = $("ll"), lc = $("lc");
+  ll.setAttribute("x1",x); ll.setAttribute("y1",y); ll.setAttribute("x2",ax); ll.setAttribute("y2",ay); ll.setAttribute("visibility","visible");
+  lc.setAttribute("cx",x); lc.setAttribute("cy",y); lc.setAttribute("visibility","visible");
+}
+
+
+/* ================= DATOS PARA SITIO ================= */
+const norm360 = a => ((a%360)+360)%360;
+const norm180 = a => ((a+540)%360)-180;
+const declOf = () => (c().declUser ?? c().decl ?? 0);
+const magOf = az => Math.round(norm360(az - declOf()));      // rumbo magnético = verdadero − declinación (Este +)
+function siteFacts(){
+  const city = c(), south = city.lat < 0, tilt = Math.max(10, Math.round(Math.abs(city.lat)));
+  const faces = faceExposure(city, state.frontAz), top = faces.reduce((x,y)=> y.pct>x.pct?y:x);
+  const flip = sunFlipMonths(city).map(m=>m.slice(0,3).toLowerCase());
+  const stations = state.view==="both" ? ["CHAAK","SMAA"] : [ST[state.view].id];
+  return {city, south, tilt, top, flip, stations,
+    usual: south ? "norte" : "sur",
+    months: city.rainMonths.map(m=>MONTHS[m].slice(0,3).toLowerCase()).join(", "),
+    ref: state.ref!=="none" ? `Caseta de monitoreo al ${cardinal(state.refAz)}, a ${state.refDist} m` : "Sin referencia capturada"};
+}
+
+/* ================= MODO CAMPO (brújula del celular) ================= */
+const field = {open:false, listening:false, heading:null, sx:0, sy:0, aligned:false, evName:null};
+const TOL = 8;
+function buildDial(){
+  let s = `<circle r="100" class="ring"></circle><g id="dialRose">`;
+  for(let a=0;a<360;a+=10){ const big = a%90===0, r1 = big?82:90, x = Math.sin(a*RAD), y = -Math.cos(a*RAD);
+    s += `<line x1="${(x*r1).toFixed(1)}" y1="${(y*r1).toFixed(1)}" x2="${(x*98).toFixed(1)}" y2="${(y*98).toFixed(1)}" class="${big?"tk big":"tk"}"></line>`; }
+  [["N",0],["E",90],["S",180],["O",270]].forEach(([t,a])=>{ s += `<text x="${(Math.sin(a*RAD)*68).toFixed(1)}" y="${(-Math.cos(a*RAD)*68).toFixed(1)}" class="${t==="N"?"nn":""}">${t}</text>`; });
+  s += `</g><g id="dialTarget"><path d="M0,-96 L11,-70 L4,-70 L4,-14 L-4,-14 L-4,-70 L-11,-70 Z" class="tgt"></path></g>`;
+  s += `<path d="M0,-108 L-9,-122 L9,-122 Z" class="me"></path><circle r="6" class="hub"></circle>`;
+  $("dial").innerHTML = s;
+}
+function onOrient(e){
+  let h = null;
+  if(typeof e.webkitCompassHeading === "number") h = e.webkitCompassHeading;
+  else if(e.absolute && typeof e.alpha === "number") h = 360 - e.alpha;
+  if(h == null) return;
+  const so = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
+  h = norm360(h + so + declOf());                              // magnético → verdadero
+  field.sx = field.sx*.8 + Math.cos(h*RAD)*.2; field.sy = field.sy*.8 + Math.sin(h*RAD)*.2;
+  field.heading = norm360(Math.atan2(field.sy, field.sx)/RAD);
+  renderField();
+}
+async function startCompass(){
+  if(field.listening) return;
+  try{
+    if(typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function"){
+      const r = await DeviceOrientationEvent.requestPermission(); if(r !== "granted") throw new Error("denied");
+    }
+  }catch(err){ fieldMsg("El celular no dio permiso para usar la brújula. Revisa los permisos de movimiento del navegador e inténtalo de nuevo.", true); return; }
+  field.evName = ("ondeviceorientationabsolute" in window) ? "deviceorientationabsolute" : "deviceorientation";
+  window.addEventListener(field.evName, onOrient, true); field.listening = true;
+  $("fStart").hidden = true; fieldMsg("Buscando la brújula…");
+  setTimeout(()=>{ if(field.listening && field.heading == null) fieldMsg(`Este dispositivo no reporta brújula. Con una brújula de mano, apunta la cara principal a ${magOf(state.frontAz)}° magnético.`, true); }, 3500);
+}
+function stopCompass(){ if(field.listening){ window.removeEventListener(field.evName, onOrient, true); field.listening = false; } field.heading = null; $("fStart").hidden = false; }
+function fieldMsg(t, err){ const m = $("fMsg"); m.textContent = t; m.classList.toggle("err", !!err); }
+function renderField(){
+  if(!field.open) return;
+  const target = state.frontAz, h = field.heading;
+  $("fInfo").innerHTML = `Cara principal: <b>${target}°</b> verdadero (${cardinal(target)}) · <b>${magOf(target)}°</b> magnético`;
+  $("dialRose").setAttribute("transform", `rotate(${-(h ?? 0)})`);
+  $("dialTarget").setAttribute("transform", `rotate(${target - (h ?? 0)})`);
+  if(h == null){ $("fDelta").textContent = "Activa la brújula"; $("field").dataset.ok = "0"; return; }
+  const d = norm180(target - h), ok = Math.abs(d) <= TOL;
+  $("fDelta").textContent = ok ? "Alineado" : `Gira ${Math.round(Math.abs(d))}° a la ${d>0?"derecha":"izquierda"}`;
+  $("field").dataset.ok = ok ? "1" : "0";
+  if(ok && !field.aligned && navigator.vibrate) try{ navigator.vibrate(80); }catch(_){}
+  field.aligned = ok;
+  fieldMsg(`Celular apuntando a ${Math.round(h)}° verdadero.`);
+}
+function openField(on){
+  field.open = on; $("field").hidden = !on; setPressed($("bField"), on);
+  if(on){ select(null); $("fDecl").value = declOf(); renderField(); fieldMsg("Necesita el sitio publicado en https y un celular con brújula."); }
+  else stopCompass();
+}
+$("fDecl").addEventListener("input", e=>{ const v = parseFloat(e.target.value); if(isFinite(v)){ c().declUser = v; renderField(); } });
+
+/* ================= FICHA DE INSTALACIÓN ================= */
+const planCanvas = document.createElement("canvas"); planCanvas.width = planCanvas.height = 1024;
+const esc = s => String(s).replace(/[&<>"]/g, ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+function sheetData(){
+  const F = siteFacts(), city = F.city, both = F.stations.length>1;
+  const rows = [
+    ["Cara principal", `${state.frontAz}° verdadero (${cardinal(state.frontAz)}) · ${magOf(state.frontAz)}° magnético`],
+    ["Brazos de sensores", `Hacia el ${cardinal(city.rainWindFrom)} (${Math.round(city.rainWindFrom)}°), del lado de la lluvia`],
+    ["Viento dominante", `Del ${cardinal(city.windFrom)} (${Math.round(city.windFrom)}°)`],
+    ["Viento con lluvia", `Del ${cardinal(city.rainWindFrom)} · temporada: ${F.months}`],
+    ["Lado con más sol", `${F.top.label} (${cardinal(F.top.az)}), ${F.top.pct}% de las horas de sol: visera o pantalla`],
+    ["Altura de tomas", F.stations.map(s=>`${s} ${INLET[s.toLowerCase()]} m`).join(" · ")],
+    ["Paneles solares", `Al ${F.usual}, inclinación ${F.tilt}°`],
+    ["Sol de mediodía", F.flip.length ? `Cambia de lado en ${F.flip.join(", ")}` : `Siempre al ${F.usual} del cenit`],
+    ["Referencia en sitio", F.ref],
+    ["Declinación magnética", `${declOf() >= 0 ? "+" : ""}${declOf()}° (aprox., verificar)`],
+  ];
+  const checks = [
+    "Trípode a 1 m o más de muros y a 2 veces la altura de los obstáculos cercanos.",
+    "Trípode nivelado con burbuja; patas ancladas o lastradas.",
+    `Cara principal a ${state.frontAz}° verdadero (${magOf(state.frontAz)}° magnético), verificada con el modo campo.`,
+    both ? "CHAAK arriba y SMAA abajo; cada gabinete debajo de sus tomas." : "Gabinete debajo de sus tomas y del escudo de radiación.",
+    "Pluviómetro nivelado y sin nada encima.",
+    "Tomas de aire libres en 270°, lejos de escapes de aire acondicionado, chimeneas y generadores.",
+    `Visera o pantalla hacia el ${cardinal(F.top.az)}: ${F.top.label.toLowerCase()} del equipo.`,
+    `Paneles solares al ${F.usual} con ${F.tilt}°, sin dar sombra a los escudos.`,
+    "Mástil conectado a tierra física.",
+    "Señal 4G verificada y datos visibles en el gemelo.",
+    "Fotos hacia los cuatro puntos cardinales y de cada gabinete.",
+  ];
+  const date = new Date().toLocaleDateString("es-MX",{day:"numeric",month:"long",year:"numeric"});
+  const sub = `${city.lat.toFixed(4)}, ${city.lon.toFixed(4)} · ${F.stations.join(" + ")} · ${date}`;
+  return {F, rows, checks, date, sub, title: city.name, source: city.windSource || "provisionales (se calculan con datos horarios en el sitio publicado)"};
+}
+function openSheet(){
+  stopTour(); select(null);
+  drawPlan(planCanvas, PRINT_PAL, true);
+  const D = sheetData();
+  $("shBody").innerHTML = `
+    <header class="ph"><div class="pk">Smability · Ficha de instalación</div><h2>${esc(D.title)}</h2><div class="pm">${esc(D.sub)}</div></header>
+    <div class="pgrid"><img src="${planCanvas.toDataURL("image/png")}" alt="Vista en planta del sitio con la cara principal a ${state.frontAz} grados"><dl>${D.rows.map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl></div>
+    <h4>Lista de verificación</h4><ul class="chk">${D.checks.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
+    <div class="sign"><div>Instalador</div><div>Fecha y hora</div><div>Firma</div></div>
+    <p class="pfoot">Vientos ${esc(D.source)}. Generado con el gemelo digital de Smability.</p>`;
+  $("shNote").hidden = !/claude/i.test(location.hostname);
+  $("sheet").hidden = false; $("shClose").focus();
+}
+function closeSheet(){ $("sheet").hidden = true; $("bSheet").focus(); }
+const slug = () => c().name.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+function saveBlob(blob, name){ const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
+async function loadJsPDF(){
+  if(window.jspdf) return window.jspdf.jsPDF;
+  await new Promise((res,rej)=>{ const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"; s.onload = res; s.onerror = rej; document.head.append(s); });
+  return window.jspdf.jsPDF;
+}
+async function downloadPdf(){
+  const btn = $("shPdf"); btn.disabled = true; btn.textContent = "Generando…";
+  try{
+    const jsPDF = await loadJsPDF(), D = sheetData(), doc = new jsPDF({unit:"mm", format:"letter"});
+    const W = 215.9, m = 14, ink = [21,26,25], mut = [86,98,95];
+    doc.setFillColor(17,32,29); doc.rect(0,0,W,15,"F");
+    doc.setTextColor(255); doc.setFont("helvetica","bold"); doc.setFontSize(11); doc.text("SMABILITY  ·  FICHA DE INSTALACIÓN", m, 9.8);
+    doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.text(D.date, W-m, 9.8, {align:"right"});
+    doc.setTextColor(...ink); doc.setFont("helvetica","bold"); doc.setFontSize(17); doc.text(D.title, m, 25);
+    doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(...mut); doc.text(D.sub, m, 30.5);
+    doc.addImage(planCanvas.toDataURL("image/png"), "PNG", m, 35, 96, 96);
+    let x = m+102, y = 37, cw = W - m - x;
+    for(const [k,v] of D.rows){
+      doc.setFontSize(7); doc.setTextColor(...mut); doc.text(k.toUpperCase(), x, y); y += 3.8;
+      doc.setFontSize(9); doc.setTextColor(...ink); const L = doc.splitTextToSize(v, cw); doc.text(L, x, y); y += L.length*3.9 + 2.4;
+    }
+    y = Math.max(y, 137) + 4;
+    doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(...mut); doc.text("LISTA DE VERIFICACIÓN", m, y); y += 6;
+    doc.setFont("helvetica","normal"); doc.setTextColor(...ink); doc.setDrawColor(...ink); doc.setLineWidth(.3);
+    for(const t of D.checks){ const L = doc.splitTextToSize(t, W-2*m-8); doc.rect(m, y-3.1, 3.5, 3.5); doc.setFontSize(9.5); doc.text(L, m+7, y); y += L.length*4.3 + 1.9; }
+    y = Math.min(y + 14, 258); const sw = (W-2*m-12)/3;
+    ["Instalador","Fecha y hora","Firma"].forEach((t,i)=>{ const sx = m + i*(sw+6); doc.line(sx, y, sx+sw, y); doc.setFontSize(8); doc.setTextColor(...mut); doc.text(t, sx, y+4); });
+    doc.setFontSize(7.5); doc.text(`Vientos ${D.source}. Generado con el gemelo digital de Smability.`, m, 272);
+    doc.save(`ficha-instalacion-${slug()}.pdf`);
+  }catch(err){ alertSheet("No se pudo generar el PDF. Revisa la conexión e inténtalo de nuevo."); }
+  btn.disabled = false; btn.textContent = "Descargar PDF";
+}
+function alertSheet(t){ const n = $("shNote"); n.textContent = t; n.hidden = false; }
+function downloadPng(){ planCanvas.toBlob(b=> b && saveBlob(b, `plano-${slug()}.png`), "image/png"); }
+
+/* ================= TOUR ================= */
+const tour = {on:false, token:0, saved:null};
+const sleep = ms => new Promise(r=>setTimeout(r, ms));
+function caption(t){ const el = $("caption"); el.hidden = !t; if(t){ el.textContent = t; el.classList.remove("in"); void el.offsetWidth; el.classList.add("in"); } }
+async function runTour(){
+  const my = ++tour.token; tour.on = true;
+  const alive = () => tour.on && tour.token === my;
+  const hold = async (text, ms) => { caption(text); await sleep(ms); return alive(); };
+  tour.saved = {view:state.view, hour:state.hour, siting:$("siting").open};
+  $("bTour").setAttribute("aria-pressed","true"); $("bTour").textContent = "Detener tour";
+  if(field.open) openField(false);
+  if(state.plan) togglePlan(); if(state.rain) toggleRain(); if(state.explodeTarget) toggleExplode();
+  select(null); $("hint").hidden = true; $("siting").open = false;
+  setView("both"); resetView();
+  controls.autoRotate = !reduceMotion; controls.autoRotateSpeed = 2.4;
+  const city = c();
+  if(!await hold("CHAAK y SMAA · un solo montaje", 4200)) return;
+  toggleExplode(); controls.autoRotateSpeed = 1.2;
+  if(!await hold("Cada pieza, a la vista", 3800)) return;
+  select({st:"chaak", part:"pm"}); controls.autoRotateSpeed = .5;
+  if(!await hold("Partículas PM2.5 y PM10 en tiempo real", 4000)) return;
+  select({st:"chaak", part:"gas"});
+  if(!await hold("Ozono y dióxido de nitrógeno", 3500)) return;
+  select({st:"chaak", part:"wind"});
+  if(!await hold("Viento: velocidad y dirección", 3500)) return;
+  select(null); toggleExplode(); controls.autoRotateSpeed = 1.2;
+  await sleep(900); if(!alive()) return;
+  toggleRain();
+  if(!await hold(`Lluvia con el viento de temporada en ${city.name}`, 5000)) return;
+  toggleRain();
+  caption("Sol y sombra a lo largo del día");
+  for(let h=7; h<=19; h+=.25){ if(!alive()) return; setHour(h); await sleep(70); }
+  await sleep(600); if(!alive()) return;
+  controls.autoRotate = false; togglePlan();
+  if(!await hold(`Vista en planta: cara principal a ${state.frontAz}°`, 4200)) return;
+  stopTour();
+}
+function stopTour(){
+  if(!tour.on) return;
+  tour.on = false; tour.token++;
+  controls.autoRotate = false; caption("");
+  $("bTour").setAttribute("aria-pressed","false"); $("bTour").textContent = "Tour";
+  if(tour.saved){ if(state.plan) togglePlan(); if(state.rain) toggleRain(); if(state.explodeTarget) toggleExplode();
+    setHour(tour.saved.hour); setView(tour.saved.view); $("siting").open = tour.saved.siting; tour.saved = null; }
+  $("hint").hidden = !!state.selected;
+}
+function setHour(h){ state.hour = h; $("hour").value = h; $("hourOut").textContent = fmtHour(h); updateSun(); drawGround(); }
+
+$("bTour").onclick = ()=>{ tour.on ? stopTour() : runTour(); };
+$("bField").onclick = ()=>{ stopTour(); openField(!field.open); };
+$("fClose").onclick = ()=> openField(false);
+$("fStart").onclick = startCompass;
+$("bSheet").onclick = openSheet;
+$("shClose").onclick = closeSheet;
+$("shPdf").onclick = downloadPdf;
+$("shPng").onclick = downloadPng;
+$("sheet").addEventListener("click", e=>{ if(e.target.id==="sheet") closeSheet(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ if(!$("sheet").hidden) closeSheet(); else if(tour.on) stopTour(); else if(field.open) openField(false); } });
+buildDial();
+
+/* ================= LOOP ================= */
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w,h,false);
+  persp.aspect = w/h; persp.updateProjectionMatrix();
+  const s = Math.max(5.2, sceneExtent()), a = w/h; if(a>=1){ ortho.left=-s*a; ortho.right=s*a; ortho.top=s; ortho.bottom=-s; } else { ortho.left=-s; ortho.right=s; ortho.top=s/a; ortho.bottom=-s/a; }
+  ortho.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+const clock = new THREE.Clock();
+function frame(){
+  const dt = Math.min(clock.getDelta(), .05);
+  state.explode += (state.explodeTarget - state.explode) * Math.min(1, dt*4);
+  const e = state.explode*state.explode*(3-2*state.explode);
+  for(const o of OWNERS()) for(const p of Object.values(o.parts)) p.group.position.copy(p.base).addScaledVector(p.explode, e);
+  let dr = bodyTargetRot - body.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr));
+  body.rotation.y += dr*Math.min(1, dt*3);
+  const ch = ST.chaak, ws = ch.v.ws || state.env.ws || 2, wd = ch.v.wd ?? state.env.wd ?? c().windFrom;
+  if(ch.cups && !reduceMotion) ch.cups.rotation.y -= ws*dt*2.2;
+  if(ch.vane) ch.vane.rotation.y = (90 - wd)*RAD - body.rotation.y;
+  if(rainLines.visible){
+    const speed = Math.max(2, state.env.ws||2)*.9, vx = rainDrift.x*speed, vz = rainDrift.z*speed, vy = -7;
+    for(let i=0;i<DROPS;i++){
+      let x = rainSeed[i*3], y = rainSeed[i*3+1], z = rainSeed[i*3+2];
+      y += vy*dt; x += vx*dt; z += vz*dt;
+      if(y < 0){ y = 6 + Math.random()*.5; x = (Math.random()-.5)*8 - vx*.6; z = (Math.random()-.5)*8 - vz*.6; }
+      rainSeed[i*3]=x; rainSeed[i*3+1]=y; rainSeed[i*3+2]=z;
+      const o = i*6; rainPos[o]=x; rainPos[o+1]=y; rainPos[o+2]=z; rainPos[o+3]=x - vx*.035; rainPos[o+4]=y - vy*.035; rainPos[o+5]=z - vz*.035;
+    }
+    rainGeo.attributes.position.needsUpdate = true;
+  }
+  if(!state.plan) controls.update();
+  renderer.render(scene, camera);
+  placePanel();
+  requestAnimationFrame(frame);
+}
+
+function applyTheme(){ floorMat.color.set(css("--ground")); rainMat.color.set(css("--rain")); sunMarker.material.color.set(css("--sun")); drawGround(); refreshPanel(); }
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+
+/* ================= ARRANQUE ================= */
+function showSource(){
+  const vis = visible(), s = $("src");
+  s.dataset.live = vis.some(st=>st.source==="live") ? "1" : "0";
+  s.textContent = vis.every(st=>st.source==="demo") ? "DEMO · datos simulados" : vis.map(st=>`${st.id} ${st.source==="live"?"EN VIVO":"DEMO"}`).join(" · ");
+}
+async function livePoll(){ await Promise.all(Object.values(ST).map(pollStation)); showSource(); record(); refreshPanel(); }
+if(stage.clientWidth < 700) $("siting").open = false;
+if(CITIES[state.city]?.custom) $("customRow").hidden = false;
+placeLandmark(); resize(); resetView(); setView(state.view); applyCity(); applyTheme();
+for(let i=0;i<24;i++){ mockTick(); record(); }
+setInterval(livePoll, POLL_MS);
+setInterval(()=>{ mockTick(); record(); refreshPanel(); }, 2500);
+livePoll();
+refineCity(state.city);
+tryLoadGLB(RIG, RIG_MODEL, "mast"); tryLoadGLB(ST.chaak, ST.chaak.modelUrl, "logger"); tryLoadGLB(ST.smaa, ST.smaa.modelUrl, "logger");
+document.fonts?.ready.then(()=>{ drawGround(); drawFrontLabel(); });
+frame();
+</script>
