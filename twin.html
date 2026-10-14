@@ -496,9 +496,12 @@ const controls = new THREE.OrbitControls(persp, renderer.domElement);
 controls.enableDamping = true; controls.minDistance = 1.5; controls.maxDistance = 60;
 controls.maxPolarAngle = Math.PI*0.495;
 function resetView(){
-  const far = (isMobile() ? 1.7 : 1) * (state.ref && state.ref!=="none" ? Math.max(1.6, sceneExtent()/4.5) : 1);
-  persp.position.set(4.0*far, 3.0*far, 4.6*far);
-  controls.target.set(0,1.7,0); controls.update();
+  const real = typeof ST!=="undefined" && ST.chaak.parts.head;           // modelo real cargado: encuadre más cercano a CHAAK
+  const zoom = real ? (state.view==="chaak" ? .4 : .7) : 1;
+  const far = (isMobile() ? 1.7 : 1) * zoom * (state.ref && state.ref!=="none" ? Math.max(1.6/zoom, sceneExtent()/4.5/zoom) : 1);
+  const ty = real ? (state.view==="chaak" ? 2.3 : 1.95) : 1.7;
+  persp.position.set(4.0*far, ty + 1.3*far, 4.6*far);
+  controls.target.set(0,ty,0); controls.update();
 }
 
 const hemi = new THREE.HemisphereLight(0xffffff, 0x8a9a96, 0.55); scene.add(hemi);
@@ -540,7 +543,17 @@ const INFO = {
   logger:{title:"Gabinete y datalogger", sub:"Cara principal · electrónica y telemetría 4G", metric:"tInt"},
   tripod:{title:"Trípode compartido", sub:"CHAAK y SMAA en el mismo montaje", metric:null},
   mast:  {title:"Mástil compartido", sub:"Aluminio · 3.0 m", metric:null},
+  // CHAAK real (models/chaak.glb)
+  head:      {title:"Estación meteorológica CHAAK", sub:"Sensor compacto · viento, temperatura, humedad y lluvia", metric:"temp"},
+  tapa:      {title:"Tapa de la carcasa", sub:"Cara principal · electrónica y telemetría 4G", metric:"tInt"},
+  cabezal:   {title:"Cabezal superior roscado", sub:"Une el sensor con el soporte", metric:null},
+  cople_sup: {title:"Cople roscado superior", sub:"Soporte de la estación", metric:null},
+  tubo:      {title:"Tubo soporte", sub:"Lleva la carcasa y el sensor", metric:null},
+  cople_base:{title:"Cople roscado de base", sub:"Une CHAAK con el mástil del trípode", metric:null},
 };
+/* CHAAK real: altura a la que se monta su base sobre el mástil del trípode (m) */
+const CHAAK_BASE_Y = 1.9;
+const CHAAK_EXPLODE = {head:[0,.34,0], cabezal:[0,.22,0], cople_sup:[0,.12,0], tubo:[0,0,0], cople_base:[0,-.18,0], tapa:[-.5,0,0], logger:[-.22,0,0]};
 const INLET = {chaak:2.3, smaa:1.7};   // altura de tomas (m), provisional
 
 /* Un solo montaje: body gira según el viento (brazos de sensores = +X, cara principal = −X); solar mira al ecuador */
@@ -564,6 +577,13 @@ function pvPanel(st, w, d, y, armLen, explode){
   pv.add(mesh(new THREE.BoxGeometry(w-.03,.006,d-.03), M.pv, V(0,.014,0)));
   st.parts.solar.pv = pv;
 }
+function rebuildMast(top){
+  const old = RIG.parts.mast; if(old) old.group.parent.remove(old.group);
+  const g = addPart(RIG, "mast", body, V(0,0,0), V(0,0,0));
+  g.add(rod(V(0,.9,0), V(0,top,0), .03, M.alu));
+  INFO.mast.sub = `Aluminio · ${top.toFixed(1)} m hasta la base de CHAAK`; MAST_TOP = top;
+}
+let MAST_TOP = 3.0;
 function buildRig(){
   let g = addPart(RIG, "tripod", body, V(0,0,0), V(0,-0.35,0));
   const hub = V(0,1.0,0);
@@ -704,7 +724,7 @@ function refreshRefCheck(){
 
 /* Modelos reales: los tres .glb comparten el mismo sistema de coordenadas (el del ensamble en AutoCAD):
    Y arriba, metros, origen en la base del trípode, brazos de sensores hacia +X, cara principal hacia −X. */
-const KEYMAP = [["pm","pm"],["particul","pm"],["gas","gas"],["thr","thr"],["escudo","thr"],["anem","wind"],["vele","wind"],["wind","wind"],
+const KEYMAP = [["sensorsolido","head"],["tapa_carcasa","tapa"],["base_carcasa","logger"],["cabezal","cabezal"],["cople_rosca_base","cople_base"],["cople_rosca_soporte","cople_sup"],["tubo_soporte","tubo"],["pm","pm"],["particul","pm"],["gas","gas"],["thr","thr"],["escudo","thr"],["anem","wind"],["vele","wind"],["wind","wind"],
   ["pluv","rain"],["rain","rain"],["solar","solar"],["panel","solar"],["gabinete","logger"],["logger","logger"],["brazo","arms"],["tripod","tripod"],["mast","mast"]];
 async function tryLoadGLB(owner, url, fallbackKey){
   if(!THREE.GLTFLoader) return;
@@ -714,17 +734,30 @@ async function tryLoadGLB(owner, url, fallbackKey){
   loader.load(url, gltf=>{
     Object.values(owner.parts).forEach(p=>p.group.parent.remove(p.group));
     owner.parts = {}; if(owner.cups!==undefined){ owner.cups = owner.vane = null; }
-    const root = gltf.scene, center = new THREE.Box3().setFromObject(root).getCenter(V());
+    const root = gltf.scene; root.updateMatrixWorld(true);
+    const center = new THREE.Box3().setFromObject(root).getCenter(V());
+    const baseY = owner===ST.chaak ? CHAAK_BASE_Y : 0;
     const meshes = []; root.traverse(o=>{ if(o.isMesh) meshes.push(o); });
     meshes.forEach(o=>{
       const n = (o.name+" "+(o.parent?o.parent.name:"")).toLowerCase(); let key = fallbackKey;
       for(const [frag,k] of KEYMAP) if(n.includes(frag)){ key = k; break; }
-      if(!owner.parts[key]) addPart(owner, key, key==="solar"?solar:body, V(0,0,0), V());
+      if(!owner.parts[key]) addPart(owner, key, key==="solar"?solar:body, V(0,baseY,0), V());
       o.castShadow = o.receiveShadow = true; o.material = o.material.clone();
-      owner.parts[key].group.attach(o);
+      if(o.material.emissive === undefined) o.material = new THREE.MeshStandardMaterial({color:o.material.color||0xdddddd});
+      const m = o.matrixWorld.clone(); o.parent.remove(o);           // conserva la posición del modelo, sin heredar el giro actual
+      m.decompose(o.position, o.quaternion, o.scale); owner.parts[key].group.add(o);
     });
-    Object.values(owner.parts).forEach(p=>{ const d = new THREE.Box3().setFromObject(p.group).getCenter(V()).sub(center); d.y *= .4; p.explode = owner===RIG ? V(0, p===owner.parts.tripod?-.35:0, 0) : (d.lengthSq()>1e-4 ? d.normalize().multiplyScalar(.55) : V()); });
-    setView(state.view); applyCity();
+    Object.entries(owner.parts).forEach(([k,p])=>{
+      if(owner===ST.chaak && CHAAK_EXPLODE[k]){ p.explode = V(...CHAAK_EXPLODE[k]); return; }
+      const d = new THREE.Box3().setFromObject(p.group).getCenter(V()).sub(center); d.y *= .4;
+      p.explode = owner===RIG ? V(0, p===owner.parts.tripod?-.35:0, 0) : (d.lengthSq()>1e-4 ? d.normalize().multiplyScalar(.55) : V());
+    });
+    if(owner===ST.chaak){
+      const head = meshes.find(o=>/sensorsolido/i.test(o.name));
+      if(head){ head.geometry.computeBoundingBox(); const bb = head.geometry.boundingBox; INLET.chaak = +(CHAAK_BASE_Y + head.position.y + (bb.min.y + bb.max.y)/2).toFixed(2); }
+      rebuildMast(CHAAK_BASE_Y);
+    }
+    setView(state.view); applyCity(); if(owner===ST.chaak && !tour.on) resetView();
     $("hint").textContent = `Modelo ${owner.id} cargado · toca un sensor`;
   }, undefined, err=>console.warn("GLB no cargado:", url, err));
 }
@@ -873,7 +906,7 @@ $("ref").onchange = e=>{ state.ref = e.target.value; placeLandmark(); resetView(
 $("refDir").onchange = e=>{ state.refAz = +e.target.value; placeLandmark(); };
 $("refDist").oninput = e=>{ state.refDist = +e.target.value; $("refDistOut").textContent = state.refDist+" m"; placeLandmark(); };
 function setPressed(btn,on){ btn.setAttribute("aria-pressed", on?"true":"false"); }
-document.querySelectorAll(".seg button").forEach(b=> b.onclick = ()=> setView(b.dataset.view));
+document.querySelectorAll(".seg button").forEach(b=> b.onclick = ()=>{ stopTour(); setView(b.dataset.view); resetView(); });
 function setView(view){
   setTimeout(updateChip, 0);
   state.view = view; try{localStorage.setItem("smab.view",view);}catch(_){}
@@ -1003,15 +1036,22 @@ const ROWS = {
   solar: [["Potencia",v=>f(v.solarW),"W"],["Batería",v=>f(v.batt),"%"]],
   logger:[["Temperatura interna",v=>f(v.tInt,1),"°C"],["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 4G",v=>f(v.rssi),"dBm"]],
   arms:  [["Brazo de sensores hacia",()=>cardinal(c().rainWindFrom),""]],
+  head:  [["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh),"%"],["Viento",v=>v.ws==null?"—":`${f(v.ws,1)} m/s ${cardinal(v.wd)}`,""],["Lluvia",v=>f(v.rain,1),"mm/h"],["Altura del sensor",()=>INLET.chaak,"m"]],
+  tapa:  [["Temperatura interna",v=>f(v.tInt,1),"°C"],["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 4G",v=>f(v.rssi),"dBm"]],
+  cabezal:[["Rosca hacia",()=>"sensor",""]],
+  cople_sup:[["Tipo",()=>"cople roscado",""]],
+  tubo:  [["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"]],
+  cople_base:[["Montaje sobre mástil a",()=>CHAAK_BASE_Y.toFixed(1),"m"]],
   tripod:[["Tomas CHAAK",()=>INLET.chaak,"m"],["Tomas SMAA",()=>INLET.smaa,"m"],["Separación a muros",()=>"≥ 1","m"]],
-  mast:  [["Altura total",()=>"3.0","m"],["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Brazos de sensores",()=>cardinal(c().rainWindFrom),""]],
+  mast:  [["Altura del mástil",()=>MAST_TOP.toFixed(1),"m"],["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Brazos de sensores",()=>cardinal(c().rainWindFrom),""]],
 };
 function statusFor(key, st){
   const v = st.v || {}, pre = state.view==="both" && st.key!=="rig" ? `${st.id} · ` : "";
   const band = (val,b)=> b.find(x=>val<=x[0]);
   if(key==="pm" && v.pm25!=null){ const s = band(v.pm25,BANDS.pm25); return `<span class="pill ${s[2]}">${pre}Aire: ${s[1]}</span>`; }
   if(key==="gas" && v.o3!=null){ const s = band(v.o3,BANDS.o3); return `<span class="pill ${s[2]}">${pre}Ozono: ${s[1]}</span>`; }
-  if(key==="logger" && v.tInt!=null) return v.tInt<=40 ? `<span class="pill ok">${pre}Electrónica en rango</span>` : v.tInt<=50 ? `<span class="pill warn">${pre}Calentamiento · agregar sombra</span>` : `<span class="pill bad">${pre}Sobrecalentamiento</span>`;
+  if(key==="head") return v.rain>0 ? `<span class="pill info">Lloviendo · viento del ${cardinal(v.wd)}</span>` : `<span class="pill ok">Sin lluvia · viento del ${cardinal(v.wd)}</span>`;
+  if((key==="logger"||key==="tapa") && v.tInt!=null) return v.tInt<=40 ? `<span class="pill ok">${pre}Electrónica en rango</span>` : v.tInt<=50 ? `<span class="pill warn">${pre}Calentamiento · agregar sombra</span>` : `<span class="pill bad">${pre}Sobrecalentamiento</span>`;
   if(key==="rain") return v.rain>0 ? `<span class="pill info">Lloviendo · viento del ${cardinal(v.wd)}</span>` : `<span class="pill ok">Sin lluvia</span>`;
   if(key==="solar") return v.solarW>2 ? `<span class="pill ok">${pre}Cargando</span>` : `<span class="pill warn">${pre}Sin generación</span>`;
   return "";
@@ -1022,6 +1062,7 @@ function refreshPanel(){
   const key = sel.part, info = key==="arms" ? {title:"Brazos de sensores", sub:"Del lado expuesto a la lluvia", metric:null} : (INFO[key] || {title:key, sub:""});
   const rig = sel.st==="rig";
   const cols = rig ? [RIG] : (key==="arms" ? [ST[sel.st]] : visible().filter(st=> st.parts[key]));
+  if(!cols.length){ panel.hidden = true; return; }
   panel.hidden = false;
   $("pTag").textContent = rig ? "Montaje compartido" : cols.length>1 ? "CHAAK vs SMAA" : (state.view==="both" ? `Solo ${cols[0].id}` : cols[0].id);
   $("pTitle").textContent = info.title; $("pSub").textContent = info.sub;
@@ -1266,12 +1307,15 @@ async function runTour(){
   if(!await hold("CHAAK y SMAA · un solo montaje", 4200)) return;
   toggleExplode(); controls.autoRotateSpeed = 1.2;
   if(!await hold("Cada pieza, a la vista", 3800)) return;
-  select({st:"chaak", part:"pm"}); controls.autoRotateSpeed = .5;
-  if(!await hold("Partículas PM2.5 y PM10 en tiempo real", 4000)) return;
-  select({st:"chaak", part:"gas"});
-  if(!await hold("Ozono y dióxido de nitrógeno", 3500)) return;
-  select({st:"chaak", part:"wind"});
-  if(!await hold("Viento: velocidad y dirección", 3500)) return;
+  const pick = (...opts)=> opts.find(([st,p])=> ST[st].parts[p]);
+  const steps = [
+    [pick(["chaak","head"],["chaak","wind"]), "Clima en tiempo real: viento, temperatura, humedad y lluvia"],
+    [pick(["smaa","pm"],["chaak","pm"]), "Partículas PM2.5 y PM10 en tiempo real"],
+    [pick(["smaa","gas"],["chaak","gas"]), "Ozono y dióxido de nitrógeno"],
+    [pick(["chaak","tapa"],["chaak","logger"]), "Electrónica protegida en la cara principal"],
+  ];
+  controls.autoRotateSpeed = .5;
+  for(const [sel, text] of steps){ if(!sel) continue; select({st:sel[0], part:sel[1]}); if(!await hold(text, 3800)) return; }
   select(null); toggleExplode(); controls.autoRotateSpeed = 1.2;
   await sleep(900); if(!alive()) return;
   toggleRain();
