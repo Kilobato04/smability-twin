@@ -9,7 +9,7 @@ head = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Gemelo digital de las estaciones CHAAK y SMAA de Smability: datos en tiempo real, vista explosionada y guía de instalación por sitio.">
-<meta property="og:title" content="Gemelo digital CHAAK · SMAA · Smability">
+<meta property="og:title" content="Smability · Gemelo digital e instalación guiada">
 <meta property="og:description" content="Explora las estaciones en 3D, sus datos en tiempo real y cómo instalarlas en tu ciudad.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#11201d">
