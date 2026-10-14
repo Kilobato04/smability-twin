@@ -15,6 +15,6 @@ head = """<!doctype html>
 <meta name="theme-color" content="#11201d">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 """
-base = "<style>html,body{margin:0}[hidden]{display:none!important}</style>\n</head>\n<body>\n"
+base = "<style>html,body{margin:0}html{box-sizing:border-box;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>\n</head>\n<body>\n"
 Path("index.html").write_text(head + src[:head_end] + "\n" + base + src[head_end:].lstrip("\n") + "\n</body>\n</html>\n", encoding="utf-8")
 print("index.html listo")
