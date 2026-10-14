@@ -51,8 +51,9 @@ input[type=range]{accent-color:var(--accent);width:120px}
 .custom{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end;padding-top:8px;border-top:1px dashed var(--line)}
 .custom .f{display:grid;gap:3px}
 .custom .f label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.custom input[type=number],.custom input[type=text]{font:inherit;font-family:var(--f-mono);font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px;width:110px}
-.custom input[type=text]{font-family:var(--f-body);width:150px}
+.custom input[type=text]{font:inherit;font-family:var(--f-mono);font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px;width:110px}
+.custom #cName{font-family:var(--f-body);width:150px}
+.custom #cLat{width:170px}
 .custom .msg{flex-basis:100%;font-size:12px;color:var(--muted);min-height:1em}
 .custom .msg.err{color:var(--bad)}
 .btn.sm{padding:6px 11px;font-size:12.5px}
@@ -210,8 +211,8 @@ input[type=range]{accent-color:var(--accent);width:120px}
     <div class="field"><label for="hour">Hora</label><input id="hour" type="range" min="5" max="20" step="0.25" value="13"><span class="hour" id="hourOut">13:00</span></div>
     <form class="custom" id="customRow" hidden novalidate>
       <div class="f"><label for="cName">Nombre del sitio</label><input id="cName" type="text" placeholder="Planta Toluca" maxlength="40"></div>
-      <div class="f"><label for="cLat">Latitud</label><input id="cLat" type="number" step="0.0001" min="-60" max="60" placeholder="19.4326" required></div>
-      <div class="f"><label for="cLon">Longitud</label><input id="cLon" type="number" step="0.0001" min="-180" max="180" placeholder="-99.1332" required></div>
+      <div class="f"><label for="cLat">Latitud</label><input id="cLat" type="text" inputmode="decimal" autocomplete="off" placeholder="19.4326 o pega «lat, long»" required></div>
+      <div class="f"><label for="cLon">Longitud</label><input id="cLon" type="text" inputmode="decimal" autocomplete="off" placeholder="-99.1332" required></div>
       <div class="f"><label for="cWind">Viento dominante</label><select id="cWind"></select></div>
       <div class="f"><label for="cRainWind">Viento en lluvias</label><select id="cRainWind"></select></div>
       <button class="btn sm" type="submit" id="cApply">Aplicar</button>
@@ -787,11 +788,19 @@ $("customRow").addEventListener("submit", async e=>{
   state.city = "custom"; fillCitySelect(); try{localStorage.setItem("smab.city","custom");}catch(_){}
   applyCity();
 });
+function splitCoords(e){
+  const m = String(e.target.value).match(/(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)/);
+  if(m){ $("cLat").value = (+m[1]).toFixed(6); $("cLon").value = (+m[2]).toFixed(6); msg("Coordenadas separadas. Presiona Aplicar."); }
+}
+$("cLat").addEventListener("input", splitCoords); $("cLon").addEventListener("input", splitCoords);
 $("cGeo").onclick = ()=>{
   if(!navigator.geolocation){ msg("Este navegador no comparte ubicación. Escribe las coordenadas.", true); return; }
   msg("Buscando tu ubicación…");
-  navigator.geolocation.getCurrentPosition(p=>{ $("cLat").value = p.coords.latitude.toFixed(4); $("cLon").value = p.coords.longitude.toFixed(4); msg("Ubicación lista. Presiona Aplicar."); },
-    ()=> msg("No se pudo obtener la ubicación. Escribe las coordenadas (en Google Maps: clic derecho sobre el punto).", true), {timeout:8000});
+  navigator.geolocation.getCurrentPosition(p=>{ $("cLat").value = p.coords.latitude.toFixed(5); $("cLon").value = p.coords.longitude.toFixed(5);
+    const acc = p.coords.accuracy || 0;
+    if(acc > 1000) msg(`Ubicación aproximada (±${Math.round(acc/1000)} km): este equipo la estima por la red y puede estar muy lejos del sitio. Verifica en Google Maps (clic derecho sobre el punto) o usa el celular.`, true);
+    else msg(`Ubicación lista (±${Math.round(acc)} m). Presiona Aplicar.`); },
+    ()=> msg("No se pudo obtener la ubicación. Escribe las coordenadas (en Google Maps: clic derecho sobre el punto).", true), {timeout:10000, enableHighAccuracy:true, maximumAge:0});
 };
 
 CARD.forEach((d,i)=> $("refDir").add(new Option(d, i*22.5)));
