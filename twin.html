@@ -72,7 +72,7 @@ input[type=range]{accent-color:var(--accent);width:120px}
 @keyframes capIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
 @media (prefers-reduced-motion: reduce){.caption.in{animation:none}}
 /* modo campo */
-#field{position:absolute;right:14px;top:44px;width:min(320px,calc(100% - 28px));background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 10px 30px rgb(0 0 0/.14);padding:14px;display:grid;gap:10px}
+#field{position:absolute;right:14px;top:84px;width:min(320px,calc(100% - 28px));background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 10px 30px rgb(0 0 0/.14);padding:14px;display:grid;gap:10px}
 #field header{display:flex;justify-content:space-between;align-items:start;gap:8px}
 #field h3{margin:2px 0 0;font-family:var(--f-display);font-size:21px;letter-spacing:.04em;line-height:1.05}
 #field .tag{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;color:var(--muted)}
@@ -127,6 +127,15 @@ input[type=range]{accent-color:var(--accent);width:120px}
 #leader line{stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 3}
 #leader circle{fill:var(--accent)}
 .hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:5px 12px;pointer-events:none;white-space:nowrap}
+.rseg-stage{position:absolute;right:14px;top:42px;z-index:3;box-shadow:0 4px 14px rgb(0 0 0/.08)}
+.dock .rfield{display:none}
+#partsLegend{position:absolute;right:14px;bottom:14px;z-index:3;display:flex;flex-direction:column;gap:2px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 6px 20px rgb(0 0 0/.1)}
+#partsLegend button{display:flex;align-items:center;gap:8px;font:500 12.5px var(--f-body);color:var(--ink);background:none;border:0;border-radius:6px;padding:5px 9px;cursor:pointer;text-align:left}
+#partsLegend button[aria-pressed="true"]{background:var(--bg);font-weight:700}
+#partsLegend button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+#partsLegend i{width:12px;height:12px;border-radius:3px;flex:none}
+body[data-render="xray"] #stage{background:radial-gradient(120% 90% at 50% 30%,#0d2a3e 0%,#04101a 72%)}
+body[data-render="tech"] #stage{background-color:#fbfbf8;background-image:linear-gradient(#e4e8e6 1px,transparent 1px),linear-gradient(90deg,#e4e8e6 1px,transparent 1px);background-size:24px 24px}
 .src{position:absolute;right:14px;top:12px;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;padding:4px 8px;border-radius:5px;border:1px solid var(--line);background:var(--surface);color:var(--muted)}
 .src[data-live="1"]{color:var(--ok);border-color:currentColor}
 /* ficha de emplazamiento */
@@ -247,6 +256,13 @@ input[type=range]{accent-color:var(--accent);width:120px}
   .hint{left:50%;bottom:12px;transform:translateX(-50%);white-space:normal;text-align:center;max-width:calc(100% - 32px)}
   body:not([data-pane=""]) .hint{display:none}
   .src{top:10px;right:12px}
+  .rseg-stage{display:none}
+  .dock .rfield{display:grid;grid-column:1/-1;gap:6px}
+  .dock .rfield .seg{display:flex}
+  .dock .rfield .seg button{flex:1;min-height:44px;font-size:13px;padding:6px 4px}
+  #partsLegend{top:44px;left:12px;right:12px;bottom:auto;flex-direction:row;flex-wrap:wrap;gap:2px 4px;padding:4px}
+  #partsLegend button{font-size:12px;padding:6px 8px}
+  body:not([data-pane=""]) #partsLegend{display:none}
   .caption{top:46px;bottom:auto;font-size:21px}
 
   .tabbar{display:flex;gap:2px;z-index:14;background:var(--surface);border-top:1px solid var(--line);padding:4px 6px}
@@ -310,6 +326,8 @@ input[type=range]{accent-color:var(--accent);width:120px}
       </div>
     </details>
     <div class="src" id="src">DEMO · datos simulados</div>
+    <div class="seg rseg rseg-stage" role="group" aria-label="Tipo de vista"><button type="button" data-mode="real" aria-pressed="true">Realista</button><button type="button" data-mode="xray" aria-pressed="false">Rayos X</button><button type="button" data-mode="tech" aria-pressed="false">Técnica</button><button type="button" data-mode="parts" aria-pressed="false">Componentes</button></div>
+    <div id="partsLegend" hidden aria-label="Componentes"></div>
     <div class="caption" id="caption" hidden></div>
     <aside id="field" hidden data-ok="0" aria-live="polite">
       <header><div><div class="tag">Modo campo</div><h3>Orienta la cara principal</h3></div><button class="x" id="fClose" aria-label="Cerrar modo campo">×</button></header>
@@ -345,6 +363,7 @@ input[type=range]{accent-color:var(--accent);width:120px}
     <button class="btn" id="bField" aria-pressed="false">Modo campo</button>
     <button class="btn" id="bSheet">Ficha de instalación</button>
     <button class="btn" id="bReset">Reiniciar vista</button>
+    <div class="field rfield"><span class="lbl" id="rLbl">Vista</span><div class="seg rseg" role="group" aria-labelledby="rLbl"><button type="button" data-mode="real" aria-pressed="true">Realista</button><button type="button" data-mode="xray" aria-pressed="false">Rayos X</button><button type="button" data-mode="tech" aria-pressed="false">Técnica</button><button type="button" data-mode="parts" aria-pressed="false">Componentes</button></div></div>
     <div class="legend">
       <em style="--c:var(--front)">Cara principal</em>
       <em style="--c:var(--accent)">Viento dominante</em>
@@ -577,11 +596,12 @@ const INFO = {
   cople_sup: {title:"Cople roscado superior", sub:"Soporte de la estación", metric:null},
   tubo:      {title:"Tubo soporte", sub:"Lleva la carcasa y el sensor", metric:null},
   cople_base:{title:"Cople roscado de base", sub:"Une CHAAK con el mástil del trípode", metric:null},
+  screws_head:{title:"Tornillos del sensor", sub:"3 × M3 radiales a 120° · fijan la estación compacta al cabezal roscado", metric:null},
   screws:    {title:"Tornillos de la carcasa", sub:"2 × M3 · atraviesan el tubo y fijan las abrazaderas", metric:null},
 };
 /* CHAAK real: altura a la que se monta su base sobre el mástil del trípode (m) */
 const CHAAK_BASE_Y = 1.9;
-const CHAAK_EXPLODE = {head:[0,.34,0], cabezal:[0,.22,0], cople_sup:[0,.12,0], tubo:[0,0,0], cople_base:[0,-.18,0], tapa:[-.5,0,0], logger:[-.22,0,0], screws:[.18,0,0]};
+const CHAAK_EXPLODE = {head:[0,.34,0], cabezal:[0,.22,0], cople_sup:[0,.12,0], tubo:[0,0,0], cople_base:[0,-.18,0], tapa:[-.5,0,0], logger:[-.22,0,0], screws:[.18,0,0], screws_head:[0,.34,0]};
 const INLET = {chaak:2.3, smaa:1.7};   // altura de tomas (m), provisional
 
 /* Un solo montaje: body gira según el viento (brazos de sensores = +X, cara principal = −X); solar mira al ecuador */
@@ -722,7 +742,7 @@ function placeLandmark(){
     landmark.position.set(Math.sin(a)*d, 0, -Math.cos(a)*d);
     landmark.rotation.y = -a;          // una cara del volumen mira a la estación
   }
-  fitShadow(Math.max(4.5, sceneExtent() + 2)); resize(); refreshRefCheck();
+  fitShadow(Math.max(4.5, sceneExtent() + 2)); resize(); refreshRefCheck(); if(typeof applyRender==="function" && RENDER.ready) applyRender();
 }
 /* % de horas de sol en que el volumen tapa el sol a la altura de los gabinetes */
 function refShadeStats(){
@@ -752,7 +772,7 @@ function refreshRefCheck(){
 
 /* Modelos reales: los tres .glb comparten el mismo sistema de coordenadas (el del ensamble en AutoCAD):
    Y arriba, metros, origen en la base del trípode, brazos de sensores hacia +X, cara principal hacia −X. */
-const KEYMAP = [["tornillo","screws"],["sensorsolido","head"],["tapa_carcasa","tapa"],["base_carcasa","logger"],["cabezal","cabezal"],["cople_rosca_base","cople_base"],["cople_rosca_soporte","cople_sup"],["tubo_soporte","tubo"],["pm","pm"],["particul","pm"],["gas","gas"],["thr","thr"],["escudo","thr"],["anem","wind"],["vele","wind"],["wind","wind"],
+const KEYMAP = [["tornillos_sensor","screws_head"],["tornillo","screws"],["sensorsolido","head"],["tapa_carcasa","tapa"],["base_carcasa","logger"],["cabezal","cabezal"],["cople_rosca_base","cople_base"],["cople_rosca_soporte","cople_sup"],["tubo_soporte","tubo"],["pm","pm"],["particul","pm"],["gas","gas"],["thr","thr"],["escudo","thr"],["anem","wind"],["vele","wind"],["wind","wind"],
   ["pluv","rain"],["rain","rain"],["solar","solar"],["panel","solar"],["gabinete","logger"],["logger","logger"],["brazo","arms"],["tripod","tripod"],["mast","mast"]];
 async function tryLoadGLB(owner, url, fallbackKey){
   if(!THREE.GLTFLoader) return;
@@ -785,7 +805,7 @@ async function tryLoadGLB(owner, url, fallbackKey){
       if(head){ head.geometry.computeBoundingBox(); const bb = head.geometry.boundingBox; INLET.chaak = +(CHAAK_BASE_Y + head.position.y + (bb.min.y + bb.max.y)/2).toFixed(2); }
       rebuildMast(CHAAK_BASE_Y);
     }
-    setView(state.view); applyCity(); if(owner===ST.chaak && !tour.on) resetView();
+    setView(state.view); applyCity(); if(owner===ST.chaak && !tour.on) resetView(); if(RENDER.ready) applyRender();
     $("hint").textContent = `Modelo ${owner.id} cargado · toca un sensor`;
   }, undefined, err=>console.warn("GLB no cargado:", url, err));
 }
@@ -1052,7 +1072,7 @@ function drawPlan(cv, pal, print){
   g.fillText(print ? `Trayectoria solar · ${MONTHS[state.month]}` : `${MONTHS[state.month]} · ${fmtHour(state.hour)}`, C, C+R+0);
 }
 function drawGround(){
-  drawPlan(groundCanvas, themePal(), false);
+  drawPlan(groundCanvas, RENDER.mode==="xray" ? XRAY_PAL : RENDER.mode==="tech" ? TECH_PAL : themePal(), false);
   groundTex.needsUpdate = true;
 }
 
@@ -1077,6 +1097,7 @@ const ROWS = {
   cople_sup:[["Tipo",()=>"cople roscado",""]],
   tubo:  [["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"]],
   cople_base:[["Montaje sobre mástil a",()=>CHAAK_BASE_Y.toFixed(1),"m"]],
+  screws_head:[["Cantidad",()=>"3",""],["Medida",()=>"M3",""],["Separación",()=>"120","°"]],
   screws:[["Cantidad",()=>"2",""],["Medida",()=>"M3",""],["Separación entre barrenos",()=>"90","mm"]],
   tripod:[["Tomas CHAAK",()=>INLET.chaak,"m"],["Tomas SMAA",()=>INLET.smaa,"m"],["Separación a muros",()=>"≥ 1","m"]],
   mast:  [["Altura del mástil",()=>MAST_TOP.toFixed(1),"m"],["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Brazos de sensores",()=>cardinal(c().rainWindFrom),""]],
@@ -1133,7 +1154,14 @@ function partAt(ev){
 }
 const ownerOf = k => k==="rig" ? RIG : ST[k];
 const same = (a,b)=> a && b && a.st===b.st && a.part===b.part;
-function tint(sel, color){ const p = sel && ownerOf(sel.st)?.parts[sel.part]; if(p) p.group.traverse(o=>{ if(o.isMesh && o.material.emissive) o.material.emissive.setHex(color); }); }
+function tint(sel, color){
+  const p = sel && ownerOf(sel.st)?.parts[sel.part]; if(!p) return;
+  p.group.traverse(o=>{
+    if(!o.isMesh || o.userData.isEdge) return;
+    if(RENDER.mode === "real" || !o.userData.origMat){ if(o.material.emissive) o.material.emissive.setHex(color); }
+    else o.material = materialFor(o, color === 0x0a5c51);
+  });
+}
 function select(sel, fromPane){ tint(state.selected,0); state.selected = sel; tint(sel, 0x0a5c51); refreshPanel(); $("hint").hidden = !!sel;
   if(!fromPane && isMobile()){ if(sel){ if(field.open) openField(false, true); syncPane("sensor"); } else if(currentPane()==="sensor") syncPane(""); } }
 let down = null;
@@ -1333,7 +1361,7 @@ async function runTour(){
   const my = ++tour.token; tour.on = true;
   const alive = () => tour.on && tour.token === my;
   const hold = async (text, ms) => { caption(text); await sleep(ms); return alive(); };
-  tour.saved = {view:state.view, hour:state.hour, siting:$("siting").open};
+  tour.saved = {view:state.view, hour:state.hour, siting:$("siting").open, render:RENDER.mode};
   $("bTour").setAttribute("aria-pressed","true"); $("bTour").textContent = "Detener tour";
   if(field.open) openField(false);
   if(state.plan) togglePlan(); if(state.rain) toggleRain(); if(state.explodeTarget) toggleExplode();
@@ -1344,6 +1372,9 @@ async function runTour(){
   if(!await hold("CHAAK y SMAA · un solo montaje", 4200)) return;
   toggleExplode(); controls.autoRotateSpeed = 1.2;
   if(!await hold("Cada pieza, a la vista", 3800)) return;
+  setRender("xray");
+  if(!await hold("Rayos X: uniones y tornillería por dentro", 3800)) return;
+  setRender(tour.saved.render === "xray" ? "real" : tour.saved.render);
   const pick = (...opts)=> opts.find(([st,p])=> ST[st].parts[p]);
   const steps = [
     [pick(["chaak","head"],["chaak","wind"]), "Clima en tiempo real: viento, temperatura, humedad, presión y lluvia"],
@@ -1371,7 +1402,7 @@ function stopTour(){
   controls.autoRotate = false; caption("");
   $("bTour").setAttribute("aria-pressed","false"); $("bTour").textContent = "Tour";
   if(tour.saved){ if(state.plan) togglePlan(); if(state.rain) toggleRain(); if(state.explodeTarget) toggleExplode();
-    setHour(tour.saved.hour); setView(tour.saved.view); $("siting").open = tour.saved.siting; tour.saved = null; }
+    setHour(tour.saved.hour); setView(tour.saved.view); $("siting").open = tour.saved.siting; setRender(tour.saved.render); tour.saved = null; }
   $("hint").hidden = !!state.selected;
 }
 function setHour(h){ state.hour = h; $("hour").value = h; $("hourOut").textContent = fmtHour(h); updateSun(); drawGround(); }
@@ -1441,6 +1472,110 @@ async function keepAwake(on){
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState === "visible" && field.open) keepAwake(true); });
 buildDial();
 
+
+/* ================= VISTAS DE RENDER ================= */
+var RENDER = {mode:"real", iso:null};
+const RENDER_MODES = ["real","xray","tech","parts"];
+const PART_GROUPS = [
+  {id:"sensor",   label:"Sensores",       color:0x2f8fd8, keys:["head","pm","gas","thr","wind","rain"]},
+  {id:"carcasa",  label:"Carcasa",        color:0xe0a030, keys:["tapa","logger"]},
+  {id:"soporte",  label:"Soporte",        color:0x8b929c, keys:["cabezal","cople_sup","tubo","cople_base","arms"]},
+  {id:"torni",    label:"Tornillería",    color:0xd8455c, keys:["screws","screws_head"]},
+  {id:"energia",  label:"Energía",        color:0x7a5fd6, keys:["solar"]},
+  {id:"montaje",  label:"Montaje",        color:0x2fa37c, keys:["tripod","mast"]},
+  {id:"ref",      label:"Referencia",     color:0xb7b2a8, keys:["__landmark"]},
+];
+const groupOf = key => PART_GROUPS.find(g=> g.keys.includes(key)) || PART_GROUPS[2];
+const XRAY_PAL = {ink:"#cfeeff", muted:"#7fb6d0", line:"#1f4a63", accent:"#38d6c0", rain:"#6ea2ff", sun:"#f2b544", surf:"#0b2233", front:"#f5cc1f", arm:"#e27fd5"};
+const TECH_PAL = Object.assign({}, PRINT_PAL, {surf:"#ffffff"});
+
+const xrayMat = new THREE.ShaderMaterial({
+  uniforms:{color:{value:new THREE.Color(0x5fd0ff)}, base:{value:.05}},
+  vertexShader:"varying vec3 vPos; void main(){ vec4 mv = modelViewMatrix*vec4(position,1.0); vPos = mv.xyz; gl_Position = projectionMatrix*mv; }",
+  fragmentShader:"uniform vec3 color; uniform float base; varying vec3 vPos; void main(){ vec3 n = normalize(cross(dFdx(vPos), dFdy(vPos))); float f = pow(1.0 - abs(dot(n, normalize(-vPos))), 2.2); gl_FragColor = vec4(color*(0.55+0.9*f), base + 0.55*f); }",
+  transparent:true, depthWrite:false, side:THREE.DoubleSide, blending:THREE.AdditiveBlending
+});
+xrayMat.extensions = {derivatives:true};
+const xrayHi = xrayMat.clone(); xrayHi.uniforms = {color:{value:new THREE.Color(0xffb347)}, base:{value:.12}}; xrayHi.extensions = {derivatives:true};
+const techMat = new THREE.MeshStandardMaterial({color:0xf4f5f3, roughness:1, metalness:0, flatShading:true, polygonOffset:true, polygonOffsetFactor:1, polygonOffsetUnits:1});
+const techHi  = new THREE.MeshStandardMaterial({color:0xffd979, roughness:1, metalness:0, flatShading:true, polygonOffset:true, polygonOffsetFactor:1, polygonOffsetUnits:1});
+const edgeMat = {
+  xray: new THREE.LineBasicMaterial({color:0x8fe3ff, transparent:true, opacity:.4, depthWrite:false}),
+  tech: new THREE.LineBasicMaterial({color:0x2a302e, transparent:true, opacity:.85}),
+};
+
+function renderMeshes(){
+  const out = [];
+  [body, solar, landmark].forEach(root=> root.traverse(o=>{
+    if(!o.isMesh || o.userData.isEdge) return;
+    for(let p=o; p; p=p.parent) if(p===frontMark) return;
+    out.push(o);
+  }));
+  return out;
+}
+function meshKey(o){
+  for(let p=o; p; p=p.parent){ if(p.userData && p.userData.part) return {st:p.userData.station, part:p.userData.part}; if(p===landmark) return {st:"ref", part:"__landmark"}; }
+  return {st:"", part:""};
+}
+function edgesOf(o){
+  if(!o.userData.edges){
+    const l = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry, 35), edgeMat.tech);
+    l.userData.isEdge = true; l.raycast = ()=>{}; l.renderOrder = 2; o.add(l); o.userData.edges = l;
+  }
+  return o.userData.edges;
+}
+function materialFor(o, hi){
+  const m = RENDER.mode;
+  if(m === "xray") return hi ? xrayHi : xrayMat;
+  if(m === "tech") return hi ? techHi : techMat;
+  if(m === "parts"){
+    const k = meshKey(o), g = groupOf(k.part);
+    if(!o.userData.partsMat) o.userData.partsMat = new THREE.MeshStandardMaterial({color:g.color, roughness:.55, metalness:.05, transparent:true, flatShading:true});
+    const pm = o.userData.partsMat; pm.color.setHex(g.color);
+    const dim = RENDER.iso && RENDER.iso !== g.id; pm.opacity = dim ? .12 : 1; pm.depthWrite = !dim;
+    pm.emissive.setHex(hi ? 0x0a5c51 : 0);
+    return pm;
+  }
+  return o.userData.origMat;
+}
+function isSelectedMesh(o){
+  const s = state.selected; if(!s) return false; const k = meshKey(o);
+  return k.st === s.st && k.part === s.part;
+}
+function applyRender(){
+  const m = RENDER.mode;
+  renderMeshes().forEach(o=>{
+    if(!o.userData.origMat) o.userData.origMat = o.material;
+    o.material = materialFor(o, isSelectedMesh(o));
+    if(m === "real") o.material.emissive && o.material.emissive.setHex(isSelectedMesh(o) ? 0x0a5c51 : 0);
+    const needEdges = m === "xray" || m === "tech";
+    if(needEdges){ const e = edgesOf(o); e.material = edgeMat[m]; e.visible = true; }
+    else if(o.userData.edges) o.userData.edges.visible = false;
+    o.castShadow = m === "real" || m === "parts";
+  });
+  sun.castShadow = m === "real" || m === "parts";
+  floor.visible = m === "real" || m === "parts";
+  sunMarker.visible = m !== "tech" && state.sun && state.sun.alt > 0;
+  document.body.dataset.render = m;
+  document.querySelectorAll(".rseg button").forEach(b=> setPressed(b, b.dataset.mode === m));
+  $("partsLegend").hidden = m !== "parts";
+  document.querySelectorAll("#partsLegend button").forEach(b=> setPressed(b, RENDER.iso === b.dataset.g));
+  drawGround();
+}
+function setRender(m){
+  if(!RENDER_MODES.includes(m)) m = "real";
+  RENDER.mode = m; if(m !== "parts") RENDER.iso = null;
+  try{ localStorage.setItem("smab.render", m); }catch(_){}
+  applyRender();
+}
+document.querySelectorAll(".rseg button").forEach(b=> b.onclick = ()=>{ stopTour(); setRender(b.dataset.mode); });
+(function buildLegend(){
+  const hex = n => "#" + n.toString(16).padStart(6,"0");
+  $("partsLegend").innerHTML = PART_GROUPS.map(g=> `<button type="button" data-g="${g.id}" aria-pressed="false"><i style="background:${hex(g.color)}"></i>${g.label}</button>`).join("");
+  $("partsLegend").querySelectorAll("button").forEach(b=> b.onclick = ()=>{ RENDER.iso = RENDER.iso === b.dataset.g ? null : b.dataset.g; applyRender(); });
+})();
+try{ const saved = localStorage.getItem("smab.render"); if(RENDER_MODES.includes(saved)) RENDER.mode = saved; }catch(_){}
+
 /* ================= LOOP ================= */
 function resize(){
   const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w,h,false);
@@ -1490,7 +1625,7 @@ function showSource(){
 async function livePoll(){ await Promise.all(Object.values(ST).map(pollStation)); showSource(); record(); refreshPanel(); }
 syncPane(""); measureTabbar();
 if(CITIES[state.city]?.custom) $("customRow").hidden = false;
-placeLandmark(); resize(); resetView(); setView(state.view); applyCity(); applyTheme();
+placeLandmark(); resize(); resetView(); setView(state.view); applyCity(); applyTheme(); RENDER.ready = true; applyRender();
 for(let i=0;i<24;i++){ mockTick(); record(); }
 setInterval(livePoll, POLL_MS);
 setInterval(()=>{ mockTick(); record(); refreshPanel(); }, 2500);
