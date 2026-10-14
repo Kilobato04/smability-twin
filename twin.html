@@ -111,11 +111,6 @@ input[type=range]{accent-color:var(--accent);width:120px}
 .sign{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:34px}
 .sign div{border-top:1px solid var(--paper-ink);padding-top:4px;font-size:11.5px;color:var(--paper-muted)}
 .pfoot{margin:22px 0 0;font-size:11px;color:var(--paper-muted)}
-@media (max-width:700px){
-  #field{left:12px;right:12px;width:auto;top:auto;bottom:12px}
-  #dial{width:160px;height:160px}
-  .pgrid{grid-template-columns:1fr}
-}
 #stage{position:relative;overflow:hidden;min-height:0;background:radial-gradient(120% 90% at 50% 30%,var(--bg) 40%,var(--bg2))}
 #stage canvas{display:block;width:100%;height:100%;touch-action:none}
 #leader{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
@@ -175,19 +170,92 @@ input[type=range]{accent-color:var(--accent);width:120px}
 .refcheck{padding:0 14px 12px;display:grid;gap:6px;font-size:12.5px;line-height:1.4}
 .refcheck h4{margin:0 0 2px;font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .refcheck .pills{margin-top:2px}
-@media (max-width:700px){
-  #panel{left:12px!important;right:12px;bottom:12px;top:auto!important;width:auto}
-  #leader{display:none}
-  input[type=range]{width:90px}
-  .legend{display:none}
-  .hint{left:12px;bottom:12px;transform:none;white-space:normal;max-width:calc(100% - 150px)}
-  .src{top:auto;bottom:12px;right:12px}
+/* ===== Móvil: barra inferior + una hoja a la vez + modo campo a pantalla completa ===== */
+.tabbar,.mchip,.mhead,.mclose{display:none}
+.sitectl{display:contents}
+@media (max-width:760px){
+  :root{--tab-h:64px}
+  .bar{flex-wrap:nowrap;justify-content:space-between;gap:10px;padding:8px 16px}
+  .brand{margin-right:0}
+  .brand b{font-size:19px}
+  .brand span{display:none}
+  .mchip{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:72%;min-height:40px;font:600 14px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:6px 12px 6px 10px;cursor:pointer}
+  .mchip svg{flex:none;width:16px;height:16px;stroke:var(--accent);fill:none;stroke-width:2}
+  .mchip span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #app{grid-template-columns:minmax(0,1fr)}
+  .bar{min-width:0}
+  #leader,.legend,#bField,#bSheet{display:none!important}
+
+  /* hojas inferiores */
+  .sitectl,.dock,#siting,#panel{display:none;position:fixed;left:0!important;right:0;top:auto!important;width:auto;bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px));z-index:12;background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0;box-shadow:0 -12px 32px rgb(0 0 0/.16);max-height:60vh;overflow:auto;overscroll-behavior:contain}
+  .mhead{display:flex;justify-content:space-between;align-items:center;gap:8px;position:sticky;top:0;z-index:1;background:var(--surface);margin:-12px -16px 0;padding:12px 8px 8px 16px}
+  .mhead b{font-family:var(--f-display);font-size:18px;letter-spacing:.05em;text-transform:uppercase}
+  .mhead .x,.mclose{display:inline-grid;place-items:center;width:44px;height:44px;border:0;background:transparent;color:var(--muted);font-size:24px;line-height:1;cursor:pointer}
+
+  body[data-pane="site"] .sitectl{display:flex;flex-direction:column;align-items:stretch;gap:16px;padding:12px 16px 20px}
+  .sitectl .field{display:grid;gap:6px}
+  .sitectl select,.sitectl input[type=text]{width:100%;max-width:none;font-size:16px;min-height:44px}
+  .sitectl .seg{display:flex}
+  .sitectl .seg button{flex:1;min-height:44px;font-size:14px}
+  .sitectl .hourfield{grid-template-columns:1fr auto;align-items:center}
+  .sitectl .hourfield label{grid-column:1/-1}
+  .sitectl input[type=range]{width:100%;min-height:32px}
+  .sitectl .custom{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:14px}
+  .sitectl .custom[hidden]{display:none}
+  .sitectl .custom .f:first-child,.sitectl .custom .msg{grid-column:1/-1}
+  .sitectl .custom input[type=text]{width:100%}
+  .sitectl .custom .btn{min-height:44px}
+
+  body[data-pane="explore"] .dock{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 16px 16px}
+  .dock .mhead{grid-column:1/-1;margin:-12px -16px -2px}
+  .dock .btn{min-height:48px;font-size:14px}
+  .dock #bTour{grid-column:1/-1}
+
+  body[data-pane="guide"] #siting{display:block}
+  #siting summary{position:sticky;top:0;z-index:1;background:var(--surface);padding:6px 4px 6px 16px}
+  #siting .mclose{display:inline-grid}
+  #siting summary small{margin-left:auto}
+  #siting .sbody{max-height:none;overflow:visible}
+  #siting .refctl select{font-size:16px;min-height:44px}
+
+  body[data-pane="sensor"] #panel:not([hidden]){display:block;max-height:46vh;padding:14px 16px 18px}
+
+  /* modo campo: pantalla completa, nada encima */
+  #field{position:fixed;left:0;right:0;top:0;bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px));width:auto;z-index:13;border:0;border-radius:0;box-shadow:none;overflow:auto;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 20px;gap:12px;align-content:start}
+  #field h3{font-size:24px}
+  #field .x{width:44px;height:44px;font-size:26px}
+  #dial{width:min(78vw,42vh);height:min(78vw,42vh)}
+  .fbig{font-size:34px}
+  .finfo{font-size:14px}
+  .fsteps{font-size:14px}
+  .frow input{font-size:16px;min-height:40px;width:88px}
+  #fStart{min-height:52px;font-size:16px}
+
+  .hint{left:50%;bottom:12px;transform:translateX(-50%);white-space:normal;text-align:center;max-width:calc(100% - 32px)}
+  body:not([data-pane=""]) .hint{display:none}
+  .src{top:10px;right:12px}
+  .caption{top:46px;bottom:auto;font-size:21px}
+
+  .tabbar{display:flex;gap:2px;z-index:14;background:var(--surface);border-top:1px solid var(--line);padding:4px 6px}
+  .tabbar button{flex:1;display:grid;justify-items:center;align-content:center;gap:3px;min-height:56px;border:0;background:none;color:var(--muted);font:600 11.5px var(--f-body);letter-spacing:.02em;border-radius:12px;cursor:pointer}
+  .tabbar svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .tabbar button[aria-pressed="true"]{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
+  .tabbar button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+
+  #sheet{padding:0}
+  .sheetwrap{border-radius:0;min-height:100%;border:0}
+  .shbar{position:sticky;top:0;z-index:1;background:var(--surface);padding-top:calc(10px + env(safe-area-inset-top,0px))}
+  .shbtns .btn{min-height:44px}
+  .pgrid{grid-template-columns:1fr}
 }
 </style>
 
 <div id="app">
   <div class="bar">
     <div class="brand"><b>Smability</b><span>Gemelo digital</span></div>
+    <button class="mchip" id="mSite" type="button" aria-label="Cambiar sitio y estación"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span id="mSiteTxt">Ciudad de México · CHAAK</span></button>
+    <div class="sitectl" id="siteCtl">
+    <div class="mhead"><b>Sitio y estación</b><button class="x" type="button" data-close aria-label="Cerrar">×</button></div>
     <div class="field"><span class="lbl" id="stLbl">Estación</span>
       <div class="seg" role="group" aria-labelledby="stLbl">
         <button id="vChaak" data-view="chaak" aria-pressed="true">CHAAK</button><button id="vSmaa" data-view="smaa" aria-pressed="false">SMAA</button><button id="vBoth" data-view="both" aria-pressed="false">Ambas</button>
@@ -195,7 +263,7 @@ input[type=range]{accent-color:var(--accent);width:120px}
     </div>
     <div class="field"><label for="city">Ciudad</label><select id="city"></select></div>
     <div class="field"><label for="month">Mes</label><select id="month"></select></div>
-    <div class="field"><label for="hour">Hora</label><input id="hour" type="range" min="5" max="20" step="0.25" value="13"><span class="hour" id="hourOut">13:00</span></div>
+    <div class="field hourfield"><label for="hour">Hora</label><input id="hour" type="range" min="5" max="20" step="0.25" value="13"><span class="hour" id="hourOut">13:00</span></div>
     <form class="custom" id="customRow" hidden novalidate>
       <div class="f"><label for="cName">Nombre del sitio</label><input id="cName" type="text" placeholder="Planta Toluca" maxlength="40"></div>
       <div class="f"><label for="cLat">Latitud</label><input id="cLat" type="text" inputmode="decimal" autocomplete="off" placeholder="19.4326 o pega «lat, long»" required></div>
@@ -206,12 +274,13 @@ input[type=range]{accent-color:var(--accent);width:120px}
       <button class="btn sm" type="button" id="cGeo">Usar mi ubicación</button>
       <div class="msg" id="cMsg">Con el sitio publicado, los vientos y meses de lluvia se calculan solos con datos horarios de 2025. Los selectores de viento se usan si no hay conexión.</div>
     </form>
+    </div>
   </div>
 
   <div id="stage">
     <svg id="leader" aria-hidden="true"><line id="ll" x1="0" y1="0" x2="0" y2="0" visibility="hidden"></line><circle id="lc" r="4" visibility="hidden"></circle></svg>
     <details id="siting" open>
-      <summary><h2>Guía de emplazamiento</h2><small id="sitingCity"></small></summary>
+      <summary><h2>Guía de emplazamiento</h2><small id="sitingCity"></small><span class="mclose" aria-hidden="true">×</span></summary>
       <div class="sbody">
         <div class="refctl">
           <div class="f"><label for="ref">Caseta de referencia</label><select id="ref"><option value="none">Sin caseta</option><option value="shelter">Caseta de monitoreo (3.3 m)</option></select></div>
@@ -250,6 +319,7 @@ input[type=range]{accent-color:var(--accent);width:120px}
   </div>
 
   <div class="dock">
+    <div class="mhead"><b>Explorar</b><button class="x" type="button" data-close aria-label="Cerrar">×</button></div>
     <button class="btn tour" id="bTour" aria-pressed="false">Tour</button>
     <button class="btn" id="bExplode" aria-pressed="false">Vista explosionada</button>
     <button class="btn" id="bRain" aria-pressed="false">Simular lluvia</button>
@@ -264,6 +334,13 @@ input[type=range]{accent-color:var(--accent);width:120px}
       <em style="--c:var(--sun)">Trayectoria solar</em>
     </div>
   </div>
+  <nav class="tabbar" aria-label="Secciones">
+    <button type="button" data-pane="explore" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>Explorar</button>
+    <button type="button" data-pane="site" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Sitio</button>
+    <button type="button" data-pane="guide" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>Guía</button>
+    <button type="button" data-pane="field" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Campo</button>
+    <button type="button" id="tSheet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>Ficha</button>
+  </nav>
 </div>
 
 <div id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="shTitle">
@@ -419,7 +496,7 @@ const controls = new THREE.OrbitControls(persp, renderer.domElement);
 controls.enableDamping = true; controls.minDistance = 1.5; controls.maxDistance = 60;
 controls.maxPolarAngle = Math.PI*0.495;
 function resetView(){
-  const far = (stage.clientWidth < 700 ? 1.35 : 1) * (state.ref && state.ref!=="none" ? Math.max(1.6, sceneExtent()/4.5) : 1);
+  const far = (isMobile() ? 1.7 : 1) * (state.ref && state.ref!=="none" ? Math.max(1.6, sceneExtent()/4.5) : 1);
   persp.position.set(4.0*far, 3.0*far, 4.6*far);
   controls.target.set(0,1.7,0); controls.update();
 }
@@ -798,6 +875,7 @@ $("refDist").oninput = e=>{ state.refDist = +e.target.value; $("refDistOut").tex
 function setPressed(btn,on){ btn.setAttribute("aria-pressed", on?"true":"false"); }
 document.querySelectorAll(".seg button").forEach(b=> b.onclick = ()=> setView(b.dataset.view));
 function setView(view){
+  setTimeout(updateChip, 0);
   state.view = view; try{localStorage.setItem("smab.view",view);}catch(_){}
   document.querySelectorAll(".seg button").forEach(b=> setPressed(b, b.dataset.view===view));
   for(const st of Object.values(ST)){ const on = view==="both" || view===st.key; Object.values(st.parts).forEach(p=> p.group.visible = on); }
@@ -843,7 +921,7 @@ function applyCity(){
   $("faces").innerHTML = `<h4>Sol directo por cara del equipo · año completo</h4>` + faces.map(f=>
     `<div class="face"><span>${f.label} · ${cardinal(f.az)}</span><div class="track"><div class="fill" style="width:${f.pct}%"></div></div><b>${f.pct}%</b></div>`).join("");
   $("windFlag").textContent = `Vientos y lluvias: ${city.windSource || "valores provisionales; se calculan solos con datos horarios cuando el sitio está publicado"}.`;
-  rainDrift.copy(dirOf(city.rainWindFrom + 180));
+  rainDrift.copy(dirOf(city.rainWindFrom + 180)); updateChip();
   refreshRefCheck(); if(typeof field!=="undefined" && field.open){ $("fDecl").value = declOf(); renderField(); }
   updateSun(); drawGround(); mockTick(); record(); refreshPanel();
 }
@@ -978,7 +1056,8 @@ function partAt(ev){
 const ownerOf = k => k==="rig" ? RIG : ST[k];
 const same = (a,b)=> a && b && a.st===b.st && a.part===b.part;
 function tint(sel, color){ const p = sel && ownerOf(sel.st)?.parts[sel.part]; if(p) p.group.traverse(o=>{ if(o.isMesh && o.material.emissive) o.material.emissive.setHex(color); }); }
-function select(sel){ tint(state.selected,0); state.selected = sel; tint(sel, 0x0a5c51); refreshPanel(); $("hint").hidden = !!sel; }
+function select(sel, fromPane){ tint(state.selected,0); state.selected = sel; tint(sel, 0x0a5c51); refreshPanel(); $("hint").hidden = !!sel;
+  if(!fromPane && isMobile()){ if(sel){ if(field.open) openField(false, true); syncPane("sensor"); } else if(currentPane()==="sensor") syncPane(""); } }
 let down = null;
 renderer.domElement.addEventListener("pointerdown", e=>{ down = [e.clientX,e.clientY]; stopTour(); });
 renderer.domElement.addEventListener("pointerup", e=>{ if(!down) return; const moved = Math.hypot(e.clientX-down[0], e.clientY-down[1]); down = null; if(moved<6) select(partAt(e)); });
@@ -992,7 +1071,7 @@ renderer.domElement.addEventListener("pointermove", e=>{
 
 function placePanel(){
   const sel = state.selected; const p = sel && ownerOf(sel.st)?.parts[sel.part]; if(!p) return;
-  const W = stage.clientWidth, H = stage.clientHeight; if(W < 700) return;
+  const W = stage.clientWidth, H = stage.clientHeight; if(isMobile()) return;
   const q = new THREE.Box3().setFromObject(p.group).getCenter(V()).project(camera);
   const x = (q.x+1)/2*W, y = (1-q.y)/2*H, panel = $("panel");
   const pw = panel.offsetWidth, ph = panel.offsetHeight;
@@ -1074,10 +1153,12 @@ function renderField(){
   field.aligned = ok;
   fieldMsg(`Celular apuntando a ${Math.round(h)}° verdadero.`);
 }
-function openField(on){
+function openField(on, fromPane){
   field.open = on; $("field").hidden = !on; setPressed($("bField"), on);
-  if(on){ select(null); $("fDecl").value = declOf(); renderField(); fieldMsg("Necesita el sitio publicado en https y un celular con brújula."); }
+  if(on){ select(null, true); $("fDecl").value = declOf(); renderField(); if(!field.listening) fieldMsg("Necesita el sitio publicado en https y un celular con brújula."); }
   else stopCompass();
+  keepAwake(on);
+  if(!fromPane && isMobile()) syncPane(on ? "field" : "");
 }
 $("fDecl").addEventListener("input", e=>{ const v = parseFloat(e.target.value); if(isFinite(v)){ c().declUser = v; renderField(); } });
 
@@ -1178,7 +1259,7 @@ async function runTour(){
   $("bTour").setAttribute("aria-pressed","true"); $("bTour").textContent = "Detener tour";
   if(field.open) openField(false);
   if(state.plan) togglePlan(); if(state.rain) toggleRain(); if(state.explodeTarget) toggleExplode();
-  select(null); $("hint").hidden = true; $("siting").open = false;
+  select(null); if(isMobile()) syncPane(""); $("hint").hidden = true; $("siting").open = false;
   setView("both"); resetView();
   controls.autoRotate = !reduceMotion; controls.autoRotateSpeed = 2.4;
   const city = c();
@@ -1224,6 +1305,48 @@ $("shPdf").onclick = downloadPdf;
 $("shPng").onclick = downloadPng;
 $("sheet").addEventListener("click", e=>{ if(e.target.id==="sheet") closeSheet(); });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ if(!$("sheet").hidden) closeSheet(); else if(tour.on) stopTour(); else if(field.open) openField(false); } });
+
+/* ================= MÓVIL: paneles (uno a la vez) ================= */
+const mq = matchMedia("(max-width: 760px)");
+function isMobile(){ return matchMedia("(max-width: 760px)").matches; }
+function currentPane(){ return document.body.dataset.pane || ""; }
+function syncPane(p){
+  document.body.dataset.pane = p;
+  document.querySelectorAll(".tabbar button[data-pane]").forEach(b=> setPressed(b, b.dataset.pane === p));
+  $("hint").hidden = !!state.selected || tour.on;
+}
+function setPane(p){
+  const cur = currentPane();
+  if(p === cur) p = "";
+  if(cur === "field" && p !== "field") openField(false, true);
+  if(cur === "sensor" && p !== "sensor" && state.selected) select(null, true);
+  if(p && tour.on) stopTour();
+  syncPane(p);
+  if(p === "field") openField(true, true);
+  if(p === "guide") $("siting").open = true;
+}
+document.querySelectorAll(".tabbar button[data-pane]").forEach(b=> b.onclick = ()=> setPane(b.dataset.pane));
+$("tSheet").onclick = ()=>{ if(currentPane()) setPane(""); openSheet(); };
+$("mSite").onclick = ()=> setPane("site");
+document.querySelectorAll("[data-close]").forEach(b=> b.onclick = ()=> setPane(""));
+$("siting").querySelector("summary").addEventListener("click", e=>{ if(isMobile()){ e.preventDefault(); setPane(""); } });
+function updateChip(){
+  const v = state.view === "both" ? "CHAAK + SMAA" : ST[state.view].id;
+  $("mSiteTxt").textContent = `${c().name} · ${v}`;
+}
+function measureTabbar(){ const t = document.querySelector(".tabbar"); if(t && t.offsetHeight) document.documentElement.style.setProperty("--tab-h", t.offsetHeight + "px"); }
+mq.addEventListener("change", ()=>{ if(!isMobile()) syncPane(""); measureTabbar(); });
+window.addEventListener("resize", measureTabbar);
+
+/* Pantalla encendida mientras se orienta en campo */
+let wakeLock = null;
+async function keepAwake(on){
+  try{
+    if(on && "wakeLock" in navigator && !wakeLock){ wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", ()=>{ wakeLock = null; }); }
+    else if(!on && wakeLock){ await wakeLock.release(); wakeLock = null; }
+  }catch(_){}
+}
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState === "visible" && field.open) keepAwake(true); });
 buildDial();
 
 /* ================= LOOP ================= */
@@ -1273,7 +1396,7 @@ function showSource(){
   s.textContent = vis.every(st=>st.source==="demo") ? "DEMO · datos simulados" : vis.map(st=>`${st.id} ${st.source==="live"?"EN VIVO":"DEMO"}`).join(" · ");
 }
 async function livePoll(){ await Promise.all(Object.values(ST).map(pollStation)); showSource(); record(); refreshPanel(); }
-if(stage.clientWidth < 700) $("siting").open = false;
+syncPane(""); measureTabbar();
 if(CITIES[state.city]?.custom) $("customRow").hidden = false;
 placeLandmark(); resize(); resetView(); setView(state.view); applyCity(); applyTheme();
 for(let i=0;i<24;i++){ mockTick(); record(); }
