@@ -163,6 +163,7 @@ input[type=range]{accent-color:var(--accent);width:120px}
 .row.head b{font:600 11px var(--f-body);letter-spacing:.08em}
 .c0{color:var(--accent)}.c1{color:var(--accent2)}
 .pills{display:flex;flex-wrap:wrap;gap:6px}
+.pnote{margin:8px 0 0;font-size:11.5px;line-height:1.45;color:var(--muted)}
 .pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid currentColor}
 .pill.ok{color:var(--ok)}.pill.warn{color:var(--warn)}.pill.bad{color:var(--bad)}.pill.info{color:var(--accent)}
 #spark{width:100%;height:44px;display:block;margin-top:8px}
@@ -326,6 +327,7 @@ input[type=range]{accent-color:var(--accent);width:120px}
       <header><div><div class="tag" id="pTag"></div><h3 id="pTitle"></h3><div class="sub" id="pSub"></div></div><button class="x" id="pClose" aria-label="Cerrar panel">×</button></header>
       <div class="rows" id="pRows"></div>
       <div class="pills" id="pStatus"></div>
+      <p class="pnote" id="pNote" hidden></p>
       <svg id="spark" viewBox="0 0 240 44" preserveAspectRatio="none"></svg>
       <div class="foot"><span id="pMetric"></span><span id="pTime"></span></div>
     </aside>
@@ -385,21 +387,21 @@ const RIG_MODEL = "models/montaje.glb";                 // trípode + mástil co
 /* Vientos: PROVISIONALES hasta que se calculan con datos horarios (se reemplazan solos con el sitio publicado).
    windFrom = de dónde viene el viento dominante (° desde el norte). rainWindFrom = viento con lluvia. rainMonths: 0 = enero. */
 const CITIES = {
-  cdmx:  {country:"México", name:"Ciudad de México", lat:19.43, lon:-99.13, tz:-6, decl:4.3, windFrom:20,  rainWindFrom:60,  rainMonths:[5,6,7,8],     tBase:17},
-  cun:   {country:"México", name:"Cancún",           lat:21.16, lon:-86.85, tz:-5, decl:-1.5, windFrom:110, rainWindFrom:100, rainMonths:[5,6,7,8,9],   tBase:27},
-  dgo:   {country:"México", name:"Durango",          lat:24.02, lon:-104.66,tz:-6, decl:6.6, windFrom:240, rainWindFrom:120, rainMonths:[5,6,7,8],     tBase:18},
-  gdl:   {country:"México", name:"Guadalajara",      lat:20.67, lon:-103.35,tz:-6, decl:5.8, windFrom:260, rainWindFrom:250, rainMonths:[5,6,7,8],     tBase:21},
-  lpz:   {country:"México", name:"La Paz, BCS",      lat:24.14, lon:-110.31,tz:-7, decl:9.6, windFrom:340, rainWindFrom:150, rainMonths:[7,8,9],       tBase:24},
-  mty:   {country:"México", name:"Monterrey",        lat:25.67, lon:-100.31,tz:-6, decl:4.0, windFrom:100, rainWindFrom:110, rainMonths:[7,8],         tBase:24},
-  pue:   {country:"México", name:"Puebla",           lat:19.04, lon:-98.21, tz:-6, decl:3.9, windFrom:30,  rainWindFrom:70,  rainMonths:[5,6,7,8],     tBase:17},
-  tij:   {country:"México", name:"Tijuana",          lat:32.53, lon:-117.02,tz:-8, decl:10.8, windFrom:270, rainWindFrom:230, rainMonths:[11,0,1,2],    tBase:18},
-  tula:  {country:"México", name:"Tula, Hidalgo",    lat:20.05, lon:-99.34, tz:-6, decl:4.4, windFrom:20,  rainWindFrom:60,  rainMonths:[5,6,7,8],     tBase:17},
-  gua:   {country:"Guatemala", name:"Ciudad de Guatemala", lat:14.63, lon:-90.51, tz:-6, decl:0.5, windFrom:25, rainWindFrom:210, rainMonths:[4,5,6,7,8,9], tBase:20},
-  bog:   {country:"Colombia", name:"Bogotá",         lat:4.71,  lon:-74.07, tz:-5, decl:-8.2, windFrom:110, rainWindFrom:120, rainMonths:[3,4,9,10],    tBase:14},
-  cali:  {country:"Colombia", name:"Cali",           lat:3.45,  lon:-76.53, tz:-5, decl:-7.0, windFrom:300, rainWindFrom:300, rainMonths:[3,4,9,10],    tBase:24},
-  mde:   {country:"Colombia", name:"Medellín",       lat:6.24,  lon:-75.58, tz:-5, decl:-7.8, windFrom:350, rainWindFrom:350, rainMonths:[3,4,8,9,10],  tBase:22},
-  suarez:{country:"Colombia", name:"Suárez, Cauca",  lat:2.95,  lon:-76.69, tz:-5, decl:-6.8, windFrom:300, rainWindFrom:290, rainMonths:[3,4,9,10],    tBase:22},
-  lima:  {country:"Perú", name:"Lima",               lat:-12.05,lon:-77.04, tz:-5, decl:-2.2, windFrom:200, rainWindFrom:200, rainMonths:[5,6,7,8],     tBase:19, drizzle:true},
+  cdmx:  {country:"México", name:"Ciudad de México", lat:19.43, lon:-99.13, elev:2240, tz:-6, decl:4.3, windFrom:20,  rainWindFrom:60,  rainMonths:[5,6,7,8],     tBase:17},
+  cun:   {country:"México", name:"Cancún",           lat:21.16, lon:-86.85, elev:10, tz:-5, decl:-1.5, windFrom:110, rainWindFrom:100, rainMonths:[5,6,7,8,9],   tBase:27},
+  dgo:   {country:"México", name:"Durango",          lat:24.02, lon:-104.66, elev:1890,tz:-6, decl:6.6, windFrom:240, rainWindFrom:120, rainMonths:[5,6,7,8],     tBase:18},
+  gdl:   {country:"México", name:"Guadalajara",      lat:20.67, lon:-103.35, elev:1566,tz:-6, decl:5.8, windFrom:260, rainWindFrom:250, rainMonths:[5,6,7,8],     tBase:21},
+  lpz:   {country:"México", name:"La Paz, BCS",      lat:24.14, lon:-110.31, elev:27,tz:-7, decl:9.6, windFrom:340, rainWindFrom:150, rainMonths:[7,8,9],       tBase:24},
+  mty:   {country:"México", name:"Monterrey",        lat:25.67, lon:-100.31, elev:540,tz:-6, decl:4.0, windFrom:100, rainWindFrom:110, rainMonths:[7,8],         tBase:24},
+  pue:   {country:"México", name:"Puebla",           lat:19.04, lon:-98.21, elev:2135, tz:-6, decl:3.9, windFrom:30,  rainWindFrom:70,  rainMonths:[5,6,7,8],     tBase:17},
+  tij:   {country:"México", name:"Tijuana",          lat:32.53, lon:-117.02, elev:20,tz:-8, decl:10.8, windFrom:270, rainWindFrom:230, rainMonths:[11,0,1,2],    tBase:18},
+  tula:  {country:"México", name:"Tula, Hidalgo",    lat:20.05, lon:-99.34, elev:2030, tz:-6, decl:4.4, windFrom:20,  rainWindFrom:60,  rainMonths:[5,6,7,8],     tBase:17},
+  gua:   {country:"Guatemala", name:"Ciudad de Guatemala", lat:14.63, lon:-90.51, elev:1500, tz:-6, decl:0.5, windFrom:25, rainWindFrom:210, rainMonths:[4,5,6,7,8,9], tBase:20},
+  bog:   {country:"Colombia", name:"Bogotá",         lat:4.71,  lon:-74.07, elev:2640, tz:-5, decl:-8.2, windFrom:110, rainWindFrom:120, rainMonths:[3,4,9,10],    tBase:14},
+  cali:  {country:"Colombia", name:"Cali",           lat:3.45,  lon:-76.53, elev:1000, tz:-5, decl:-7.0, windFrom:300, rainWindFrom:300, rainMonths:[3,4,9,10],    tBase:24},
+  mde:   {country:"Colombia", name:"Medellín",       lat:6.24,  lon:-75.58, elev:1495, tz:-5, decl:-7.8, windFrom:350, rainWindFrom:350, rainMonths:[3,4,8,9,10],  tBase:22},
+  suarez:{country:"Colombia", name:"Suárez, Cauca",  lat:2.95,  lon:-76.69, elev:1050, tz:-5, decl:-6.8, windFrom:300, rainWindFrom:290, rainMonths:[3,4,9,10],    tBase:22},
+  lima:  {country:"Perú", name:"Lima",               lat:-12.05,lon:-77.04, elev:154, tz:-5, decl:-2.2, windFrom:200, rainWindFrom:200, rainMonths:[5,6,7,8],     tBase:19, drizzle:true},
 };
 const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const CARD = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSO","SO","OSO","O","ONO","NO","NNO"];
@@ -469,7 +471,7 @@ async function fetchClimate(lat, lon){
     const out = {
       windFrom: argmax(all)*22.5, rainWindFrom: (wetN > 30 ? argmax(wet) : argmax(all))*22.5,
       rainMonths, drizzle: total < 60, tBase: tN ? +(tSum/tN).toFixed(1) : null,
-      tz: (j.utc_offset_seconds ?? Math.round(lon/15)*3600)/3600, annualMm: Math.round(total),
+      tz: (j.utc_offset_seconds ?? Math.round(lon/15)*3600)/3600, annualMm: Math.round(total), elev: typeof j.elevation==="number" ? j.elevation : undefined,
       windSource:`calculados con datos horarios ${CLIMATE_YEAR} (Open-Meteo)`
     };
     try{ localStorage.setItem("smab.clim."+k, JSON.stringify(out)); }catch(e){}
@@ -515,6 +517,7 @@ function resetView(){
   const ty = real ? (state.view==="chaak" ? 2.3 : 1.95) : 1.7;
   persp.position.set(4.0*far, ty + 1.3*far, 4.6*far);
   controls.target.set(0,ty,0); controls.update();
+  panShift = 0; if(typeof applyViewOffset==="function") applyViewOffset();
 }
 
 const hemi = new THREE.HemisphereLight(0xffffff, 0x8a9a96, 0.55); scene.add(hemi);
@@ -557,16 +560,18 @@ const INFO = {
   tripod:{title:"Trípode compartido", sub:"CHAAK y SMAA en el mismo montaje", metric:null},
   mast:  {title:"Mástil compartido", sub:"Aluminio · 3.0 m", metric:null},
   // CHAAK real (models/chaak.glb)
-  head:      {title:"Estación meteorológica CHAAK", sub:"Sensor compacto · viento, temperatura, humedad y lluvia", metric:"temp"},
+  head:      {title:"Estación meteorológica compacta", sub:"Hongyuv HY-WDS6E · viento ultrasónico, sensores MEMS y lluvia por radar", metric:"temp",
+              note:"Rangos: viento 0–60 m/s (±2%) · dirección 0–359° (±3°) · temperatura −40 a 80 °C · humedad 0–100% (±2%) · presión 150–1100 hPa (±1 hPa) · precipitación 0–100 mm/h (±10%). Sin partes móviles, IP65."},
   tapa:      {title:"Tapa de la carcasa", sub:"Cara principal · electrónica y telemetría 4G", metric:"tInt"},
   cabezal:   {title:"Cabezal superior roscado", sub:"Une el sensor con el soporte", metric:null},
   cople_sup: {title:"Cople roscado superior", sub:"Soporte de la estación", metric:null},
   tubo:      {title:"Tubo soporte", sub:"Lleva la carcasa y el sensor", metric:null},
   cople_base:{title:"Cople roscado de base", sub:"Une CHAAK con el mástil del trípode", metric:null},
+  screws:    {title:"Tornillos de la carcasa", sub:"2 × M3 · atraviesan el tubo y fijan las abrazaderas", metric:null},
 };
 /* CHAAK real: altura a la que se monta su base sobre el mástil del trípode (m) */
 const CHAAK_BASE_Y = 1.9;
-const CHAAK_EXPLODE = {head:[0,.34,0], cabezal:[0,.22,0], cople_sup:[0,.12,0], tubo:[0,0,0], cople_base:[0,-.18,0], tapa:[-.5,0,0], logger:[-.22,0,0]};
+const CHAAK_EXPLODE = {head:[0,.34,0], cabezal:[0,.22,0], cople_sup:[0,.12,0], tubo:[0,0,0], cople_base:[0,-.18,0], tapa:[-.5,0,0], logger:[-.22,0,0], screws:[.18,0,0]};
 const INLET = {chaak:2.3, smaa:1.7};   // altura de tomas (m), provisional
 
 /* Un solo montaje: body gira según el viento (brazos de sensores = +X, cara principal = −X); solar mira al ecuador */
@@ -737,7 +742,7 @@ function refreshRefCheck(){
 
 /* Modelos reales: los tres .glb comparten el mismo sistema de coordenadas (el del ensamble en AutoCAD):
    Y arriba, metros, origen en la base del trípode, brazos de sensores hacia +X, cara principal hacia −X. */
-const KEYMAP = [["sensorsolido","head"],["tapa_carcasa","tapa"],["base_carcasa","logger"],["cabezal","cabezal"],["cople_rosca_base","cople_base"],["cople_rosca_soporte","cople_sup"],["tubo_soporte","tubo"],["pm","pm"],["particul","pm"],["gas","gas"],["thr","thr"],["escudo","thr"],["anem","wind"],["vele","wind"],["wind","wind"],
+const KEYMAP = [["tornillo","screws"],["sensorsolido","head"],["tapa_carcasa","tapa"],["base_carcasa","logger"],["cabezal","cabezal"],["cople_rosca_base","cople_base"],["cople_rosca_soporte","cople_sup"],["tubo_soporte","tubo"],["pm","pm"],["particul","pm"],["gas","gas"],["thr","thr"],["escudo","thr"],["anem","wind"],["vele","wind"],["wind","wind"],
   ["pluv","rain"],["rain","rain"],["solar","solar"],["panel","solar"],["gabinete","logger"],["logger","logger"],["brazo","arms"],["tripod","tripod"],["mast","mast"]];
 async function tryLoadGLB(owner, url, fallbackKey){
   if(!THREE.GLTFLoader) return;
@@ -807,7 +812,13 @@ function mockTick(){
     if(st.source==="live") continue;
     const v = st.v, small = st.key==="smaa";
     Object.assign(v, {temp:+(E.temp+j(.3)).toFixed(1), rh:Math.round(E.rh+j(2))});
-    if(st.key==="chaak"){ v.ws = E.ws; v.wd = E.wd; v.rain = E.rain; v.rainDay = +((v.rainDay||0) + E.rain/240).toFixed(1); }
+    if(st.key==="chaak"){
+      v.ws = +(E.ws + j(.2)).toFixed(2); v.wd = E.wd; v.rain = E.rain; v.rainDay = +((v.rainDay||0) + E.rain/240).toFixed(2);
+      const p0 = 1013.25*Math.pow(1 - 2.25577e-5*(city.elev||0), 5.25588);           // presión a la altitud del sitio
+      v.press = +(p0 + 1.2*Math.cos((h-10)/12*Math.PI) - (raining?2.5:0) + j(.3)).toFixed(1);
+      v.ptype = !raining ? "Ninguna" : (v.temp < 1 ? "Nieve" : (state.rain && Math.random() < .04 ? "Granizo" : "Lluvia"));
+      const g = Math.log(v.rh/100) + 17.62*v.temp/(243.12+v.temp); v.dew = +(243.12*g/(17.62-g)).toFixed(1);
+    }
     v.pm25 = Math.max(3, Math.round(14 + 22*traffic - (raining?8:0) + j(4)));
     v.pm10 = Math.round(v.pm25*1.8 + j(4));
     v.no2  = Math.max(4, Math.round(18 + 30*traffic + j(4)));
@@ -827,7 +838,8 @@ function mapApi(j){
     temp: pick("temp","temperature","t","data.temp"), rh: pick("rh","humidity","hr","data.rh"),
     ws: pick("ws","wind_speed","data.ws"), wd: pick("wd","wind_dir","data.wd"),
     rain: pick("rain","precip","data.rain"), solarW: pick("solar","solar_w"), batt: pick("battery","batt"),
-    rssi: pick("rssi","signal"), tInt: pick("t_int","temp_internal","box_temp")
+    rssi: pick("rssi","signal"), tInt: pick("t_int","temp_internal","box_temp"),
+    press: pick("press","pressure","bar","hpa","data.pressure"), dew: pick("dew","dew_point","data.dew")
   };
   Object.keys(out).forEach(k=> out[k]===undefined && delete out[k]);
   return Object.keys(out).length ? out : null;
@@ -959,7 +971,7 @@ function applyCity(){
     ["04", city.drizzle
       ? `<b>Lluvia escasa:</b> llovizna en ${months}, con viento del ${up}. Pluviómetro y tomas del lado ${up}, sin nada encima.`
       : `<b>La lluvia sí debe mojar el equipo.</b> Pluviómetro y tomas del lado ${up}, sin nada encima. Temporada de lluvias: ${months}.`],
-    ["05", `<b>Mismo mástil, por niveles.</b> CHAAK arriba (anemómetro y pluviómetro en lo más alto, tomas a ${INLET.chaak} m) y SMAA abajo (tomas a ${INLET.smaa} m). Cada gabinete va debajo de sus tomas y de su escudo, porque el calor del gabinete sube.`],
+    ["05", `<b>Mismo mástil, por niveles.</b> CHAAK arriba (sensor meteorológico compacto en lo más alto, a ${INLET.chaak} m) y SMAA abajo (tomas a ${INLET.smaa} m). Cada gabinete va debajo de sus tomas y de su escudo, porque el calor del gabinete sube.`],
     ["06", `<b>Paneles solares al ${usual},</b> inclinación de ${tilt}° (10° mínimo para que se laven con la lluvia), sin dar sombra a los escudos de radiación.`],
     ["07", `<b>Instalación.</b> Nivela el trípode y el pluviómetro con burbuja, lastra o ancla cada pata y conecta el mástil a tierra física. Orienta con el norte verdadero (en la brújula del celular activa el norte geográfico). Lejos de escapes de aire acondicionado, chimeneas y generadores.`],
   ];
@@ -1049,12 +1061,13 @@ const ROWS = {
   solar: [["Potencia",v=>f(v.solarW),"W"],["Batería",v=>f(v.batt),"%"]],
   logger:[["Temperatura interna",v=>f(v.tInt,1),"°C"],["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 4G",v=>f(v.rssi),"dBm"]],
   arms:  [["Brazo de sensores hacia",()=>cardinal(c().rainWindFrom),""]],
-  head:  [["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh),"%"],["Viento",v=>v.ws==null?"—":`${f(v.ws,1)} m/s ${cardinal(v.wd)}`,""],["Lluvia",v=>f(v.rain,1),"mm/h"],["Altura del sensor",()=>INLET.chaak,"m"]],
+  head:  [["Velocidad del viento",v=>f(v.ws,2),"m/s"],["Dirección del viento",v=>v.wd==null?"—":`${cardinal(v.wd)} ${v.wd}`,"°"],["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh,1),"%"],["Presión atmosférica",v=>f(v.press,1),"hPa"],["Precipitación",v=>f(v.rain,2),"mm/h"],["Tipo de precipitación",v=>v.ptype||"—",""],["Acumulado hoy",v=>f(v.rainDay,2),"mm"],["Punto de rocío (calculado)",v=>f(v.dew,1),"°C"]],
   tapa:  [["Temperatura interna",v=>f(v.tInt,1),"°C"],["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 4G",v=>f(v.rssi),"dBm"]],
   cabezal:[["Rosca hacia",()=>"sensor",""]],
   cople_sup:[["Tipo",()=>"cople roscado",""]],
   tubo:  [["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"]],
   cople_base:[["Montaje sobre mástil a",()=>CHAAK_BASE_Y.toFixed(1),"m"]],
+  screws:[["Cantidad",()=>"2",""],["Medida",()=>"M3",""],["Separación entre barrenos",()=>"90","mm"]],
   tripod:[["Tomas CHAAK",()=>INLET.chaak,"m"],["Tomas SMAA",()=>INLET.smaa,"m"],["Separación a muros",()=>"≥ 1","m"]],
   mast:  [["Altura del mástil",()=>MAST_TOP.toFixed(1),"m"],["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Brazos de sensores",()=>cardinal(c().rainWindFrom),""]],
 };
@@ -1063,7 +1076,7 @@ function statusFor(key, st){
   const band = (val,b)=> b.find(x=>val<=x[0]);
   if(key==="pm" && v.pm25!=null){ const s = band(v.pm25,BANDS.pm25); return `<span class="pill ${s[2]}">${pre}Aire: ${s[1]}</span>`; }
   if(key==="gas" && v.o3!=null){ const s = band(v.o3,BANDS.o3); return `<span class="pill ${s[2]}">${pre}Ozono: ${s[1]}</span>`; }
-  if(key==="head") return v.rain>0 ? `<span class="pill info">Lloviendo · viento del ${cardinal(v.wd)}</span>` : `<span class="pill ok">Sin lluvia · viento del ${cardinal(v.wd)}</span>`;
+  if(key==="head") return v.rain>0 ? `<span class="pill info">${v.ptype||"Lluvia"} · viento del ${cardinal(v.wd)}</span>` : `<span class="pill ok">Sin lluvia · viento del ${cardinal(v.wd)}</span>`;
   if((key==="logger"||key==="tapa") && v.tInt!=null) return v.tInt<=40 ? `<span class="pill ok">${pre}Electrónica en rango</span>` : v.tInt<=50 ? `<span class="pill warn">${pre}Calentamiento · agregar sombra</span>` : `<span class="pill bad">${pre}Sobrecalentamiento</span>`;
   if(key==="rain") return v.rain>0 ? `<span class="pill info">Lloviendo · viento del ${cardinal(v.wd)}</span>` : `<span class="pill ok">Sin lluvia</span>`;
   if(key==="solar") return v.solarW>2 ? `<span class="pill ok">${pre}Cargando</span>` : `<span class="pill warn">${pre}Sin generación</span>`;
@@ -1084,6 +1097,7 @@ function refreshPanel(){
   html += (ROWS[key]||[]).map(([l,fn,u])=>`<div class="row" style="--n:${n}"><span>${l}</span>${cols.map(st=>`<b>${fn(st.v||{},st)}<small>${u}</small></b>`).join("")}</div>`).join("");
   $("pRows").innerHTML = html;
   $("pStatus").innerHTML = cols.map(st=>statusFor(key,st)).filter((x,i,a)=>x && a.indexOf(x)===i).join("");
+  $("pNote").hidden = !info.note; $("pNote").textContent = info.note || "";
   const series = info.metric ? cols.map(st=>(st.hist||{})[info.metric]||[]).filter(h=>h.length>1) : [];
   if(series.length){
     const all = series.flat(), mn = Math.min(...all), mx = Math.max(...all), span = (mx-mn)||1;
@@ -1322,7 +1336,7 @@ async function runTour(){
   if(!await hold("Cada pieza, a la vista", 3800)) return;
   const pick = (...opts)=> opts.find(([st,p])=> ST[st].parts[p]);
   const steps = [
-    [pick(["chaak","head"],["chaak","wind"]), "Clima en tiempo real: viento, temperatura, humedad y lluvia"],
+    [pick(["chaak","head"],["chaak","wind"]), "Clima en tiempo real: viento, temperatura, humedad, presión y lluvia"],
     [pick(["smaa","pm"],["chaak","pm"]), "Partículas PM2.5 y PM10 en tiempo real"],
     [pick(["smaa","gas"],["chaak","gas"]), "Ozono y dióxido de nitrógeno"],
     [pick(["chaak","tapa"],["chaak","logger"]), "Electrónica protegida en la cara principal"],
@@ -1367,8 +1381,19 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ if(!$("sheet").h
 const mq = matchMedia("(max-width: 760px)");
 function isMobile(){ return matchMedia("(max-width: 760px)").matches; }
 function currentPane(){ return document.body.dataset.pane || ""; }
+/* En celular, con una hoja abierta, el modelo sube para quedar visible arriba de ella */
+let panShift = 0;
+function applyViewOffset(){
+  const p = currentPane(), sel = {sensor:"#panel", guide:"#siting", site:".sitectl", explore:".dock"}[p];
+  const sh = isMobile() && sel ? (document.querySelector(sel)?.offsetHeight || 0) : 0;
+  const want = Math.min(.36, sh / 2 / Math.max(1, stage.clientHeight));     // centra el modelo en el espacio libre arriba de la hoja
+  const dist = persp.position.distanceTo(controls.target), visH = 2*dist*Math.tan(persp.fov*Math.PI/360);
+  const target = want * visH, d = target - panShift;
+  if(Math.abs(d) < 1e-4) return;
+  persp.position.y -= d; controls.target.y -= d; panShift = target; controls.update();
+}
 function syncPane(p){
-  document.body.dataset.pane = p;
+  document.body.dataset.pane = p; requestAnimationFrame(applyViewOffset);
   document.querySelectorAll(".tabbar button[data-pane]").forEach(b=> setPressed(b, b.dataset.pane === p));
   $("hint").hidden = !!state.selected || tour.on;
 }
