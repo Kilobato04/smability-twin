@@ -556,7 +556,7 @@ function resetView(){
   const real = typeof ST!=="undefined" && ST.chaak.parts.head;           // modelo real cargado: encuadre más cercano a CHAAK
   const zoom = real ? (state.view==="chaak" ? .4 : .7) : 1;
   const far = (isMobile() ? 1.7 : 1) * zoom * (state.ref && state.ref!=="none" ? Math.max(1.6/zoom, sceneExtent()/4.5/zoom) : 1);
-  const ty = real ? (state.view==="chaak" ? 2.3 : 1.95) : 1.7;
+  const ty = real ? (state.view==="chaak" ? CHAAK_BASE_Y + .42 : 1.1) : 1.7;
   persp.position.set(4.0*far, ty + 1.3*far, 4.6*far);
   controls.target.set(0,ty,0); controls.update();
   panShift = 0; if(typeof applyViewOffset==="function") applyViewOffset();
@@ -613,9 +613,11 @@ const INFO = {
   screws:    {title:"Tornillos de la carcasa", sub:"2 × M3 · atraviesan el tubo y fijan las abrazaderas", metric:null},
 };
 /* CHAAK real: altura a la que se monta su base sobre el mástil del trípode (m) */
-const CHAAK_BASE_Y = 1.9;
+const CHAAK_BASE_Y = 1.12;          // tope del mástil de 1.25" del trípode (models/montaje.glb)
+const SMAA_DY = -0.72;              // SMAA provisional: baja al tramo libre del mástil, bajo CHAAK
+let LEG = {r:.95, a0:30};           // patas para la ficha (se actualiza con el trípode real)
 const CHAAK_EXPLODE = {head:[0,.34,0], cabezal:[0,.22,0], cople_sup:[0,.12,0], tubo:[0,0,0], cople_base:[0,-.18,0], tapa:[-.5,0,0], logger:[-.22,0,0], screws:[.18,0,0], screws_head:[0,.34,0]};
-const INLET = {chaak:2.3, smaa:1.7};   // altura de tomas (m), provisional
+const INLET = {chaak:1.74, smaa:0.98};   // altura de tomas (m); CHAAK se recalcula con el modelo real
 
 /* Un solo montaje: body gira según el viento (brazos de sensores = +X, cara principal = −X); solar mira al ecuador */
 const body = new THREE.Group(), solar = new THREE.Group(); scene.add(body); scene.add(solar);
@@ -639,6 +641,7 @@ function pvPanel(st, w, d, y, armLen, explode){
   st.parts.solar.pv = pv;
 }
 function rebuildMast(top){
+  if(RIG.real) return;                 // el trípode real ya trae su mástil
   const old = RIG.parts.mast; if(old) old.group.parent.remove(old.group);
   const g = addPart(RIG, "mast", body, V(0,0,0), V(0,0,0));
   g.add(rod(V(0,.9,0), V(0,top,0), .03, M.alu));
@@ -651,8 +654,7 @@ function buildRig(){
   for(let i=0;i<3;i++){ const a = i*2*Math.PI/3 + Math.PI/6; g.add(rod(hub, V(Math.cos(a)*.95,0,Math.sin(a)*.95), .022, M.alu)); g.add(mesh(new THREE.CylinderGeometry(.05,.05,.02,16), M.dark, V(Math.cos(a)*.95,.01,Math.sin(a)*.95))); }
   g.add(mesh(new THREE.CylinderGeometry(.06,.06,.12,16), M.dark, hub));
   g = addPart(RIG, "mast", body, V(0,0,0), V(0,0,0));
-  g.add(rod(V(0,.9,0), V(0,3.0,0), .03, M.alu));
-  g.add(rod(V(0,3.0,0), V(0,3.07,0), .045, M.dark));       // tapa
+  g.add(rod(V(0,.9,0), V(0,CHAAK_BASE_Y,0), .03, M.alu));
 }
 /* CHAAK: parte alta del mástil (meteorología + tomas a 2.3 m) */
 function buildChaak(st){
@@ -708,9 +710,10 @@ function buildSmaa(st){
   g = addPart(st, "gas", body, V(.3,1.68,-.13), V(.3,-.25,-.45));
   g.add(mesh(new THREE.CylinderGeometry(.04,.04,.12,24), M.white));
   g.add(mesh(new THREE.CylinderGeometry(.042,.042,.016,24), M.plum, V(0,.025,0)));
-  pvPanel(st, .3, .22, 1.18, .14, V(0,-.15,.45));
+  pvPanel(st, .3, .22, 1.60, .14, V(0,-.15,.45));
 }
 buildRig(); buildChaak(ST.chaak); buildSmaa(ST.smaa);
+Object.values(ST.smaa.parts).forEach(p=>{ p.base.y += SMAA_DY; p.group.position.y += SMAA_DY; });
 /* ================= CARA PRINCIPAL: flecha y etiqueta ================= */
 const frontMark = new THREE.Group(); body.add(frontMark);
 const frontLabelCanvas = document.createElement("canvas"); frontLabelCanvas.width = 512; frontLabelCanvas.height = 112;
@@ -817,6 +820,11 @@ async function tryLoadGLB(owner, url, fallbackKey){
       const head = meshes.find(o=>/sensorsolido/i.test(o.name));
       if(head){ head.geometry.computeBoundingBox(); const bb = head.geometry.boundingBox; INLET.chaak = +(CHAAK_BASE_Y + head.position.y + (bb.min.y + bb.max.y)/2).toFixed(2); }
       rebuildMast(CHAAK_BASE_Y);
+    }
+    if(owner===RIG){
+      RIG.real = true; MAST_TOP = CHAAK_BASE_Y; LEG = {r:.355, a0:46};
+      INFO.mast.sub = `Tubo de 1.25" · ${CHAAK_BASE_Y.toFixed(2)} m hasta la base de CHAAK`;
+      INFO.tripod.sub = "Patas de 0.71 m de apertura · CHAAK y SMAA en el mismo montaje";
     }
     setView(state.view); applyCity(); if(owner===ST.chaak && !tour.on) resetView(); if(RENDER.ready) applyRender();
     $("hint").textContent = `Modelo ${owner.id} cargado · toca un sensor`;
@@ -1068,7 +1076,7 @@ function drawPlan(cv, pal, print){
     // huella del trípode y brazo de sensores, girados como en sitio
     const r = bodyTargetRot, w = (x,z)=>[C + (x*Math.cos(r) + z*Math.sin(r))*S, C + (-x*Math.sin(r) + z*Math.cos(r))*S];
     g.strokeStyle = pal.muted; g.lineWidth = 6;
-    for(let i=0;i<3;i++){ const a = i*2*Math.PI/3 + Math.PI/6, [x,y] = w(Math.cos(a)*.95, Math.sin(a)*.95);
+    for(let i=0;i<3;i++){ const a = i*2*Math.PI/3 + LEG.a0*RAD, [x,y] = w(Math.cos(a)*LEG.r, Math.sin(a)*LEG.r);
       g.beginPath(); g.moveTo(C,C); g.lineTo(x,y); g.stroke(); g.fillStyle = pal.muted; g.beginPath(); g.arc(x,y,9,0,7); g.fill(); }
     const [ax,ay] = w(.62,0); g.strokeStyle = pal.arm; g.lineWidth = 9; g.beginPath(); g.moveTo(C,C); g.lineTo(ax,ay); g.stroke();
     const [tx,ty] = w(1.05,0); g.fillStyle = pal.arm; g.font = "600 24px 'Barlow', sans-serif"; g.fillText("Sensores", tx, ty);
