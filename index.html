@@ -476,7 +476,7 @@ function sunFlipMonths(c){
   return MONTHS.filter((_,m)=>{ const dec = sunPosition(cityDate(c,m,12),c.lat,c.lon).dec; return c.lat>=0 ? dec > c.lat : dec < c.lat; });
 }
 function faceExposure(city, frontAz){
-  const faces = [["Frente (gabinetes)",frontAz],["Lado derecho",frontAz+90],["Trasera (sensores)",frontAz+180],["Lado izquierdo",frontAz+270]];
+  const faces = [["Frente (SMAA)",frontAz],["Lado derecho",frontAz+90],["Trasera (CHAAK)",frontAz+180],["Lado izquierdo",frontAz+270]];
   const cnt = [0,0,0,0]; let n = 0;
   for(let m=0;m<12;m++) for(let h=5;h<=20;h+=.5){
     const s = sunPosition(cityDate(city,m,h),city.lat,city.lon); if(s.alt<5) continue; n++;
@@ -597,27 +597,34 @@ const INFO = {
   thr:   {title:"Escudo de radiación", sub:"Temperatura y humedad relativa", metric:"temp"},
   wind:  {title:"Anemómetro y veleta", sub:"Velocidad y dirección del viento", metric:"ws"},
   rain:  {title:"Pluviómetro", sub:"Balancín · 0.2 mm por pulso", metric:"rain"},
-  solar: {title:"Panel solar", sub:"Autonomía energética", metric:"solarW"},
+  solar: {title:"Panel solar", sub:"Fijo a la carcasa · inclinación de fábrica", metric:"solarW"},
   logger:{title:"Gabinete y datalogger", sub:"Cara principal · electrónica y telemetría 4G", metric:"tInt"},
   tripod:{title:"Trípode compartido", sub:"CHAAK y SMAA en el mismo montaje", metric:null},
   mast:  {title:"Mástil compartido", sub:"Aluminio · 3.0 m", metric:null},
   // CHAAK real (models/chaak.glb)
   head:      {title:"Estación meteorológica compacta", sub:"Hongyuv HY-WDS6E · viento ultrasónico, sensores MEMS y lluvia por radar", metric:"temp",
               note:"Rangos: viento 0–60 m/s (±2%) · dirección 0–359° (±3°) · temperatura −40 a 80 °C · humedad 0–100% (±2%) · presión 150–1100 hPa (±1 hPa) · precipitación 0–100 mm/h (±10%). Sin partes móviles, IP65."},
-  tapa:      {title:"Tapa de la carcasa", sub:"Cara principal · electrónica y telemetría 4G", metric:"tInt"},
+  tapa:      {title:"Tapa de la carcasa CHAAK", sub:"Del lado opuesto a SMAA · electrónica y telemetría 4G", metric:"tInt"},
   cabezal:   {title:"Cabezal superior roscado", sub:"Une el sensor con el soporte", metric:null},
   cople_sup: {title:"Cople roscado superior", sub:"Soporte de la estación", metric:null},
   tubo:      {title:"Tubo soporte", sub:"Lleva la carcasa y el sensor", metric:null},
   cople_base:{title:"Cople roscado de base", sub:"Une CHAAK con el mástil del trípode", metric:null},
   screws_head:{title:"Tornillos del sensor", sub:"3 × M3 radiales a 120° · fijan la estación compacta al cabezal roscado", metric:null},
   screws:    {title:"Tornillos de la carcasa", sub:"2 × M3 · atraviesan el tubo y fijan las abrazaderas", metric:null},
+  // SMAA real (models/smaa.glb)
+  smaa_case: {title:"Carcasa SMAA · tapa superior", sub:"Fija a la pestaña de la placa soporte con 2 tornillos · electrónica a la sombra del panel", metric:"tInt"},
+  smaa_sens: {title:"Módulo de sensores SMAA", sub:"Calidad del aire: PM2.5 · PM10 · O₃ · NO₂ · temperatura y humedad", metric:"pm25",
+              note:"Tomas de aire en la parte baja de la carcasa: el panel y la pestaña las cubren de la lluvia directa sin cerrar el paso del aire."},
+  battery:   {title:"Paquete de baterías", sub:"Bajo la placa inclinada del panel · alimenta a SMAA de noche", metric:"batt"},
 };
 /* CHAAK real: altura a la que se monta su base sobre el mástil del trípode (m) */
 const CHAAK_BASE_Y = 1.12;          // tope del mástil de 1.25" del trípode (models/montaje.glb)
-const SMAA_DY = -0.72;              // SMAA provisional: baja al tramo libre del mástil, bajo CHAAK
+const SMAA_DY = 0;                 // SMAA provisional ya colocada a la altura de la carcasa original de CHAAK
+const SMAA_BASE_Y = CHAAK_BASE_Y + .335;   // SMAA real: cara inferior de la pestaña de la placa soporte, sobre el tubo de CHAAK
+const SMAA_EXPLODE = {arms:[0,0,0], smaa_case:[-.1,-.06,0], smaa_sens:[-.1,-.22,0], solar:[-.22,.2,0], battery:[-.04,.04,.3]};
 let LEG = {r:.95, a0:30};           // patas para la ficha (se actualiza con el trípode real)
-const CHAAK_EXPLODE = {head:[0,.34,0], cabezal:[0,.22,0], cople_sup:[0,.12,0], tubo:[0,0,0], cople_base:[0,-.18,0], tapa:[-.5,0,0], logger:[-.22,0,0], screws:[.18,0,0], screws_head:[0,.34,0]};
-const INLET = {chaak:1.74, smaa:0.98};   // altura de tomas (m); CHAAK se recalcula con el modelo real
+const CHAAK_EXPLODE = {head:[0,.34,0], cabezal:[0,.22,0], cople_sup:[0,.12,0], tubo:[0,0,0], cople_base:[0,-.18,0], tapa:[.5,0,0], logger:[.22,0,0], screws:[-.18,0,0], screws_head:[0,.34,0]};
+const INLET = {chaak:1.74, smaa:1.25};   // altura de tomas (m); CHAAK se recalcula con el modelo real
 
 /* Un solo montaje: body gira según el viento (brazos de sensores = +X, cara principal = −X); solar mira al ecuador */
 const body = new THREE.Group(), solar = new THREE.Group(); scene.add(body); scene.add(solar);
@@ -695,22 +702,28 @@ function buildChaak(st){
 }
 /* SMAA: parte baja del mástil (calidad del aire, tomas a 1.7 m); gabinete debajo de sus tomas */
 function buildSmaa(st){
+  // Provisional hasta tener el modelo real: SMAA en la cara principal (−X), donde estaba la carcasa de CHAAK.
+  // Placa soporte del panel sujeta al tubo con cinchos; carcasa fija a la placa; panel fijo sobre la carcasa.
   let g = addPart(st, "arms", body, V(0,0,0), V(0,0,0));
-  g.add(rod(V(0,1.8,0), V(.42,1.8,0), .014, M.alu));
-  g = addPart(st, "logger", body, V(-.13,1.4,0), V(-.5,-.15,0));
-  g.add(mesh(new THREE.BoxGeometry(.13,.32,.26), M.white));
-  g.add(mesh(new THREE.BoxGeometry(.01,.06,.16), M.plum, V(-.07,.09,0)));
-  g.add(mesh(new THREE.BoxGeometry(.008,.08,.14), M.dark, V(-.068,-.03,0)));
-  g.add(mesh(new THREE.BoxGeometry(.2,.012,.3), M.white, V(-.03,.175,0)));   // visera
-  g = addPart(st, "thr", body, V(.35,1.78,0), V(.35,-.05,.35)); radiationShield(g, 5, .07);
-  g = addPart(st, "pm", body, V(.18,1.7,0), V(.28,-.3,-.25));
-  g.add(mesh(new THREE.BoxGeometry(.1,.12,.09), M.white));
-  g.add(mesh(new THREE.BoxGeometry(.102,.016,.092), M.plum, V(0,.04,0)));
-  g.add(mesh(new THREE.CylinderGeometry(.015,.015,.06,14), M.dark, V(0,-.09,0)));
-  g = addPart(st, "gas", body, V(.3,1.68,-.13), V(.3,-.25,-.45));
-  g.add(mesh(new THREE.CylinderGeometry(.04,.04,.12,24), M.white));
-  g.add(mesh(new THREE.CylinderGeometry(.042,.042,.016,24), M.plum, V(0,.025,0)));
-  pvPanel(st, .3, .22, 1.60, .14, V(0,-.15,.45));
+  g.add(mesh(new THREE.BoxGeometry(.012,.34,.2), M.alu, V(-.03,1.45,0)));
+  [1.33,1.57].forEach(y=>{ const t = mesh(new THREE.TorusGeometry(.024,.003,6,24), M.dark, V(0,y,0)); t.rotation.x = Math.PI/2; g.add(t); });   // cinchos
+  g = addPart(st, "logger", body, V(-.11,1.45,0), V(-.45,0,0));
+  g.add(mesh(new THREE.BoxGeometry(.13,.28,.22), M.white));
+  g.add(mesh(new THREE.BoxGeometry(.01,.06,.14), M.plum, V(-.07,.08,0)));
+  g.add(mesh(new THREE.BoxGeometry(.008,.07,.12), M.dark, V(-.068,-.03,0)));
+  g = addPart(st, "thr", body, V(-.12,1.25,.08), V(-.3,-.15,.25)); radiationShield(g, 4, .05);
+  g = addPart(st, "pm", body, V(-.11,1.26,-.07), V(-.3,-.2,-.2));
+  g.add(mesh(new THREE.BoxGeometry(.09,.1,.08), M.white));
+  g.add(mesh(new THREE.BoxGeometry(.092,.014,.082), M.plum, V(0,.035,0)));
+  g.add(mesh(new THREE.CylinderGeometry(.013,.013,.05,14), M.dark, V(0,-.075,0)));
+  g = addPart(st, "gas", body, V(-.19,1.27,0), V(-.45,-.2,0));
+  g.add(mesh(new THREE.CylinderGeometry(.035,.035,.1,24), M.white));
+  g.add(mesh(new THREE.CylinderGeometry(.037,.037,.014,24), M.plum, V(0,.02,0)));
+  g = addPart(st, "solar", body, V(-.11,1.62,0), V(-.2,.3,0));
+  const pv = new THREE.Group(); pv.rotation.z = 20*RAD; g.add(pv);           // fijo, inclinado hacia la cara principal
+  pv.add(mesh(new THREE.BoxGeometry(.26,.02,.3), M.alu));
+  pv.add(mesh(new THREE.BoxGeometry(.24,.006,.28), M.pv, V(0,.012,0)));
+  st.parts.solar.fixed = true;
 }
 buildRig(); buildChaak(ST.chaak); buildSmaa(ST.smaa);
 Object.values(ST.smaa.parts).forEach(p=>{ p.base.y += SMAA_DY; p.group.position.y += SMAA_DY; });
@@ -788,7 +801,7 @@ function refreshRefCheck(){
 
 /* Modelos reales: los tres .glb comparten el mismo sistema de coordenadas (el del ensamble en AutoCAD):
    Y arriba, metros, origen en la base del trípode, brazos de sensores hacia +X, cara principal hacia −X. */
-const KEYMAP = [["tornillos_sensor","screws_head"],["tornillo","screws"],["sensorsolido","head"],["tapa_carcasa","tapa"],["base_carcasa","logger"],["cabezal","cabezal"],["cople_rosca_base","cople_base"],["cople_rosca_soporte","cople_sup"],["tubo_soporte","tubo"],["pm","pm"],["particul","pm"],["gas","gas"],["thr","thr"],["escudo","thr"],["anem","wind"],["vele","wind"],["wind","wind"],
+const KEYMAP = [["soporte_panel","arms"],["smaa_top","smaa_case"],["smaa_bottom","smaa_sens"],["panel_solar","solar"],["bateria","battery"],["tornillos_sensor","screws_head"],["tornillo","screws"],["sensorsolido","head"],["tapa_carcasa","tapa"],["base_carcasa","logger"],["cabezal","cabezal"],["cople_rosca_base","cople_base"],["cople_rosca_soporte","cople_sup"],["tubo_soporte","tubo"],["pm","pm"],["particul","pm"],["gas","gas"],["thr","thr"],["escudo","thr"],["anem","wind"],["vele","wind"],["wind","wind"],
   ["pluv","rain"],["rain","rain"],["solar","solar"],["panel","solar"],["gabinete","logger"],["logger","logger"],["brazo","arms"],["tripod","tripod"],["mast","mast"]];
 async function tryLoadGLB(owner, url, fallbackKey){
   if(!THREE.GLTFLoader) return;
@@ -800,12 +813,12 @@ async function tryLoadGLB(owner, url, fallbackKey){
     owner.parts = {}; if(owner.cups!==undefined){ owner.cups = owner.vane = null; }
     const root = gltf.scene; root.updateMatrixWorld(true);
     const center = new THREE.Box3().setFromObject(root).getCenter(V());
-    const baseY = owner===ST.chaak ? CHAAK_BASE_Y : 0;
+    const baseY = owner===ST.chaak ? CHAAK_BASE_Y : owner===ST.smaa ? SMAA_BASE_Y : 0;
     const meshes = []; root.traverse(o=>{ if(o.isMesh) meshes.push(o); });
     meshes.forEach(o=>{
       const n = (o.name+" "+(o.parent?o.parent.name:"")).toLowerCase(); let key = fallbackKey;
       for(const [frag,k] of KEYMAP) if(n.includes(frag)){ key = k; break; }
-      if(!owner.parts[key]) addPart(owner, key, key==="solar"?solar:body, V(0,baseY,0), V());
+      if(!owner.parts[key]) addPart(owner, key, body, V(0,baseY,0), V());   // panel real: fijo a la carcasa, gira con el montaje
       o.castShadow = o.receiveShadow = true; o.material = o.material.clone();
       if(o.material.emissive === undefined) o.material = new THREE.MeshStandardMaterial({color:o.material.color||0xdddddd});
       const m = o.matrixWorld.clone(); o.parent.remove(o);           // conserva la posición del modelo, sin heredar el giro actual
@@ -813,6 +826,7 @@ async function tryLoadGLB(owner, url, fallbackKey){
     });
     Object.entries(owner.parts).forEach(([k,p])=>{
       if(owner===ST.chaak && CHAAK_EXPLODE[k]){ p.explode = V(...CHAAK_EXPLODE[k]); return; }
+      if(owner===ST.smaa && SMAA_EXPLODE[k]){ p.explode = V(...SMAA_EXPLODE[k]); return; }
       const d = new THREE.Box3().setFromObject(p.group).getCenter(V()).sub(center); d.y *= .4;
       p.explode = owner===RIG ? V(0, p===owner.parts.tripod?-.35:0, 0) : (d.lengthSq()>1e-4 ? d.normalize().multiplyScalar(.55) : V());
     });
@@ -820,6 +834,12 @@ async function tryLoadGLB(owner, url, fallbackKey){
       const head = meshes.find(o=>/sensorsolido/i.test(o.name));
       if(head){ head.geometry.computeBoundingBox(); const bb = head.geometry.boundingBox; INLET.chaak = +(CHAAK_BASE_Y + head.position.y + (bb.min.y + bb.max.y)/2).toFixed(2); }
       rebuildMast(CHAAK_BASE_Y);
+    }
+    if(owner===ST.smaa){
+      owner.real = true;
+      const sens = meshes.find(o=>/smaa_bottom/i.test(o.name));
+      if(sens){ sens.geometry.computeBoundingBox(); const bb = sens.geometry.boundingBox; INLET.smaa = +(SMAA_BASE_Y + sens.position.y + (bb.min.y + bb.max.y)/2).toFixed(2); }
+      INFO.solar.sub = "Fijo a la placa soporte · 37° de fábrica, mirando a la cara principal";
     }
     if(owner===RIG){
       RIG.real = true; MAST_TOP = CHAAK_BASE_Y; LEG = {r:.355, a0:46};
@@ -987,7 +1007,8 @@ function setView(view){
   setTimeout(updateChip, 0);
   state.view = view; try{localStorage.setItem("smab.view",view);}catch(_){}
   document.querySelectorAll(".seg button").forEach(b=> setPressed(b, b.dataset.view===view));
-  for(const st of Object.values(ST)){ const on = view==="both" || view===st.key; Object.values(st.parts).forEach(p=> p.group.visible = on); }
+  const SHARED = ["tubo","cople_base","cople_sup"];   // tubo de CHAAK: también lo usa SMAA
+  for(const st of Object.values(ST)){ const on = view==="both" || view===st.key; Object.entries(st.parts).forEach(([k,p])=> p.group.visible = on || (st===ST.chaak && ST.smaa.real && SHARED.includes(k))); }
   if(state.selected && state.selected.st!=="rig" && !visible().includes(ST[state.selected.st])) select(null);
   showSource(); refreshPanel();
 }
@@ -1017,12 +1038,12 @@ function applyCity(){
   $("sitingCity").textContent = `${city.name} · ${latLabel(city.lat)}`;
   const items = [
     ["01", `<b>Trípode libre, no sobre muros.</b> A 1 m o más de cualquier muro y a una distancia de al menos 2 veces la altura de obstáculos cercanos. Un muro calienta los equipos y frena el aire que llega a las tomas.`],
-    ["02", `<b>Cara principal hacia el ${down} (${frontAz}°),</b> de espaldas al viento de lluvia del ${up}. Los gabinetes de CHAAK y SMAA miran al mismo lado; el aguacero pega en la parte trasera y en los brazos de sensores.`],
+    ["02", `<b>Cara principal hacia el ${down} (${frontAz}°),</b> de espaldas al viento de lluvia del ${up}: SMAA va de este lado y protege sus tomas y conectores. La carcasa de CHAAK queda del lado opuesto, hacia la lluvia: tapa sellada IP65 y prensaestopas siempre hacia abajo.`],
     ["03", `<b>Electrónica a la sombra.</b> El lado con más horas de sol directo es ${top.label.toLowerCase()} (${cardinal(top.az)}, ${top.pct}% de las horas de sol). Visera o pantalla de ese lado, sin tapar las tomas. ${flip.length ? `El sol de mediodía pasa al ${other} del cenit en <b>${flip.join(", ")}</b>: la sombra cambia de lado a mitad de año.` : `Aquí el sol de mediodía siempre pasa al ${usual} del cenit.`}`],
     ["04", city.drizzle
       ? `<b>Lluvia escasa:</b> llovizna en ${months}, con viento del ${up}. Pluviómetro y tomas del lado ${up}, sin nada encima.`
       : `<b>La lluvia sí debe mojar el equipo.</b> Pluviómetro y tomas del lado ${up}, sin nada encima. Temporada de lluvias: ${months}.`],
-    ["05", `<b>Mismo mástil, por niveles.</b> CHAAK arriba (sensor meteorológico compacto en lo más alto, a ${INLET.chaak} m) y SMAA abajo (tomas a ${INLET.smaa} m). Cada gabinete va debajo de sus tomas y de su escudo, porque el calor del gabinete sube.`],
+    ["05", `<b>Un tubo, dos lados.</b> SMAA en la cara principal (tomas a ${INLET.smaa} m), con la placa de su panel sujeta al tubo con cinchos. La carcasa de CHAAK va del lado opuesto con los mismos 2 barrenos y tornillos M3. El sensor meteorológico queda arriba, a ${INLET.chaak} m.`],
     ["06", `<b>Paneles solares al ${usual},</b> inclinación de ${tilt}° (10° mínimo para que se laven con la lluvia), sin dar sombra a los escudos de radiación.`],
     ["07", `<b>Instalación.</b> Nivela el trípode y el pluviómetro con burbuja, lastra o ancla cada pata y conecta el mástil a tierra física. Orienta con el norte verdadero (en la brújula del celular activa el norte geográfico). Lejos de escapes de aire acondicionado, chimeneas y generadores.`],
   ];
@@ -1111,9 +1132,12 @@ const ROWS = {
   rain:  [["Intensidad",v=>f(v.rain,1),"mm/h"],["Acumulado hoy",v=>f(v.rainDay,1),"mm"]],
   solar: [["Potencia",v=>f(v.solarW),"W"],["Batería",v=>f(v.batt),"%"]],
   logger:[["Temperatura interna",v=>f(v.tInt,1),"°C"],["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 4G",v=>f(v.rssi),"dBm"]],
-  arms:  [["Brazo de sensores hacia",()=>cardinal(c().rainWindFrom),""]],
+  smaa_case:[["Temperatura interna",v=>f(v.tInt,1),"°C"],["Mira hacia",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 4G",v=>f(v.rssi),"dBm"]],
+  smaa_sens:[["PM2.5",v=>f(v.pm25),"µg/m³"],["PM10",v=>f(v.pm10),"µg/m³"],["Ozono (O₃)",v=>f(v.o3),"ppb"],["NO₂",v=>f(v.no2),"ppb"],["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh),"%"],["Altura de toma",(v,st)=>INLET[st.key],"m"]],
+  battery:[["Carga",v=>f(v.batt),"%"],["Panel",v=>f(v.solarW),"W"]],
+  arms:  [["Sujeción",()=>"cinchos al tubo",""],["Mira hacia",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"]],
   head:  [["Velocidad del viento",v=>f(v.ws,2),"m/s"],["Dirección del viento",v=>v.wd==null?"—":`${cardinal(v.wd)} ${v.wd}`,"°"],["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh,1),"%"],["Presión atmosférica",v=>f(v.press,1),"hPa"],["Precipitación",v=>f(v.rain,2),"mm/h"],["Tipo de precipitación",v=>v.ptype||"—",""],["Acumulado hoy",v=>f(v.rainDay,2),"mm"],["Punto de rocío (calculado)",v=>f(v.dew,1),"°C"]],
-  tapa:  [["Temperatura interna",v=>f(v.tInt,1),"°C"],["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 4G",v=>f(v.rssi),"dBm"]],
+  tapa:  [["Temperatura interna",v=>f(v.tInt,1),"°C"],["Mira hacia",()=>`${cardinal(state.frontAz+180)} ${(state.frontAz+180)%360}`,"°"],["Señal 4G",v=>f(v.rssi),"dBm"]],
   cabezal:[["Rosca hacia",()=>"sensor",""]],
   cople_sup:[["Tipo",()=>"cople roscado",""]],
   tubo:  [["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"]],
@@ -1126,10 +1150,12 @@ const ROWS = {
 function statusFor(key, st){
   const v = st.v || {}, pre = state.view==="both" && st.key!=="rig" ? `${st.id} · ` : "";
   const band = (val,b)=> b.find(x=>val<=x[0]);
+  if(key==="smaa_sens" && v.pm25!=null){ const s = band(v.pm25,BANDS.pm25); return `<span class="pill ${s[2]}">Aire: ${s[1]}</span>`; }
+  if(key==="battery" && v.batt!=null) return v.batt>=40 ? `<span class="pill ok">Batería ${f(v.batt)}%</span>` : `<span class="pill warn">Batería baja</span>`;
   if(key==="pm" && v.pm25!=null){ const s = band(v.pm25,BANDS.pm25); return `<span class="pill ${s[2]}">${pre}Aire: ${s[1]}</span>`; }
   if(key==="gas" && v.o3!=null){ const s = band(v.o3,BANDS.o3); return `<span class="pill ${s[2]}">${pre}Ozono: ${s[1]}</span>`; }
   if(key==="head") return v.rain>0 ? `<span class="pill info">${v.ptype||"Lluvia"} · viento del ${cardinal(v.wd)}</span>` : `<span class="pill ok">Sin lluvia · viento del ${cardinal(v.wd)}</span>`;
-  if((key==="logger"||key==="tapa") && v.tInt!=null) return v.tInt<=40 ? `<span class="pill ok">${pre}Electrónica en rango</span>` : v.tInt<=50 ? `<span class="pill warn">${pre}Calentamiento · agregar sombra</span>` : `<span class="pill bad">${pre}Sobrecalentamiento</span>`;
+  if((key==="logger"||key==="tapa"||key==="smaa_case") && v.tInt!=null) return v.tInt<=40 ? `<span class="pill ok">${pre}Electrónica en rango</span>` : v.tInt<=50 ? `<span class="pill warn">${pre}Calentamiento · agregar sombra</span>` : `<span class="pill bad">${pre}Sobrecalentamiento</span>`;
   if(key==="rain") return v.rain>0 ? `<span class="pill info">Lloviendo · viento del ${cardinal(v.wd)}</span>` : `<span class="pill ok">Sin lluvia</span>`;
   if(key==="solar") return v.solarW>2 ? `<span class="pill ok">${pre}Cargando</span>` : `<span class="pill warn">${pre}Sin generación</span>`;
   return "";
@@ -1137,7 +1163,7 @@ function statusFor(key, st){
 function refreshPanel(){
   const sel = state.selected, panel = $("panel");
   if(!sel){ panel.hidden = true; $("ll").setAttribute("visibility","hidden"); $("lc").setAttribute("visibility","hidden"); return; }
-  const key = sel.part, info = key==="arms" ? {title:"Brazos de sensores", sub:"Del lado expuesto a la lluvia", metric:null} : (INFO[key] || {title:key, sub:""});
+  const key = sel.part, info = key==="arms" ? (sel.st==="smaa" ? {title:"Placa soporte del panel", sub:"Se sujeta al tubo con cinchos y carga la carcasa de SMAA", metric:null} : {title:"Brazos de sensores", sub:"Del lado expuesto a la lluvia", metric:null}) : (INFO[key] || {title:key, sub:""});
   const rig = sel.st==="rig";
   const cols = rig ? [RIG] : (key==="arms" ? [ST[sel.st]] : visible().filter(st=> st.parts[key]));
   if(!cols.length){ panel.hidden = true; return; }
@@ -1310,7 +1336,7 @@ function sheetData(){
     "Trípode a 1 m o más de muros y a 2 veces la altura de los obstáculos cercanos.",
     "Trípode nivelado con burbuja; patas ancladas o lastradas.",
     `Cara principal a ${state.frontAz}° verdadero (${magOf(state.frontAz)}° magnético), verificada con el modo campo.`,
-    both ? "CHAAK arriba y SMAA abajo; cada gabinete debajo de sus tomas." : "Gabinete debajo de sus tomas y del escudo de radiación.",
+    both ? "SMAA en la cara principal con cinchos al tubo; carcasa de CHAAK del lado opuesto con sus 2 tornillos M3." : "Gabinete debajo de sus tomas y del escudo de radiación.",
     "Pluviómetro nivelado y sin nada encima.",
     "Tomas de aire libres en 270°, lejos de escapes de aire acondicionado, chimeneas y generadores.",
     `Visera o pantalla hacia el ${cardinal(F.top.az)}: ${F.top.label.toLowerCase()} del equipo.`,
@@ -1399,8 +1425,8 @@ async function runTour(){
   const pick = (...opts)=> opts.find(([st,p])=> ST[st].parts[p]);
   const steps = [
     [pick(["chaak","head"],["chaak","wind"]), "Clima en tiempo real: viento, temperatura, humedad, presión y lluvia"],
-    [pick(["smaa","pm"],["chaak","pm"]), "Partículas PM2.5 y PM10 en tiempo real"],
-    [pick(["smaa","gas"],["chaak","gas"]), "Ozono y dióxido de nitrógeno"],
+    [pick(["smaa","smaa_sens"],["smaa","pm"]), "Calidad del aire en tiempo real: PM2.5, PM10, O₃ y NO₂"],
+    [pick(["smaa","solar"]), "Panel fijo a 37°: carga la batería y cubre las tomas de la lluvia"],
     [pick(["chaak","tapa"],["chaak","logger"]), "Electrónica protegida en la cara principal"],
   ];
   controls.autoRotateSpeed = .5;
@@ -1498,11 +1524,11 @@ buildDial();
 var RENDER = {mode:"real", iso:null};
 const RENDER_MODES = ["real","xray","tech","parts"];
 const PART_GROUPS = [
-  {id:"sensor",   label:"Sensores",       color:0x2f8fd8, keys:["head","pm","gas","thr","wind","rain"]},
-  {id:"carcasa",  label:"Carcasa",        color:0xe0a030, keys:["tapa","logger"]},
+  {id:"sensor",   label:"Sensores",       color:0x2f8fd8, keys:["head","pm","gas","thr","wind","rain","smaa_sens"]},
+  {id:"carcasa",  label:"Carcasa",        color:0xe0a030, keys:["tapa","logger","smaa_case"]},
   {id:"soporte",  label:"Soporte",        color:0x8b929c, keys:["cabezal","cople_sup","tubo","cople_base","arms"]},
   {id:"torni",    label:"Tornillería",    color:0xd8455c, keys:["screws","screws_head"]},
-  {id:"energia",  label:"Energía",        color:0x7a5fd6, keys:["solar"]},
+  {id:"energia",  label:"Energía",        color:0x7a5fd6, keys:["solar","battery"]},
   {id:"montaje",  label:"Montaje",        color:0x2fa37c, keys:["tripod","mast"]},
   {id:"ref",      label:"Referencia",     color:0xb7b2a8, keys:["__landmark"]},
 ];
