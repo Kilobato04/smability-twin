@@ -21,9 +21,12 @@ twin.html                       fuente del visor (se edita aquí)
 build.py                        genera index.html a partir de twin.html
 index.html                      página publicada
 favicon.svg
-models/montaje.glb              trípode y mástil compartidos      (pendiente)
-models/chaak.glb                equipo CHAAK                      (pendiente)
-models/smaa.glb                 equipo SMAA                       (pendiente)
+models/montaje.glb              trípode (pivot assy sin cabezal) y mástil de 1.25"
+models/chaak.glb                equipo CHAAK (modelo real v1, 7 piezas)
+tools/stl2glb.py                convierte los STL de AutoCAD en .glb
+tools/chaak.json                piezas de CHAAK: nombre, corrección de posición y material
+models/smaa.glb                 equipo SMAA real: carcasa, placa soporte, panel y batería
+tools/smaa_build.py             arma smaa.glb desde los 2 STEP y los 3 STL de SMAA
 netlify/functions/station.mjs   proxy al API (oculta la API key)
 netlify.toml
 ```
@@ -97,6 +100,39 @@ netlify dev          # http://localhost:8888, con la función del API
 7. **Meta:** menos de 5 MB por archivo. Haz commit en `models/` y Netlify publica.
 
 El visor asigna cada malla a su sensor buscando fragmentos del nombre (lista `KEYMAP` en `twin.html`).
+
+### CHAAK real (v1)
+Las 7 piezas exportadas de AutoCAD se convierten con:
+```bash
+python3 tools/stl2glb.py tools/chaak.json carpeta_con_stl models/chaak.glb
+```
+- Al exportar, AutoCAD movió cada pieza en Y por separado. `dy` en `tools/chaak.json` lo corrige.
+- La cara principal (tapa de la carcasa) mira hacia +Y en AutoCAD; el script la lleva a −X.
+- La base de CHAAK se monta sobre el mástil del trípode a `CHAAK_BASE_Y` (1.12 m, tope del mástil) en `twin.html`.
+- Para agregar piezas nuevas (electrónica, tornillería), súmalas a `tools/chaak.json` con su `dy`.
+- La tapa asienta a hueso sobre la base (hombro de 14.98 mm sobre el borde de 57.71 mm).
+- El cable del sensor se recorta bajo z = 853 mm (`cut_below_z`).
+- Los tornillos M3 se generan en los barrenos del tubo y de las abrazaderas (z = 623.8 y 713.8 mm). Pieza `tornillos_carcasa` con `screws`.
+- Tornillos del sensor: 3 radiales M3 a 120° (30°, 150° y 270°) a z = 897.6 mm, del collar del sensor al cabezal roscado. Pieza `tornillos_sensor`.
+
+### SMAA real
+```bash
+# 1) teselar los STEP con occt-import-js (genera top_geo.json y bottom_geo.json)
+# 2) armar el .glb
+python3 tools/smaa_build.py carpeta_smaa models/smaa.glb
+```
+- `SMAA-01TOP` y `SMAA-01BOTTOM` comparten coordenadas; los 3 STL (soporte, panel, batería) los movió AutoCAD por separado y el script los realinea:
+  - Caja: los 2 barrenos del tope (48.6 mm entre centros) caen en las 2 ranuras de la pestaña del soporte.
+  - Panel: cara trasera sobre la placa inclinada (37°), borde alto al tope del soporte.
+  - Batería: bajo la placa inclinada, misma huella que la caja.
+- La placa vertical del soporte asienta en el tubo de CHAAK (cinchos) del lado de la cara principal; la carcasa de CHAAK queda del lado opuesto.
+- En `twin.html`, `SMAA_BASE_Y` (= `CHAAK_BASE_Y` + 0.335 m) es la altura de la pestaña. El panel gira con el montaje: es fijo a la carcasa.
+- Mallas → claves: `soporte_panel` → arms, `smaa_top` → smaa_case, `smaa_bottom` → smaa_sens, `panel_solar` → solar, `bateria` → battery.
+- Sensor: Hongyuv HY-WDS6E. Mide viento ultrasónico (velocidad y dirección), temperatura, humedad, presión y precipitación por radar (lluvia, granizo o nieve).
+- **Los STL no van al repo:** todo lo que está aquí se publica en Netlify.
+
+## Vistas de render
+Realista, Rayos X, Técnica y Componentes (cada pieza se colorea por grupo y se puede aislar desde la leyenda). En `twin.html`: `PART_GROUPS` define los grupos y colores.
 
 ## 4. Datos del API
 La función `mapApi()` en `twin.html` traduce el JSON de la estación a las variables del visor. Ajusta los nombres de campo a los reales; acepta rutas como `data.pm25`.
