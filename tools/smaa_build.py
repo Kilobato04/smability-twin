@@ -3,7 +3,7 @@
   - 8_Soporte_Panel_Solar_SMAA.stl, 9_Panel_Solar_SMAA_.stl, 10_Battery_Pack_SMAA.stl (AutoCAD; cada uno movido al octante positivo).
 
 Marco del soporte (mm): x a lo largo, y del frente (y=0) hacia el tubo (placa vertical en y=113–115.7), z arriba (pestaña en z=0–2.8).
-  - Caja: sus 2 barrenos del tope (x=-5 y 43.6, separados 48.6 mm) caen en las 2 ranuras de la pestaña (x=113 y 162, y≈45).
+  - Caja: girada 180° sobre su eje vertical; la pestaña pasa por dentro del mango (hueco de 88 mm) y toca su techo (z=109.3).
   - Panel: su cara trasera asienta sobre la placa inclinada (37°) y su borde alto llega al tope del soporte.
   - Batería: su cara superior asienta bajo la placa inclinada; misma huella en x que la caja.
 Salida: metros, Y arriba, origen en la cara inferior de la pestaña sobre el eje del tubo de CHAAK (r=21.5 mm), frente hacia −X.
@@ -27,9 +27,13 @@ def step_tris(path):
 
 def main(src, out):
     parts = []
-    box_shift = np.array([118.4, 41.8, -122.13])                       # barrenos del tope → ranuras de la pestaña
-    top = step_tris(f"{src}/top_geo.json") + box_shift
-    bot = step_tris(f"{src}/bottom_geo.json") + box_shift
+    # Carcasa girada 180° sobre su eje vertical (centro del mango: x=18, y=3) y colgada de la pestaña:
+    # la pestaña cruza por dentro del mango y su cara superior toca el techo del mango (z=109.3).
+    def place(t):
+        t = t.copy(); t[..., 0] = 2*18 - t[..., 0]; t[..., 1] = 2*3 - t[..., 1]
+        return t + np.array([118.4, 33.9, 2.8 - 109.3])
+    top = place(step_tris(f"{src}/top_geo.json"))
+    bot = place(step_tris(f"{src}/bottom_geo.json"))
     sop = load_stl(f"{src}/8_soporte.stl")
     pan = load_stl(f"{src}/9_panel.stl")
     pan = pan + N * (40.82 - (-1.16)) + U * (172.2 - 224.5)           # cara trasera sobre la placa; borde alto al tope
