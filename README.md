@@ -123,11 +123,13 @@ python3 tools/smaa_build.py carpeta_smaa models/smaa.glb
 ```
 - `SMAA-01TOP` y `SMAA-01BOTTOM` comparten coordenadas; los 3 STL (soporte, panel, batería) los movió AutoCAD por separado y el script los realinea:
   - Caja: girada 180° sobre su eje vertical, con la espalda hacia el tubo. La pestaña del soporte cruza por dentro del mango y queda bajo su barra superior.
-  - Panel: cara trasera sobre la placa inclinada (37°), borde alto al tope del soporte.
-  - Batería: bajo la placa inclinada, misma huella que la caja.
+  - Los 2 barrenos del mango (50 mm entre centros) quedan concéntricos con las 2 ranuras de la pestaña (x = 112 y 162 mm, y = 46.23 mm). Tornillería generada: 2 × M5 con rondana y tuerca bajo la pestaña (`tornillos_mango_smaa`).
+  - Panel: sus barrenos Ø4 asientan sobre los 5 barrenos Ø5.4 de la placa inclinada; con eso el panel baja 20 mm respecto a la primera versión. Tornillería: 4 × M4 con rondana y tuerca bajo la placa (`tornillos_panel_smaa`); el barreno central de arriba queda bajo la oreja de la batería y no lleva tornillo.
+  - Batería: del lado derecho (de frente al panel). Sus 4 barrenos Ø3.2 quedan concéntricos con los barrenos internos Ø3.5 de la placa (x = 130.5 y 249.68 mm; 101.3 mm entre filas). 4 × M3 avellanados a ras de la placa, tuerca bajo la oreja (`tornillos_bateria_smaa`). La placa trae el mismo patrón del lado izquierdo (x = 24.32 y 143.5 mm).
+  - Panel: cara trasera sobre la placa inclinada (37°).
 - La placa vertical del soporte asienta en el tubo de CHAAK (cinchos) del lado de la cara principal. La carcasa de CHAAK va en la cara opuesta: las dos carcasas se dan la espalda.
 - En `twin.html`, `SMAA_BASE_Y` (= `CHAAK_BASE_Y` + 0.335 m) es la altura de la pestaña. El panel gira con el montaje: es fijo a la carcasa.
-- Mallas → claves: `soporte_panel` → arms, `smaa_top` → smaa_case, `smaa_bottom` → smaa_sens, `panel_solar` → solar, `bateria` → battery.
+- Mallas → claves: `tornillos_bateria` → screws_bat, `tornillos_mango` → screws_smaa, `tornillos_panel` → screws_panel, `soporte_panel` → arms, `smaa_top` → smaa_case, `smaa_bottom` → smaa_sens, `panel_solar` → solar, `bateria` → battery.
 - Sensor: Hongyuv HY-WDS6E. Mide viento ultrasónico (velocidad y dirección), temperatura, humedad, presión y precipitación por radar (lluvia, granizo o nieve).
 - **Los STL no van al repo:** todo lo que está aquí se publica en Netlify.
 
