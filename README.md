@@ -151,3 +151,10 @@ La función `mapApi()` en `twin.html` traduce el JSON de la estación a las vari
 
 ## 6. Editar
 Edita `twin.html` y luego ejecuta `python3 build.py`, que regenera `index.html`. Después haz commit y push.
+
+## Energía de SMAA y orientación del panel
+- Equipo: Voltaic 10 W Axon. Panel P110 de 10 W / 6 V fijo a 37° mirando con la cara principal; batería V75 de 72 Wh (Li-Ion NMC, 5 V / 2 A, deja de cargar arriba de 45 °C).
+- `fetchSolar()` baja la irradiancia horaria directa y difusa del año base (Open-Meteo) y calcula, por mes y por rumbo del panel (cada 5°), la energía diaria sobre el panel. Se guarda en `localStorage` (`smab.pv1.*`). Sin conexión, `estimateSolar()` usa cielo despejado con nubosidad típica.
+- Energía que entra = 10 W × horas de sol pico sobre el panel × 0.70 (temperatura, suciedad y conversión a 5 V). Consumo supuesto (falta medirlo): bajo 0.40 W, típico 0.85 W, alto 1.15 W.
+- Regla (`energyPlan()`): la cara principal va de espaldas a la lluvia. Si en el peor mes el panel no da al menos 1.25× el consumo, se gira lo mínimo dentro de ±60° hasta lograrlo; si no se logra, al rumbo que más ayude. No se gira por ganancias menores al 5%. Con solo CHAAK no se gira.
+- En la guía: tarjeta "Energía SMAA" con consumo, orientación (recomendada o de espaldas a la lluvia) y barras mensuales. La ficha imprime el panel y la autonomía de la batería.
