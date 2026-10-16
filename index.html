@@ -356,7 +356,7 @@ body[data-render="tech"] #stage{background-color:#fbfbf8;background-image:linear
       <button class="btn" id="fStart">Activar brújula</button>
       <div class="fmsg" id="fMsg"></div>
     </aside>
-    <div class="hint" id="hint">Toca la estación o un sensor para ver sus datos</div>
+    <div class="hint" id="hint">Toca una pieza para ver sus datos · doble toque para acercarte</div>
     <aside id="panel" hidden aria-live="polite">
       <header><div><div class="tag" id="pTag"></div><h3 id="pTitle"></h3><div class="sub" id="pSub"></div></div><button class="x" id="pClose" aria-label="Cerrar panel">×</button></header>
       <div class="rows" id="pRows"></div>
@@ -550,15 +550,15 @@ const ortho = new THREE.OrthographicCamera(-5,5,5,-5,0.1,50);
 ortho.position.set(0,14,0); ortho.up.set(0,0,-1); ortho.lookAt(0,0,0);
 let camera = persp;
 const controls = new THREE.OrbitControls(persp, renderer.domElement);
-controls.enableDamping = true; controls.minDistance = 1.5; controls.maxDistance = 60;
-controls.maxPolarAngle = Math.PI*0.495;
+controls.enableDamping = true; controls.minDistance = .25; controls.maxDistance = 60;
+controls.maxPolarAngle = Math.PI*0.97;      // se puede bajar la cámara para ver las caras inferiores (nunca bajo el suelo)
 function resetView(){
   const real = typeof ST!=="undefined" && ST.chaak.parts.head;           // modelo real cargado: encuadre más cercano a CHAAK
   const zoom = real ? (state.view==="chaak" ? .4 : .7) : 1;
   const far = (isMobile() ? 1.7 : 1) * zoom * (state.ref && state.ref!=="none" ? Math.max(1.6/zoom, sceneExtent()/4.5/zoom) : 1);
   const ty = real ? (state.view==="chaak" ? CHAAK_BASE_Y + .42 : 1.1) : 1.7;
   persp.position.set(4.0*far, ty + 1.3*far, 4.6*far);
-  controls.target.set(0,ty,0); controls.update();
+  focusAnim = null; controls.target.set(0,ty,0); controls.update();
   panShift = 0; if(typeof applyViewOffset==="function") applyViewOffset();
 }
 
@@ -615,13 +615,16 @@ const INFO = {
   smaa_case: {title:"Carcasa SMAA · tapa superior", sub:"Fija a la pestaña de la placa soporte con 2 tornillos · electrónica a la sombra del panel", metric:"tInt"},
   smaa_sens: {title:"Módulo de sensores SMAA", sub:"Calidad del aire: PM2.5 · PM10 · O₃ · NO₂ · temperatura y humedad", metric:"pm25",
               note:"Tomas de aire en la parte baja de la carcasa: el panel y la pestaña las cubren de la lluvia directa sin cerrar el paso del aire."},
+  screws_smaa:{title:"Tornillos mango ↔ pestaña", sub:"2 × M5 · atraviesan la barra del mango de SMAA y las ranuras de la pestaña del soporte; rondana y tuerca por debajo", metric:null},
+  screws_bat:{title:"Tornillos de la batería", sub:"4 × M3 avellanados · fijan las orejas de la batería a los barrenos internos de la placa; tuerca por debajo", metric:null},
+  screws_panel:{title:"Tornillos del panel", sub:"4 × M4 · fijan el panel a la placa inclinada del soporte; rondana y tuerca por debajo", metric:null},
   battery:   {title:"Paquete de baterías", sub:"Bajo la placa inclinada del panel · alimenta a SMAA de noche", metric:"batt"},
 };
 /* CHAAK real: altura a la que se monta su base sobre el mástil del trípode (m) */
 const CHAAK_BASE_Y = 1.12;          // tope del mástil de 1.25" del trípode (models/montaje.glb)
 const SMAA_DY = 0;                 // SMAA provisional ya colocada a la altura de la carcasa original de CHAAK
 const SMAA_BASE_Y = CHAAK_BASE_Y + .335;   // SMAA real: cara inferior de la pestaña de la placa soporte, sobre el tubo de CHAAK
-const SMAA_EXPLODE = {arms:[0,0,0], smaa_case:[-.1,-.06,0], smaa_sens:[-.1,-.22,0], solar:[-.22,.2,0], battery:[-.04,.04,.3]};
+const SMAA_EXPLODE = {arms:[0,0,0], smaa_case:[-.1,-.06,0], smaa_sens:[-.1,-.22,0], solar:[-.22,.2,0], battery:[-.04,.04,.3], screws_smaa:[-.1,.06,0], screws_panel:[-.3,.3,0], screws_bat:[-.04,.04,.42]};
 let LEG = {r:.95, a0:30};           // patas para la ficha (se actualiza con el trípode real)
 const CHAAK_EXPLODE = {head:[0,.34,0], cabezal:[0,.22,0], cople_sup:[0,.12,0], tubo:[0,0,0], cople_base:[0,-.18,0], tapa:[.5,0,0], logger:[.22,0,0], screws:[-.18,0,0], screws_head:[0,.34,0]};
 const INLET = {chaak:1.74, smaa:1.25};   // altura de tomas (m); CHAAK se recalcula con el modelo real
@@ -801,7 +804,7 @@ function refreshRefCheck(){
 
 /* Modelos reales: los tres .glb comparten el mismo sistema de coordenadas (el del ensamble en AutoCAD):
    Y arriba, metros, origen en la base del trípode, brazos de sensores hacia +X, cara principal hacia −X. */
-const KEYMAP = [["soporte_panel","arms"],["smaa_top","smaa_case"],["smaa_bottom","smaa_sens"],["panel_solar","solar"],["bateria","battery"],["tornillos_sensor","screws_head"],["tornillo","screws"],["sensorsolido","head"],["tapa_carcasa","tapa"],["base_carcasa","logger"],["cabezal","cabezal"],["cople_rosca_base","cople_base"],["cople_rosca_soporte","cople_sup"],["tubo_soporte","tubo"],["pm","pm"],["particul","pm"],["gas","gas"],["thr","thr"],["escudo","thr"],["anem","wind"],["vele","wind"],["wind","wind"],
+const KEYMAP = [["tornillos_bateria","screws_bat"],["tornillos_mango","screws_smaa"],["tornillos_panel","screws_panel"],["soporte_panel","arms"],["smaa_top","smaa_case"],["smaa_bottom","smaa_sens"],["panel_solar","solar"],["bateria","battery"],["tornillos_sensor","screws_head"],["tornillo","screws"],["sensorsolido","head"],["tapa_carcasa","tapa"],["base_carcasa","logger"],["cabezal","cabezal"],["cople_rosca_base","cople_base"],["cople_rosca_soporte","cople_sup"],["tubo_soporte","tubo"],["pm","pm"],["particul","pm"],["gas","gas"],["thr","thr"],["escudo","thr"],["anem","wind"],["vele","wind"],["wind","wind"],
   ["pluv","rain"],["rain","rain"],["solar","solar"],["panel","solar"],["gabinete","logger"],["logger","logger"],["brazo","arms"],["tripod","tripod"],["mast","mast"]];
 async function tryLoadGLB(owner, url, fallbackKey){
   if(!THREE.GLTFLoader) return;
@@ -847,7 +850,7 @@ async function tryLoadGLB(owner, url, fallbackKey){
       INFO.tripod.sub = "Patas de 0.71 m de apertura · CHAAK y SMAA en el mismo montaje";
     }
     setView(state.view); applyCity(); if(owner===ST.chaak && !tour.on) resetView(); if(RENDER.ready) applyRender();
-    $("hint").textContent = `Modelo ${owner.id} cargado · toca un sensor`;
+    $("hint").textContent = `Modelo ${owner.id} cargado · doble toque en una pieza para acercarte y verla por debajo`;
   }, undefined, err=>console.warn("GLB no cargado:", url, err));
 }
 
@@ -1135,6 +1138,9 @@ const ROWS = {
   smaa_case:[["Temperatura interna",v=>f(v.tInt,1),"°C"],["Mira hacia",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 4G",v=>f(v.rssi),"dBm"]],
   smaa_sens:[["PM2.5",v=>f(v.pm25),"µg/m³"],["PM10",v=>f(v.pm10),"µg/m³"],["Ozono (O₃)",v=>f(v.o3),"ppb"],["NO₂",v=>f(v.no2),"ppb"],["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh),"%"],["Altura de toma",(v,st)=>INLET[st.key],"m"]],
   battery:[["Carga",v=>f(v.batt),"%"],["Panel",v=>f(v.solarW),"W"]],
+  screws_smaa:[["Cantidad",()=>"2",""],["Medida",()=>"M5",""],["Separación entre barrenos",()=>"50","mm"]],
+  screws_bat:[["Cantidad",()=>"4",""],["Medida",()=>"M3",""],["Lado",()=>"derecho, de frente al panel",""]],
+  screws_panel:[["Cantidad",()=>"4",""],["Medida",()=>"M4",""],["Barrenos",()=>"Ø4 panel · Ø5.4 soporte",""]],
   arms:  [["Sujeción",()=>"cinchos al tubo",""],["Mira hacia",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"]],
   head:  [["Velocidad del viento",v=>f(v.ws,2),"m/s"],["Dirección del viento",v=>v.wd==null?"—":`${cardinal(v.wd)} ${v.wd}`,"°"],["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh,1),"%"],["Presión atmosférica",v=>f(v.press,1),"hPa"],["Precipitación",v=>f(v.rain,2),"mm/h"],["Tipo de precipitación",v=>v.ptype||"—",""],["Acumulado hoy",v=>f(v.rainDay,2),"mm"],["Punto de rocío (calculado)",v=>f(v.dew,1),"°C"]],
   tapa:  [["Temperatura interna",v=>f(v.tInt,1),"°C"],["Mira hacia",()=>`${cardinal(state.frontAz+180)} ${(state.frontAz+180)%360}`,"°"],["Señal 4G",v=>f(v.rssi),"dBm"]],
@@ -1211,9 +1217,27 @@ function tint(sel, color){
 }
 function select(sel, fromPane){ tint(state.selected,0); state.selected = sel; tint(sel, 0x0a5c51); refreshPanel(); $("hint").hidden = !!sel;
   if(!fromPane && isMobile()){ if(sel){ if(field.open) openField(false, true); syncPane("sensor"); } else if(currentPane()==="sensor") syncPane(""); } }
-let down = null;
-renderer.domElement.addEventListener("pointerdown", e=>{ down = [e.clientX,e.clientY]; stopTour(); });
-renderer.domElement.addEventListener("pointerup", e=>{ if(!down) return; const moved = Math.hypot(e.clientX-down[0], e.clientY-down[1]); down = null; if(moved<6) select(partAt(e)); });
+/* Doble toque o doble clic sobre una pieza: la cámara se acerca y gira alrededor de ella (también por debajo) */
+var focusAnim = null;
+function focusOn(sel){
+  const p = sel && ownerOf(sel.st)?.parts[sel.part]; if(!p || state.plan) return;
+  const box = new THREE.Box3().setFromObject(p.group); if(box.isEmpty()) return;
+  const c = box.getCenter(V()), r = Math.max(.08, box.getSize(V()).length()/2);
+  const dir = persp.position.clone().sub(controls.target).normalize(), dist = Math.min(2.5, Math.max(.3, r*3.2));
+  focusAnim = {t:0, t0:controls.target.clone(), p0:persp.position.clone(), t1:c, p1:c.clone().add(dir.multiplyScalar(dist))};
+}
+function stepFocus(){
+  if(!focusAnim) return;
+  focusAnim.t = Math.min(1, focusAnim.t + (reduceMotion ? 1 : .06)); const k = 1 - Math.pow(1 - focusAnim.t, 3);
+  controls.target.lerpVectors(focusAnim.t0, focusAnim.t1, k); persp.position.lerpVectors(focusAnim.p0, focusAnim.p1, k);
+  if(focusAnim.t >= 1) focusAnim = null;
+}
+let down = null, lastTap = {t:0, x:0, y:0};
+renderer.domElement.addEventListener("pointerdown", e=>{ down = [e.clientX,e.clientY]; stopTour(); focusAnim = null; });
+renderer.domElement.addEventListener("pointerup", e=>{ if(!down) return; const moved = Math.hypot(e.clientX-down[0], e.clientY-down[1]); down = null; if(moved>=6) return;
+  const sel = partAt(e), now = performance.now(), dbl = now - lastTap.t < 350 && Math.hypot(e.clientX-lastTap.x, e.clientY-lastTap.y) < 24;
+  lastTap = {t: dbl ? 0 : now, x:e.clientX, y:e.clientY};
+  select(sel); if(dbl && sel) focusOn(sel); });
 renderer.domElement.addEventListener("pointermove", e=>{
   if(e.pointerType!=="mouse") return;
   const k = partAt(e); if(same(k,state.hovered) || (!k && !state.hovered)) return;
@@ -1527,7 +1551,7 @@ const PART_GROUPS = [
   {id:"sensor",   label:"Sensores",       color:0x2f8fd8, keys:["head","pm","gas","thr","wind","rain","smaa_sens"]},
   {id:"carcasa",  label:"Carcasa",        color:0xe0a030, keys:["tapa","logger","smaa_case"]},
   {id:"soporte",  label:"Soporte",        color:0x8b929c, keys:["cabezal","cople_sup","tubo","cople_base","arms"]},
-  {id:"torni",    label:"Tornillería",    color:0xd8455c, keys:["screws","screws_head"]},
+  {id:"torni",    label:"Tornillería",    color:0xd8455c, keys:["screws","screws_head","screws_smaa","screws_panel","screws_bat"]},
   {id:"energia",  label:"Energía",        color:0x7a5fd6, keys:["solar","battery"]},
   {id:"montaje",  label:"Montaje",        color:0x2fa37c, keys:["tripod","mast"]},
   {id:"ref",      label:"Referencia",     color:0xb7b2a8, keys:["__landmark"]},
@@ -1653,7 +1677,7 @@ function frame(){
     }
     rainGeo.attributes.position.needsUpdate = true;
   }
-  if(!state.plan) controls.update();
+  if(!state.plan){ stepFocus(); controls.update(); if(persp.position.y < .06) persp.position.y = .06; }
   renderer.render(scene, camera);
   placePanel();
   requestAnimationFrame(frame);
