@@ -140,6 +140,14 @@ input[type=range]{accent-color:var(--accent);width:120px}
 .hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:5px 12px;pointer-events:none;white-space:nowrap}
 .rseg-stage{position:absolute;right:14px;top:42px;z-index:3;box-shadow:0 4px 14px rgb(0 0 0/.08)}
 .dock .rfield{display:none}
+.dock .cfield{display:none}
+.cut-stage{position:absolute;right:14px;top:82px;z-index:3;display:grid;gap:6px;justify-items:end}
+.cut-stage .seg{box-shadow:0 4px 14px rgb(0 0 0/.08)}
+.cutpos{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:4px 10px;font-size:12px;color:var(--muted)}
+.cutpos[hidden]{display:none}
+.cutpos,.cutpos span,.cutpos output{text-transform:none;letter-spacing:0}
+.cutpos input{width:140px;accent-color:var(--accent)}
+.cutpos output{font:12px var(--f-mono);color:var(--ink);min-width:58px;text-align:right}
 #partsLegend{position:absolute;right:14px;bottom:14px;z-index:3;display:flex;flex-direction:column;gap:2px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 6px 20px rgb(0 0 0/.1)}
 #partsLegend button{display:flex;align-items:center;gap:8px;font:500 12.5px var(--f-body);color:var(--ink);background:none;border:0;border-radius:6px;padding:5px 9px;cursor:pointer;text-align:left}
 #partsLegend button[aria-pressed="true"]{background:var(--bg);font-weight:700}
@@ -282,6 +290,11 @@ body[data-render="tech"] #stage{background-color:#fbfbf8;background-image:linear
   body:not([data-pane=""]) .hint{display:none}
   .src{top:10px;right:12px}
   .rseg-stage{display:none}
+  .cut-stage{display:none}
+  .dock .cfield{display:grid;grid-column:1/-1;gap:6px}
+  .dock .cfield .seg{display:flex}
+  .dock .cfield .seg button{flex:1;min-height:44px;font-size:13px;padding:6px 4px}
+  .dock .cfield .cutpos input{flex:1;width:auto}
   .dock .rfield{display:grid;grid-column:1/-1;gap:6px}
   .dock .rfield .seg{display:flex}
   .dock .rfield .seg button{flex:1;min-height:44px;font-size:13px;padding:6px 4px}
@@ -356,6 +369,8 @@ body[data-render="tech"] #stage{background-color:#fbfbf8;background-image:linear
     <div class="src" id="src">DEMO · datos simulados</div>
     <div class="seg rseg rseg-stage" role="group" aria-label="Tipo de vista"><button type="button" data-mode="real" aria-pressed="true">Realista</button><button type="button" data-mode="xray" aria-pressed="false">Rayos X</button><button type="button" data-mode="tech" aria-pressed="false">Técnica</button><button type="button" data-mode="parts" aria-pressed="false">Componentes</button></div>
     <div id="partsLegend" hidden aria-label="Componentes"></div>
+    <div class="cutctl cut-stage"><div class="seg cseg" role="group" aria-label="Corte"><button type="button" data-cut="none" aria-pressed="true">Sin corte</button><button type="button" data-cut="long" aria-pressed="false">Longitudinal</button><button type="button" data-cut="trans" aria-pressed="false">Transversal</button></div>
+      <label class="cutpos" hidden><span>Posición</span><input type="range" min="-140" max="140" step="1" value="0" aria-label="Posición del corte"><output>0 mm</output></label></div>
     <div class="caption" id="caption" hidden></div>
     <aside id="field" hidden data-ok="0" aria-live="polite">
       <header><div><div class="tag">Modo campo</div><h3>Orienta la cara principal</h3></div><button class="x" id="fClose" aria-label="Cerrar modo campo">×</button></header>
@@ -392,6 +407,8 @@ body[data-render="tech"] #stage{background-color:#fbfbf8;background-image:linear
     <button class="btn" id="bSheet">Ficha de instalación</button>
     <button class="btn" id="bReset">Reiniciar vista</button>
     <div class="field rfield"><span class="lbl" id="rLbl">Vista</span><div class="seg rseg" role="group" aria-labelledby="rLbl"><button type="button" data-mode="real" aria-pressed="true">Realista</button><button type="button" data-mode="xray" aria-pressed="false">Rayos X</button><button type="button" data-mode="tech" aria-pressed="false">Técnica</button><button type="button" data-mode="parts" aria-pressed="false">Componentes</button></div></div>
+    <div class="field cfield"><span class="lbl" id="cLbl">Corte</span><div class="seg cseg" role="group" aria-labelledby="cLbl"><button type="button" data-cut="none" aria-pressed="true">Sin corte</button><button type="button" data-cut="long" aria-pressed="false">Longitudinal</button><button type="button" data-cut="trans" aria-pressed="false">Transversal</button></div>
+      <label class="cutpos" hidden><span>Posición</span><input type="range" min="-140" max="140" step="1" value="0" aria-label="Posición del corte"><output>0 mm</output></label></div>
     <div class="legend">
       <em style="--c:var(--front)">Cara principal</em>
       <em style="--c:var(--accent)">Viento dominante</em>
@@ -644,6 +661,7 @@ const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.shadowMap.enabled = true;
+renderer.localClippingEnabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 stage.prepend(renderer.domElement);
 
@@ -1355,9 +1373,9 @@ const same = (a,b)=> a && b && a.st===b.st && a.part===b.part;
 function tint(sel, color){
   const p = sel && ownerOf(sel.st)?.parts[sel.part]; if(!p) return;
   p.group.traverse(o=>{
-    if(!o.isMesh || o.userData.isEdge) return;
+    if(!o.isMesh || o.userData.isEdge || o.userData.isCap) return;
     if(RENDER.mode === "real" || !o.userData.origMat){ if(o.material.emissive) o.material.emissive.setHex(color); }
-    else o.material = materialFor(o, color === 0x0a5c51);
+    else { o.material = materialFor(o, color === 0x0a5c51); if(CUT && CUT.mode !== "none") setClip(o.material, true); }
   });
 }
 function select(sel, fromPane){ tint(state.selected,0); state.selected = sel; tint(sel, 0x0a5c51); refreshPanel(); $("hint").hidden = !!sel;
@@ -1708,23 +1726,26 @@ const TECH_PAL = Object.assign({}, PRINT_PAL, {surf:"#ffffff"});
 
 const xrayMat = new THREE.ShaderMaterial({
   uniforms:{color:{value:new THREE.Color(0x5fd0ff)}, base:{value:.05}},
-  vertexShader:"varying vec3 vPos; void main(){ vec4 mv = modelViewMatrix*vec4(position,1.0); vPos = mv.xyz; gl_Position = projectionMatrix*mv; }",
-  fragmentShader:"uniform vec3 color; uniform float base; varying vec3 vPos; void main(){ vec3 n = normalize(cross(dFdx(vPos), dFdy(vPos))); float f = pow(1.0 - abs(dot(n, normalize(-vPos))), 2.2); gl_FragColor = vec4(color*(0.55+0.9*f), base + 0.55*f); }",
-  transparent:true, depthWrite:false, side:THREE.DoubleSide, blending:THREE.AdditiveBlending
+  vertexShader:"#include <clipping_planes_pars_vertex>\nvarying vec3 vPos; void main(){ vec4 mvPosition = modelViewMatrix*vec4(position,1.0); vPos = mvPosition.xyz; gl_Position = projectionMatrix*mvPosition;\n#include <clipping_planes_vertex>\n}",
+  fragmentShader:"#include <clipping_planes_pars_fragment>\nuniform vec3 color; uniform float base; varying vec3 vPos; void main(){\n#include <clipping_planes_fragment>\nvec3 n = normalize(cross(dFdx(vPos), dFdy(vPos))); float f = pow(1.0 - abs(dot(n, normalize(-vPos))), 2.2); gl_FragColor = vec4(color*(0.55+0.9*f), base + 0.55*f); }",
+  clipping:true, transparent:true, depthWrite:false, side:THREE.DoubleSide, blending:THREE.AdditiveBlending
 });
 xrayMat.extensions = {derivatives:true};
-const xrayHi = xrayMat.clone(); xrayHi.uniforms = {color:{value:new THREE.Color(0xffb347)}, base:{value:.12}}; xrayHi.extensions = {derivatives:true};
+const xrayHi = xrayMat.clone(); xrayHi.uniforms = {color:{value:new THREE.Color(0xffb347)}, base:{value:.12}}; xrayHi.extensions = {derivatives:true}; xrayHi.clipping = true;
 const techMat = new THREE.MeshStandardMaterial({color:0xf4f5f3, roughness:1, metalness:0, flatShading:true, polygonOffset:true, polygonOffsetFactor:1, polygonOffsetUnits:1});
 const techHi  = new THREE.MeshStandardMaterial({color:0xffd979, roughness:1, metalness:0, flatShading:true, polygonOffset:true, polygonOffsetFactor:1, polygonOffsetUnits:1});
 const edgeMat = {
   xray: new THREE.LineBasicMaterial({color:0x8fe3ff, transparent:true, opacity:.4, depthWrite:false}),
   tech: new THREE.LineBasicMaterial({color:0x2a302e, transparent:true, opacity:.85}),
 };
+// La caseta de referencia usa sus propias copias para que los cortes no la afecten
+const REF_MATS = {xray:xrayMat.clone(), tech:techMat.clone(), edge:{xray:edgeMat.xray.clone(), tech:edgeMat.tech.clone()}};
+REF_MATS.xray.uniforms = {color:{value:new THREE.Color(0x5fd0ff)}, base:{value:.05}}; REF_MATS.xray.extensions = {derivatives:true};
 
 function renderMeshes(){
   const out = [];
   [body, solar, landmark].forEach(root=> root.traverse(o=>{
-    if(!o.isMesh || o.userData.isEdge) return;
+    if(!o.isMesh || o.userData.isEdge || o.userData.isCap) return;
     for(let p=o; p; p=p.parent) if(p===frontMark) return;
     out.push(o);
   }));
@@ -1742,9 +1763,9 @@ function edgesOf(o){
   return o.userData.edges;
 }
 function materialFor(o, hi){
-  const m = RENDER.mode;
-  if(m === "xray") return hi ? xrayHi : xrayMat;
-  if(m === "tech") return hi ? techHi : techMat;
+  const m = RENDER.mode, ref = !hi && meshKey(o).st === "ref";
+  if(m === "xray") return hi ? xrayHi : ref ? REF_MATS.xray : xrayMat;
+  if(m === "tech") return hi ? techHi : ref ? REF_MATS.tech : techMat;
   if(m === "parts"){
     const k = meshKey(o), g = groupOf(k.part);
     if(!o.userData.partsMat) o.userData.partsMat = new THREE.MeshStandardMaterial({color:g.color, roughness:.55, metalness:.05, transparent:true, flatShading:true});
@@ -1766,7 +1787,7 @@ function applyRender(){
     o.material = materialFor(o, isSelectedMesh(o));
     if(m === "real") o.material.emissive && o.material.emissive.setHex(isSelectedMesh(o) ? 0x0a5c51 : 0);
     const needEdges = m === "xray" || m === "tech";
-    if(needEdges){ const e = edgesOf(o); e.material = edgeMat[m]; e.visible = true; }
+    if(needEdges){ const e = edgesOf(o); e.material = meshKey(o).st === "ref" ? REF_MATS.edge[m] : edgeMat[m]; e.visible = true; }
     else if(o.userData.edges) o.userData.edges.visible = false;
     o.castShadow = m === "real" || m === "parts";
   });
@@ -1777,8 +1798,72 @@ function applyRender(){
   document.querySelectorAll(".rseg button").forEach(b=> setPressed(b, b.dataset.mode === m));
   $("partsLegend").hidden = m !== "parts";
   document.querySelectorAll("#partsLegend button").forEach(b=> setPressed(b, RENDER.iso === b.dataset.g));
-  drawGround();
+  drawGround(); if(typeof CUT !== "undefined" && CUT) applyCut();
 }
+
+/* ================= CORTES (longitudinal y transversal) ================= */
+// Planos en coordenadas del montaje (giran con él). Longitudinal: contiene el eje del tubo y la dirección frente–trasera
+// (corta CHAAK, SMAA, soporte, panel y batería por el centro). Transversal: contiene el eje del tubo, de lado a lado.
+var CUT = {mode:"none", off:{long:0, trans:0}, side:1, plane:new THREE.Plane(), planes:[]};
+const CUT_DEF = {
+  long: {n:new THREE.Vector3(0,0,1), min:-140, max:140, label:"Longitudinal", sub:"frente–trasera por el eje"},
+  trans:{n:new THREE.Vector3(1,0,0), min:-220, max:100, label:"Transversal",  sub:"de lado a lado por el eje"},
+};
+const CAP_DARK = new THREE.Color(0x000000);
+function stationMeshes(){ return renderMeshes().filter(o=> meshKey(o).st !== "ref"); }
+function fixWinding(g){                        // caras hacia afuera (volumen con signo > 0) para que el relleno del corte salga bien
+  if(g.userData.windingOk) return; g.userData.windingOk = true;
+  const P = g.attributes.position, I = g.index; if(!P) return;
+  const n = I ? I.count : P.count, a = V(), b = V(), c = V(); let vol = 0;
+  for(let i=0;i<n;i+=3){ const i0 = I?I.getX(i):i, i1 = I?I.getX(i+1):i+1, i2 = I?I.getX(i+2):i+2;
+    a.fromBufferAttribute(P,i0); b.fromBufferAttribute(P,i1); c.fromBufferAttribute(P,i2); vol += a.dot(b.cross(c)); }
+  if(vol >= 0) return;
+  if(I){ for(let i=0;i<n;i+=3){ const t = I.getX(i+1); I.setX(i+1, I.getX(i+2)); I.setX(i+2, t); } I.needsUpdate = true; }
+  else { const arr = P.array; for(let i=0;i<n;i+=3){ for(let k=0;k<3;k++){ const t = arr[(i+1)*3+k]; arr[(i+1)*3+k] = arr[(i+2)*3+k]; arr[(i+2)*3+k] = t; } } P.needsUpdate = true; }
+}
+function setClip(m, on){
+  if(!m) return;
+  if(m.userData.side0 === undefined) m.userData.side0 = m.side;
+  m.clippingPlanes = CUT.planes; m.clipShadows = true;
+  m.side = on && m.opacity >= 1 && !m.isShaderMaterial ? THREE.FrontSide : m.userData.side0;
+  m.needsUpdate = true;
+}
+function capOf(o){
+  if(!o.userData.cap){
+    const col = new THREE.Color(groupOf(meshKey(o).part).color).lerp(CAP_DARK, .35);
+    const cap = new THREE.Mesh(o.geometry, new THREE.MeshBasicMaterial({color:col, side:THREE.BackSide, clippingPlanes:CUT.planes}));
+    cap.userData.isCap = true; cap.raycast = ()=>{}; o.add(cap); o.userData.cap = cap;
+  }
+  return o.userData.cap;
+}
+function applyCut(){
+  const on = CUT.mode !== "none";
+  CUT.planes.length = 0; if(on){ updateCutPlane(true); CUT.planes.push(CUT.plane); }
+  const caps = on && RENDER.mode !== "xray";
+  stationMeshes().forEach(o=>{
+    if(on) fixWinding(o.geometry);
+    setClip(o.material, on); if(o.userData.edges) setClip(o.userData.edges.material, on);
+    if(caps){ const cp = capOf(o); cp.visible = o.visible !== false; cp.material.needsUpdate = true; }
+    else if(o.userData.cap) o.userData.cap.visible = false;
+  });
+  document.querySelectorAll(".cseg button").forEach(b=> setPressed(b, b.dataset.cut === CUT.mode));
+  document.querySelectorAll(".cutpos").forEach(l=> l.hidden = !on);
+  if(on){ const D = CUT_DEF[CUT.mode]; document.querySelectorAll(".cutpos input").forEach(r=>{ r.min = D.min; r.max = D.max; r.value = CUT.off[CUT.mode]; });
+    document.querySelectorAll(".cutpos output").forEach(x=> x.textContent = `${CUT.off[CUT.mode] > 0 ? "+" : ""}${CUT.off[CUT.mode]} mm`); }
+  document.body.dataset.cut = CUT.mode;
+}
+function updateCutPlane(force){
+  if(CUT.mode === "none") return;
+  const D = CUT_DEF[CUT.mode], off = CUT.off[CUT.mode]/1000;
+  body.updateMatrixWorld();
+  const camL = body.worldToLocal(camera.position.clone()), d = camL.dot(D.n) - off;
+  if(force || Math.abs(d) > .04) CUT.side = d > 0 ? -1 : 1;          // se oculta la mitad del lado de la cámara: siempre se ve el interior
+  const nw = D.n.clone().multiplyScalar(CUT.side).transformDirection(body.matrixWorld);
+  CUT.plane.setFromNormalAndCoplanarPoint(nw, body.localToWorld(D.n.clone().multiplyScalar(off)));
+}
+function setCut(mode){ stopTour(); CUT.mode = CUT_DEF[mode] ? mode : "none"; applyCut(); }
+document.querySelectorAll(".cseg button").forEach(b=> b.onclick = ()=> setCut(b.dataset.cut));
+document.querySelectorAll(".cutpos input").forEach(r=> r.oninput = ()=>{ if(CUT.mode==="none") return; CUT.off[CUT.mode] = +r.value; applyCut(); });
 function setRender(m){
   if(!RENDER_MODES.includes(m)) m = "real";
   RENDER.mode = m; if(m !== "parts") RENDER.iso = null;
@@ -1824,6 +1909,7 @@ function frame(){
     rainGeo.attributes.position.needsUpdate = true;
   }
   if(!state.plan){ stepFocus(); controls.update(); if(persp.position.y < .06) persp.position.y = .06; }
+  if(CUT) updateCutPlane();
   renderer.render(scene, camera);
   placePanel();
   requestAnimationFrame(frame);
