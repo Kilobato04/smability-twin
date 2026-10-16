@@ -150,6 +150,20 @@ body[data-render="tech"] #stage{background-color:#fbfbf8;background-image:linear
 #siting li i{font-style:normal;font-family:var(--f-mono);font-size:11px;color:var(--accent);padding-top:2px}
 #siting .flag{color:var(--muted);font-size:12px;padding:0 14px 12px}
 .faces{padding:0 14px 12px;display:grid;gap:6px}
+.energy{padding:0 14px 12px;display:grid;gap:8px;font-size:12.5px;line-height:1.4}
+.energy h4{margin:0;font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.energy .erow{display:grid;grid-template-columns:78px minmax(0,1fr);gap:8px;align-items:center}
+.energy .erow>span{font-size:12px;color:var(--muted)}
+.energy .seg{display:flex;min-width:0}
+.energy .seg button{flex:1;padding:5px 6px;font-size:11.5px;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ebars{position:relative;height:60px;margin-bottom:16px;display:grid;grid-template-columns:repeat(12,1fr);gap:3px;align-items:end;border-bottom:1px solid var(--line)}
+.ecol{position:relative;height:100%;display:flex;align-items:flex-end}
+.ecol small{position:absolute;bottom:-16px;left:0;right:0;text-align:center;font:10px var(--f-mono);color:var(--muted)}
+.ebar{width:100%;border-radius:3px 3px 0 0;background:var(--ok)}
+.ebar.warn{background:var(--warn)}.ebar.bad{background:var(--bad)}
+.eone{position:absolute;left:0;right:0;border-top:1.5px dashed var(--ink);opacity:.55;pointer-events:none;z-index:1}
+.energy .enote{margin:0}
+.energy .esrc{margin:0;font-size:11px;color:var(--muted)}
 .faces h4{margin:0 0 2px;font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .face{display:grid;grid-template-columns:118px 1fr 36px;gap:8px;align-items:center;font-size:12px}
 .face .track{height:8px;background:var(--bg2);border-radius:4px;overflow:hidden}
@@ -322,6 +336,7 @@ body[data-render="tech"] #stage{background-color:#fbfbf8;background-image:linear
         <ul id="sitingList"></ul>
         <div class="refcheck" id="refCheck" hidden></div>
         <div class="faces" id="faces"></div>
+        <div class="energy" id="energy"></div>
         <div class="flag" id="windFlag"></div>
       </div>
     </details>
@@ -510,17 +525,105 @@ async function fetchClimate(lat, lon){
 async function refineCity(key){
   const ci = CITIES[key]; if(!ci || ci.climateTried) return;
   ci.climateTried = true;
-  const cl = await fetchClimate(ci.lat, ci.lon);
-  if(cl){ Object.assign(ci, cl); if(state.city===key) applyCity(); }
+  const [cl, pv] = await Promise.all([fetchClimate(ci.lat, ci.lon), fetchSolar(ci.lat, ci.lon)]);
+  if(cl) Object.assign(ci, cl);
+  if(pv) ci.pv = pv; else if(cl) ci.pv = null;          // con meses de lluvia reales se recalcula el estimado
+  if((cl || pv) && state.city===key) applyCity();
+}
+
+/* ================= ENERGÍA SMAA · Voltaic 10 W Axon ================= */
+// Panel P110 10 W / 6 V fijo a 37° mirando con la cara principal; batería V75 Li-Ion NMC 72 Wh (5 V / 2 A).
+// eta: temperatura, suciedad y conversión 6 V → 5 V del cargador (sin MPPT declarado).
+const PV = {W:10, tilt:37, battWh:72, usable:.85, eta:.70, window:60, step:5};
+const LOADS = {
+  bajo:  {label:"Bajo",   w:.40, desc:"envío cada 5 min, PM por ciclos"},
+  tipico:{label:"Típico", w:.85, desc:"envío cada 1 min, PM continuo"},
+  alto:  {label:"Alto",   w:1.15, desc:"1 min, GPS continuo, señal 2G débil"},
+};
+const LOAD_PARTS = [["Sensor PM (ventilador y láser)", .45], ["Microcontrolador, T/HR, O₂, CO y ruido", .15], ["Módem 2G: reposo y envíos", .15], ["GPS por ciclos", .03], ["Conversión a 5 V", .07]];
+const ENERGY_OK = 1.25;                                    // margen mínimo en el peor mes (energía que entra ÷ consumo)
+const NAZ = 360/PV.step, DAYS_M = [31,28,31,30,31,30,31,31,30,31,30,31];
+// Irradiancia diaria sobre el panel (kWh/m²·día = horas de sol pico) por mes y por rumbo del panel (cada 5°)
+function poaAccumulate(acc, m, s, Bh, Dh, w){
+  const b = PV.tilt*RAD, cb = Math.cos(b), sb = Math.sin(b), G = Bh + Dh;
+  const diffuse = Dh*(1+cb)/2 + .2*G*(1-cb)/2;
+  const up = s.alt > 2, sa = Math.sin(s.alt*RAD), ca = Math.cos(s.alt*RAD), dni = up ? Math.min(1100, Bh/sa) : 0;
+  for(let k=0;k<NAZ;k++){
+    const ci = up ? sa*cb + ca*sb*Math.cos((s.az - k*PV.step)*RAD) : 0;
+    acc[k][m] += (dni*Math.max(0,ci) + diffuse)*w;
+  }
+}
+function poaFinish(acc, days){ return acc.map(row=> row.map((v,m)=> +(v/days[m]/1000).toFixed(3))); }
+const solarCache = {};
+async function fetchSolar(lat, lon){
+  const k = `${(+lat).toFixed(2)},${(+lon).toFixed(2)}`;
+  if(solarCache[k]) return solarCache[k];
+  try{ const saved = JSON.parse(localStorage.getItem("smab.pv1."+k)||"null"); if(saved) return solarCache[k] = saved; }catch(e){}
+  const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${CLIMATE_YEAR}-01-01&end_date=${CLIMATE_YEAR}-12-31&hourly=direct_radiation,diffuse_radiation&timezone=GMT`;
+  try{
+    const ctl = new AbortController(); const t = setTimeout(()=>ctl.abort(), 15000);
+    const r = await fetch(url,{signal:ctl.signal}); clearTimeout(t);
+    if(!r.ok) return null;
+    const H = (await r.json()).hourly; if(!H || !H.time) return null;
+    const acc = Array.from({length:NAZ}, ()=> new Array(12).fill(0)), days = new Array(12).fill(0), seen = new Set();
+    H.time.forEach((ts,i)=>{
+      const Bh = H.direct_radiation[i], Dh = H.diffuse_radiation[i]; if(Bh==null || Dh==null) return;
+      const m = +ts.slice(5,7) - 1; if(!seen.has(ts.slice(0,10))){ seen.add(ts.slice(0,10)); days[m]++; }
+      if(Bh + Dh <= 0) return;
+      const s = sunPosition(Date.parse(ts+":00Z") - 1800000, lat, lon);   // valor medio de la hora anterior
+      poaAccumulate(acc, m, s, Bh, Dh, 1);
+    });
+    if(days.some(d=>!d)) return null;
+    const out = {byAz: poaFinish(acc, days), src:`irradiancia horaria ${CLIMATE_YEAR} (Open-Meteo)`};
+    try{ localStorage.setItem("smab.pv1."+k, JSON.stringify(out)); }catch(e){}
+    return solarCache[k] = out;
+  }catch(e){ return null; }
+}
+// Respaldo sin conexión: cielo despejado reducido por nubosidad (más en temporada de lluvias)
+function estimateSolar(city){
+  const acc = Array.from({length:NAZ}, ()=> new Array(12).fill(0)), wet = new Set(city.rainMonths||[]);
+  for(let m=0;m<12;m++){
+    const kc = wet.has(m) ? (city.drizzle ? .8 : .62) : .85;
+    for(let h=0;h<24;h+=.25){
+      const s = sunPosition(cityDate(city,m,h), city.lat, city.lon); if(s.alt <= 0) continue;
+      const sa = Math.sin(s.alt*RAD), dni = 1000*Math.pow(.7, Math.pow(1/sa, .678));
+      const Bh = dni*sa*kc*kc, Dh = (.12*dni*sa + 60*sa)*(2 - kc);   // las nubes bajan el haz directo y suben el difuso
+      poaAccumulate(acc, m, s, Bh, Dh, .25);
+    }
+  }
+  return {byAz: poaFinish(acc, new Array(12).fill(1)), src:"estimado con cielo despejado y nubosidad típica (sin datos horarios)", est:true};
+}
+function pvOf(city){ return city.pv || (city.pvEst ||= estimateSolar(city)); }
+function energyPlan(city){
+  const P = pvOf(city), load = LOADS[state.load] || LOADS.tipico, out = load.w*24;
+  const lee = Math.round((city.rainWindFrom + 180) % 360);
+  const at = az => { const k = Math.round((((az%360)+360)%360)/PV.step) % NAZ; return P.byAz[k].map(h=> PV.W*h*PV.eta); };
+  const evalAz = (az, dev)=>{ const ein = at(az), ratios = ein.map(e=> e/out), worstM = ratios.indexOf(Math.min(...ratios));
+    return {az:((az%360)+360)%360, dev, ein, ratio:ratios[worstM], worstM, year:ein.reduce((a,b)=>a+b,0)/12}; };
+  const opts = []; for(let d=-PV.window; d<=PV.window; d+=PV.step) opts.push(evalAz(lee + d, d));
+  const base = opts.find(o=>!o.dev), best = opts.reduce((a,b)=> b.ratio > a.ratio + 1e-6 ? b : a);
+  const enough = opts.filter(o=> o.ratio >= ENERGY_OK).sort((a,b)=> Math.abs(a.dev) - Math.abs(b.dev) || b.ratio - a.ratio);
+  let rec = base.ratio >= ENERGY_OK ? base : (enough[0] || best);
+  if(rec !== base && rec.ratio - base.ratio < .05) rec = base;          // no se gira por ganancias menores al 5%
+  const usable = PV.battWh*PV.usable;
+  return {load, out, lee, base, best, rec, opts, src:P.src, est:!!P.est, autonomy: usable/out};
+}
+function pvNow(city, frontAz){        // potencia instantánea demo del panel (W) con cielo despejado y nubes de temporada
+  const s = sunPosition(cityDate(city, state.month, state.hour), city.lat, city.lon); if(s.alt <= 0) return 0;
+  const sa = Math.sin(s.alt*RAD), ca = Math.cos(s.alt*RAD), b = PV.tilt*RAD, dni = 1000*Math.pow(.7, Math.pow(1/sa,.678));
+  const ci = Math.max(0, sa*Math.cos(b) + ca*Math.sin(b)*Math.cos((s.az - frontAz)*RAD));
+  const kc = (city.rainMonths||[]).includes(state.month) ? .75 : 1;
+  return PV.W*PV.eta*kc*(dni*ci + (.12*dni*sa + 60*sa)*(1+Math.cos(b))/2)/1000;
 }
 
 /* ================= ESTADO ================= */
 const state = {
   ref:"none", refAz:45, refDist:6,
-  view:"chaak", city:"cdmx", month:new Date().getMonth(), hour:13, frontAz:0,
+  view:"chaak", city:"cdmx", load:"tipico", orient:"auto", month:new Date().getMonth(), hour:13, frontAz:0,
   explode:0, explodeTarget:0, rain:false, plan:false,
   selected:null, hovered:null, env:{}, lastUpdate:null
 };
+try{ const L = localStorage.getItem("smab.load"), O = localStorage.getItem("smab.orient"); if(LOADS[L]) state.load = L; if(O==="auto" || O==="lluvia") state.orient = O; }catch(_){}
 
 /* ================= THREE ================= */
 const stage = $("stage");
@@ -599,13 +702,13 @@ const INFO = {
   screws_head:{title:"Tornillos del sensor", sub:"3 × M3 radiales a 120° · fijan la estación compacta al cabezal roscado", metric:null},
   screws:    {title:"Tornillos de la carcasa", sub:"2 × M3 · atraviesan el tubo y fijan las abrazaderas", metric:null},
   // SMAA real (models/smaa.glb)
-  smaa_case: {title:"Carcasa SMAA · tapa superior", sub:"Fija a la pestaña de la placa soporte con 2 tornillos · electrónica a la sombra del panel", metric:"tInt"},
-  smaa_sens: {title:"Módulo de sensores SMAA", sub:"Calidad del aire: PM2.5 · PM10 · O₃ · NO₂ · temperatura y humedad", metric:"pm25",
+  smaa_case: {title:"Carcasa SMAA · tapa superior", sub:"Fija a la pestaña de la placa soporte con 2 tornillos · electrónica, módem 2G y GPS a la sombra del panel", metric:"tInt"},
+  smaa_sens: {title:"Módulo de sensores SMAA", sub:"PM2.5 y PM10 (cálculo) · O₂ · CO · temperatura y humedad · ruido · GPS · resolución de 1 a 5 min", metric:"pm25",
               note:"Tomas de aire en la parte baja de la carcasa: el panel y la pestaña las cubren de la lluvia directa sin cerrar el paso del aire."},
   screws_smaa:{title:"Tornillos mango ↔ pestaña", sub:"2 × M5 · atraviesan la barra del mango de SMAA y las ranuras de la pestaña del soporte; rondana y tuerca por debajo", metric:null},
   screws_bat:{title:"Tornillos de la batería", sub:"4 × M3 avellanados · fijan las orejas de la batería a los barrenos internos de la placa; tuerca por debajo", metric:null},
   screws_panel:{title:"Tornillos del panel", sub:"4 × M4 · fijan el panel a la placa inclinada del soporte; rondana y tuerca por debajo", metric:null},
-  battery:   {title:"Paquete de baterías", sub:"Bajo la placa inclinada del panel · alimenta a SMAA de noche", metric:"batt"},
+  battery:   {title:"Batería Voltaic V75", sub:"72 Wh · Li-Ion NMC · 5 V / 2 A · bajo la placa del panel · deja de cargar arriba de 45 °C", metric:"batt"},
 };
 /* CHAAK real: altura a la que se monta su base sobre el mástil del trípode (m) */
 const CHAAK_BASE_Y = 1.12;          // tope del mástil de 1.25" del trípode (models/montaje.glb)
@@ -885,8 +988,14 @@ function mockTick(){
     v.no2  = Math.max(4, Math.round(18 + 30*traffic + j(4)));
     v.o3   = Math.max(5, Math.round(20 + 70*Math.max(0,Math.sin((h-10)/8*Math.PI)) - (raining?20:0) + j(5)));
     v.tInt = +(v.temp + 3 + (small?16:22)*irr*(raining?.4:1) + j(.5)).toFixed(1);
-    v.solarW = Math.max(0, Math.round((small?10:40)*Math.sin(Math.max(0,s.alt)*RAD)*(raining?.25:1) + j(1)));
-    v.batt = Math.min(100, Math.max(40, Math.round((v.batt||86) + (v.solarW>(small?4:15)?.3:-.2))));
+    v.solarW = small ? +Math.max(0, pvNow(city, state.frontAz)*(raining?.25:1) + j(.15)).toFixed(1)
+                     : Math.max(0, Math.round(40*Math.sin(Math.max(0,s.alt)*RAD)*(raining?.25:1) + j(1)));
+    if(small){
+      v.o2 = +(20.9 + j(.05)).toFixed(2);
+      v.co = +Math.max(.1, .3 + 1.4*traffic + j(.1)).toFixed(2);
+      v.noise = Math.round(46 + 22*traffic + (raining?6:0) + j(2));
+    }
+    v.batt = Math.min(100, Math.max(40, Math.round((v.batt||86) + (v.solarW>(small?(LOADS[state.load]||LOADS.tipico).w/PV.eta:15)?.3:-.2))));
     v.rssi = Math.round(-71 + j(6));
   }
 }
@@ -899,7 +1008,7 @@ function mapApi(j){
     temp: pick("temp","temperature","t","data.temp"), rh: pick("rh","humidity","hr","data.rh"),
     ws: pick("ws","wind_speed","data.ws"), wd: pick("wd","wind_dir","data.wd"),
     rain: pick("rain","precip","data.rain"), solarW: pick("solar","solar_w"), batt: pick("battery","batt"),
-    rssi: pick("rssi","signal"), tInt: pick("t_int","temp_internal","box_temp"),
+    rssi: pick("rssi","signal"), o2: pick("o2","O2","data.o2"), co: pick("co","CO","data.co"), noise: pick("noise","db","ruido","data.noise"), tInt: pick("t_int","temp_internal","box_temp"),
     press: pick("press","pressure","bar","hpa","data.pressure"), dew: pick("dew","dew_point","data.dew")
   };
   Object.keys(out).forEach(k=> out[k]===undefined && delete out[k]);
@@ -988,6 +1097,8 @@ $("cGeo").onclick = ()=>{
 
 CARD.forEach((d,i)=> $("refDir").add(new Option(d, i*22.5)));
 $("refDir").value = state.refAz;
+$("energy").addEventListener("click", e=>{ const b = e.target.closest("button[data-k]"); if(!b) return;
+  state[b.dataset.k] = b.dataset.v; try{ localStorage.setItem("smab."+b.dataset.k, b.dataset.v); }catch(_){} applyCity(); });
 $("ref").onchange = e=>{ state.ref = e.target.value; placeLandmark(); resetView(); };
 $("refDir").onchange = e=>{ state.refAz = +e.target.value; placeLandmark(); };
 $("refDist").oninput = e=>{ state.refDist = +e.target.value; $("refDistOut").textContent = state.refDist+" m"; placeLandmark(); };
@@ -1000,6 +1111,7 @@ function setView(view){
   const SHARED = ["tubo","cople_base","cople_sup"];   // tubo de CHAAK: también lo usa SMAA
   for(const st of Object.values(ST)){ const on = view==="both" || view===st.key; Object.entries(st.parts).forEach(([k,p])=> p.group.visible = on || (st===ST.chaak && ST.smaa.real && SHARED.includes(k))); }
   if(state.selected && state.selected.st!=="rig" && !visible().includes(ST[state.selected.st])) select(null);
+  if(state.energy) applyCity();                 // con SMAA el panel puede girar la cara principal; solo CHAAK va de espaldas a la lluvia
   showSource(); refreshPanel();
 }
 function toggleExplode(){ state.explodeTarget = state.explodeTarget?0:1; setPressed($("bExplode"), !!state.explodeTarget); if(reduceMotion) state.explode = state.explodeTarget; }
@@ -1014,8 +1126,11 @@ $("bReset").onclick = ()=>{ stopTour(); if(state.plan) togglePlan(); resetView()
 let bodyTargetRot = 0;
 function applyCity(){
   const city = c(), south = city.lat < 0;
-  // Cara principal (gabinetes, local −X) de espaldas al viento de lluvia → mira a sotavento
-  const frontAz = Math.round(((city.rainWindFrom + 180) % 360)), a = frontAz*RAD; state.frontAz = frontAz;
+  // Cara principal (SMAA, local −X) de espaldas al viento de lluvia → mira a sotavento.
+  // Si el panel de SMAA no junta energía suficiente en el peor mes, se gira dentro de ±60° hacia donde capta más sol.
+  const EP = energyPlan(city); state.energy = EP;
+  const hasSmaa = state.view !== "chaak", pick = (state.orient === "lluvia" || !hasSmaa) ? EP.base : EP.rec;
+  const frontAz = pick.az, a = frontAz*RAD; state.frontAz = frontAz;
   bodyTargetRot = Math.atan2(-Math.cos(a), -Math.sin(a));
   const tilt = Math.max(10, Math.round(Math.abs(city.lat)));
   solar.rotation.y = south ? Math.PI : 0;          // paneles miran al ecuador
@@ -1028,24 +1143,54 @@ function applyCity(){
   $("sitingCity").textContent = `${city.name} · ${latLabel(city.lat)}`;
   const items = [
     ["01", `<b>Trípode libre, no sobre muros.</b> A 1 m o más de cualquier muro y a una distancia de al menos 2 veces la altura de obstáculos cercanos. Un muro calienta los equipos y frena el aire que llega a las tomas.`],
-    ["02", `<b>Cara principal hacia el ${down} (${frontAz}°),</b> de espaldas al viento de lluvia del ${up}: SMAA va de este lado y protege sus tomas y conectores. La carcasa de CHAAK queda del lado opuesto, hacia la lluvia: tapa sellada IP65 y prensaestopas siempre hacia abajo.`],
+    ["02", `<b>Cara principal hacia el ${down} (${frontAz}°),</b> ${pick.dev ? `girada ${Math.abs(pick.dev)}° desde la espalda exacta a la lluvia del ${up} para que el panel de SMAA cargue mejor (sigue dentro de ±${PV.window}°, tomas protegidas)` : `de espaldas al viento de lluvia del ${up}`}: SMAA va de este lado y protege sus tomas y conectores. La carcasa de CHAAK queda del lado opuesto, hacia la lluvia: tapa sellada IP65 y prensaestopas siempre hacia abajo.`],
     ["03", `<b>Electrónica a la sombra.</b> El lado con más horas de sol directo es ${top.label.toLowerCase()} (${cardinal(top.az)}, ${top.pct}% de las horas de sol). Visera o pantalla de ese lado, sin tapar las tomas. ${flip.length ? `El sol de mediodía pasa al ${other} del cenit en <b>${flip.join(", ")}</b>: la sombra cambia de lado a mitad de año.` : `Aquí el sol de mediodía siempre pasa al ${usual} del cenit.`}`],
     ["04", city.drizzle
       ? `<b>Lluvia escasa:</b> llovizna en ${months}, con viento del ${up}. Pluviómetro y tomas del lado ${up}, sin nada encima.`
       : `<b>La lluvia sí debe mojar el equipo.</b> Pluviómetro y tomas del lado ${up}, sin nada encima. Temporada de lluvias: ${months}.`],
     ["05", `<b>Un tubo, dos lados.</b> SMAA en la cara principal (tomas a ${INLET.smaa} m), con la placa de su panel sujeta al tubo con cinchos. La carcasa de CHAAK va del lado opuesto con los mismos 2 barrenos y tornillos M3. El sensor meteorológico queda arriba, a ${INLET.chaak} m.`],
-    ["06", `<b>Paneles solares al ${usual},</b> inclinación de ${tilt}° (10° mínimo para que se laven con la lluvia), sin dar sombra a los escudos de radiación.`],
+    hasSmaa && ["06", `<b>Panel de SMAA:</b> fijo a ${PV.tilt}° mirando con la cara principal; se lava con la lluvia. ${energyLine(EP, pick)} Sin sombra de CHAAK, ramas ni muros.`],
     ["07", `<b>Instalación.</b> Nivela el trípode y el pluviómetro con burbuja, lastra o ancla cada pata y conecta el mástil a tierra física. Orienta con el norte verdadero (en la brújula del celular activa el norte geográfico). Lejos de escapes de aire acondicionado, chimeneas y generadores.`],
   ];
-  $("sitingList").innerHTML = items.map(([n,t])=>`<li><i>${n}</i><span>${t}</span></li>`).join("");
+  $("sitingList").innerHTML = items.filter(Boolean).map(([n,t])=>`<li><i>${n}</i><span>${t}</span></li>`).join("");
   $("faces").innerHTML = `<h4>Sol directo por cara del equipo · año completo</h4>` + faces.map(f=>
     `<div class="face"><span>${f.label} · ${cardinal(f.az)}</span><div class="track"><div class="fill" style="width:${f.pct}%"></div></div><b>${f.pct}%</b></div>`).join("");
+  renderEnergy(EP, pick);
   $("windFlag").textContent = `Vientos y lluvias: ${city.windSource || "valores provisionales; se calculan solos con datos horarios cuando el sitio está publicado"}.`;
   rainDrift.copy(dirOf(city.rainWindFrom + 180)); updateChip();
   refreshRefCheck(); if(typeof field!=="undefined" && field.open){ $("fDecl").value = declOf(); renderField(); }
   updateSun(); drawGround(); mockTick(); record(); refreshPanel();
 }
 
+const MON3 = MONTHS.map(m=>m.slice(0,3).toLowerCase());
+function energyLine(EP, o){
+  return `En el peor mes (${MON3[o.worstM]}) entran ${Math.round(o.ein[o.worstM])} Wh/día contra ${Math.round(EP.out)} de consumo (${o.ratio.toFixed(2)}×); la batería cubre ${EP.autonomy.toFixed(1)} días sin sol.`;
+}
+function renderEnergy(EP, pick){
+  const el = $("energy"); if(!el) return; el.hidden = state.view === "chaak"; if(el.hidden) return;
+  const cls = r => r >= ENERGY_OK ? "ok" : r >= 1 ? "warn" : "bad";
+  const ratios = pick.ein.map(e=> e/EP.out), top = Math.max(2, ...ratios);
+  const segBtns = (k, opts)=> opts.map(([v,l])=>`<button type="button" data-k="${k}" data-v="${v}" aria-pressed="${state[k]===v}">${l}</button>`).join("");
+  let msg;
+  if(EP.base.ratio >= ENERGY_OK) msg = `De espaldas a la lluvia ya alcanza: el panel cubre ${EP.base.ratio.toFixed(2)}× el consumo en el peor mes. No hace falta girar.`;
+  else if(state.orient === "lluvia") msg = EP.rec.dev
+    ? `De espaldas a la lluvia el peor mes queda en ${EP.base.ratio.toFixed(2)}×. La orientación recomendada gira ${Math.abs(EP.rec.dev)}° hacia el ${cardinal(EP.rec.az)} y lo sube a ${EP.rec.ratio.toFixed(2)}×.`
+    : `De espaldas a la lluvia el peor mes queda en ${EP.base.ratio.toFixed(2)}×; girar dentro de ±${PV.window}° no mejora.`;
+  else if(EP.rec.dev) msg = `Girada ${Math.abs(EP.rec.dev)}° hacia el ${cardinal(EP.rec.az)} desde la espalda a la lluvia (${EP.lee}° → ${EP.rec.az}°): el peor mes sube de ${EP.base.ratio.toFixed(2)}× a ${EP.rec.ratio.toFixed(2)}×. Las tomas siguen protegidas.`;
+  else msg = `Girar dentro de ±${PV.window}° no mejora el peor mes (${EP.base.ratio.toFixed(2)}×).`;
+  if(pick.ratio < 1) msg += ` <b>No alcanza en ${MON3[pick.worstM]}:</b> envía cada 5 min o mide PM por ciclos; la batería cubre ${EP.autonomy.toFixed(1)} días de déficit.`;
+  const hot = (c().tBase ?? 0) >= 26 ? ` En calor fuerte la batería deja de cargar arriba de 45 °C: que quede a la sombra del panel.` : "";
+  el.innerHTML = `<h4>Energía SMAA · panel ${PV.W} W · batería ${PV.battWh} Wh</h4>
+    <div class="erow"><span>Consumo</span><div class="seg">${segBtns("load", Object.entries(LOADS).map(([k,L])=>[k, L.label]))}</div></div>
+    <div class="erow"><span>Orientación</span><div class="seg">${segBtns("orient", [["auto","Recomendada"],["lluvia","Espalda a la lluvia"]])}</div></div>
+    <div class="ebars" role="img" aria-label="Energía que entra contra consumo, por mes">
+      <i class="eone" style="bottom:${(1/top*100).toFixed(1)}%"></i>
+      ${ratios.map((r,m)=>`<div class="ecol" title="${MONTHS[m]}: ${Math.round(pick.ein[m])} Wh/día que entran · ${r.toFixed(2)}× el consumo"><div class="ebar ${cls(r)}" style="height:${Math.max(3, r/top*100).toFixed(1)}%"></div><small>${MONTHS[m][0]}</small></div>`).join("")}
+    </div>
+    <p class="enote"><span class="pill ${cls(pick.ratio)}">Peor mes ${pick.ratio.toFixed(2)}×</span> ${energyLine(EP, pick)}</p>
+    <p class="enote">${msg}${hot}</p>
+    <p class="esrc">Consumo supuesto ${LOADS[state.load].w} W (${LOADS[state.load].desc}); falta medirlo en sitio. Sol: ${EP.src}.</p>`;
+}
 function updateSun(){
   const city = c(), s = sunPosition(cityDate(city,state.month,state.hour), city.lat, city.lon);
   const dir = V(Math.sin(s.az*RAD)*Math.cos(s.alt*RAD), Math.sin(s.alt*RAD), -Math.cos(s.az*RAD)*Math.cos(s.alt*RAD));
@@ -1120,11 +1265,11 @@ const ROWS = {
   thr:   [["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh),"%"]],
   wind:  [["Velocidad",v=>f(v.ws,1),"m/s"],["Dirección",v=>v.wd==null?"—":`${cardinal(v.wd)} ${v.wd}`,"°"]],
   rain:  [["Intensidad",v=>f(v.rain,1),"mm/h"],["Acumulado hoy",v=>f(v.rainDay,1),"mm"]],
-  solar: [["Potencia",v=>f(v.solarW),"W"],["Batería",v=>f(v.batt),"%"]],
+  solar: [["Potencia",v=>f(v.solarW,1),"W"],["Batería",v=>f(v.batt),"%"],["Panel",()=>`${PV.W} W · ${PV.tilt}° fijo`,""],["Mira hacia",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Peor mes",()=> state.energy ? `${MON3[(state.orient==="lluvia"?state.energy.base:state.energy.rec).worstM]} · ${(state.orient==="lluvia"?state.energy.base:state.energy.rec).ratio.toFixed(2)}×` : "—",""]],
   logger:[["Temperatura interna",v=>f(v.tInt,1),"°C"],["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 4G",v=>f(v.rssi),"dBm"]],
-  smaa_case:[["Temperatura interna",v=>f(v.tInt,1),"°C"],["Mira hacia",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 4G",v=>f(v.rssi),"dBm"]],
-  smaa_sens:[["PM2.5",v=>f(v.pm25),"µg/m³"],["PM10",v=>f(v.pm10),"µg/m³"],["Ozono (O₃)",v=>f(v.o3),"ppb"],["NO₂",v=>f(v.no2),"ppb"],["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh),"%"],["Altura de toma",(v,st)=>INLET[st.key],"m"]],
-  battery:[["Carga",v=>f(v.batt),"%"],["Panel",v=>f(v.solarW),"W"]],
+  smaa_case:[["Temperatura interna",v=>f(v.tInt,1),"°C"],["Mira hacia",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 2G",v=>f(v.rssi),"dBm"],["GPS",()=>c().lat.toFixed(4)+", "+c().lon.toFixed(4),""]],
+  smaa_sens:[["PM2.5",v=>f(v.pm25),"µg/m³"],["PM10",v=>f(v.pm10),"µg/m³"],["Oxígeno (O₂)",v=>f(v.o2,2),"%"],["Monóxido de carbono (CO)",v=>f(v.co,2),"ppm"],["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh),"%"],["Ruido",v=>f(v.noise),"dB"],["Altura de toma",(v,st)=>INLET[st.key],"m"]],
+  battery:[["Carga",v=>f(v.batt),"%"],["Panel",v=>f(v.solarW,1),"W"],["Capacidad",()=>`${PV.battWh} Wh · Li-Ion NMC`,""],["Autonomía sin sol",()=> state.energy ? state.energy.autonomy.toFixed(1) : "—","días"],["Consumo supuesto",()=>`${LOADS[state.load].w} W (${LOADS[state.load].label.toLowerCase()})`,""]],
   screws_smaa:[["Cantidad",()=>"2",""],["Medida",()=>"M5",""],["Separación entre barrenos",()=>"50","mm"]],
   screws_bat:[["Cantidad",()=>"4",""],["Medida",()=>"M3",""],["Lado",()=>"derecho, de frente al panel",""]],
   screws_panel:[["Cantidad",()=>"4",""],["Medida",()=>"M4",""],["Barrenos",()=>"Ø4 panel · Ø5.4 soporte",""]],
@@ -1338,7 +1483,8 @@ function sheetData(){
     ["Viento con lluvia", `Del ${cardinal(city.rainWindFrom)} · temporada: ${F.months}`],
     ["Lado con más sol", `${F.top.label} (${cardinal(F.top.az)}), ${F.top.pct}% de las horas de sol: visera o pantalla`],
     ["Altura de tomas", F.stations.map(s=>`${s} ${INLET[s.toLowerCase()]} m`).join(" · ")],
-    ["Paneles solares", `Al ${F.usual}, inclinación ${F.tilt}°`],
+    ...(F.stations.includes("SMAA") ? [["Panel SMAA", (()=>{ const EP = state.energy, o = state.orient==="lluvia" ? EP.base : EP.rec; return `${PV.W} W fijo a ${PV.tilt}° hacia el ${cardinal(state.frontAz)} · peor mes ${MON3[o.worstM]}: ${Math.round(o.ein[o.worstM])} Wh/día, ${o.ratio.toFixed(2)}× el consumo ${LOADS[state.load].label.toLowerCase()} (${LOADS[state.load].w} W)`; })()],
+    ["Batería SMAA", `${PV.battWh} Wh · cubre ${state.energy.autonomy.toFixed(1)} días sin sol`]] : []),
     ["Sol de mediodía", F.flip.length ? `Cambia de lado en ${F.flip.join(", ")}` : `Siempre al ${F.usual} del cenit`],
     ["Referencia en sitio", F.ref],
     ["Declinación magnética", `${declOf() >= 0 ? "+" : ""}${declOf()}° (aprox., verificar)`],
@@ -1351,9 +1497,9 @@ function sheetData(){
     "Pluviómetro nivelado y sin nada encima.",
     "Tomas de aire libres en 270°, lejos de escapes de aire acondicionado, chimeneas y generadores.",
     `Visera o pantalla hacia el ${cardinal(F.top.az)}: ${F.top.label.toLowerCase()} del equipo.`,
-    `Paneles solares al ${F.usual} con ${F.tilt}°, sin dar sombra a los escudos.`,
+    ...(F.stations.includes("SMAA") ? ["Panel de SMAA limpio y sin sombra (CHAAK, ramas, muros) entre las 9 y las 16 h."] : []),
     "Mástil conectado a tierra física.",
-    "Señal 4G verificada y datos visibles en el gemelo.",
+    "Señal celular verificada (2G en SMAA) y datos visibles en el gemelo.",
     "Fotos hacia los cuatro puntos cardinales y de cada gabinete.",
   ];
   const date = new Date().toLocaleDateString("es-MX",{day:"numeric",month:"long",year:"numeric"});
@@ -1436,7 +1582,7 @@ async function runTour(){
   const pick = (...opts)=> opts.find(([st,p])=> ST[st].parts[p]);
   const steps = [
     [pick(["chaak","head"],["chaak","wind"]), "Clima en tiempo real: viento, temperatura, humedad, presión y lluvia"],
-    [pick(["smaa","smaa_sens"],["smaa","pm"]), "Calidad del aire en tiempo real: PM2.5, PM10, O₃ y NO₂"],
+    [pick(["smaa","smaa_sens"],["smaa","pm"]), "Calidad del aire en tiempo real: PM2.5, PM10, O₂, CO y ruido"],
     [pick(["smaa","solar"]), "Panel fijo a 37°: carga la batería y cubre las tomas de la lluvia"],
     [pick(["chaak","tapa"],["chaak","logger"]), "Electrónica protegida en la cara principal"],
   ];
