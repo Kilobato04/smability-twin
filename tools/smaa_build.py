@@ -18,7 +18,8 @@ from stl2glb import load_stl, cluster, cylinder
 N = np.array([0, -0.6018, 0.7986])      # normal de la placa inclinada (hacia arriba y al frente)
 U = np.array([0, 0.7986, 0.6018])       # dirección a lo largo de la pendiente (hacia arriba)
 TUBE_Y = 115.7 + 21.5                   # eje del tubo de CHAAK en el marco del soporte
-XC = 137.0                              # centro del soporte en x
+XC = 137.0
+BAT_DU = 3.0                            # mm que baja la batería por la pendiente respecto a los barrenos actuales de la placa                              # centro del soporte en x
 
 def step_tris(path):
     g = json.load(open(path))[0]
@@ -41,7 +42,10 @@ def main(src, out):
     bat = load_stl(f"{src}/10_bateria.stl")
     # Batería a la derecha (vista de frente al panel): sus 4 barrenos Ø3.2 (x 105/224.18, u 24.59/125.89)
     # concéntricos con los barrenos internos Ø3.5 de la placa (x 130.5/249.68, u 45.96/147.25).
-    bat = bat + N * ((40.82 - 2.8) - 27.43) + U * (45.96 - 24.59)
+    # BAT_DU: la batería baja 3 mm por la pendiente para librar la placa vertical (con 0 mm invadía 1.4 mm;
+    # mínimo 1.7 mm; a partir de ~3.8 mm choca con la tuerca del tornillo inferior derecho del panel).
+    # Los barrenos internos de la placa deben bajar lo mismo (u 42.96 / 144.25) o hacerse ranura.
+    bat = bat + N * ((40.82 - 2.8) - 27.43) + U * (45.96 - 24.59 - BAT_DU)
     bat[:, :, 0] += 130.5 - 105.0
     # Tornillería (mm, marco del soporte).
     # Mango ↔ pestaña: 2 × M5, cabeza sobre la barra del mango, rondana y tuerca bajo la pestaña.
@@ -60,7 +64,7 @@ def main(src, out):
     # Batería ↔ placa: 4 × M3 avellanados, a ras de la cara superior de la placa (el panel va encima); tuerca bajo la oreja.
     tb = []
     for x in (130.5, 249.68):
-        for u in (45.96, 147.25):
+        for u in (45.96 - BAT_DU, 147.25 - BAT_DU):
             tb += [cylinder(P(x, u, 39.4), P(x, u, 40.82), 3.0, 16), cylinder(P(x, u, 40.82), P(x, u, 32.5), 1.5, 12),
                    cylinder(P(x, u, 35.5), P(x, u, 36.5), 3.5, 16), cylinder(P(x, u, 33.5), P(x, u, 35.5), 3.17, 6)]
     parts += [("tornillos_bateria_smaa", np.vstack(tb), [0.35, 0.37, 0.40, 1], 0.8, 0.35, 0)]
