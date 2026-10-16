@@ -122,10 +122,10 @@ python3 tools/stl2glb.py tools/chaak.json carpeta_con_stl models/chaak.glb
 python3 tools/smaa_build.py carpeta_smaa models/smaa.glb
 ```
 - `SMAA-01TOP` y `SMAA-01BOTTOM` comparten coordenadas; los 3 STL (soporte, panel, batería) los movió AutoCAD por separado y el script los realinea:
-  - Caja: los 2 barrenos del tope (48.6 mm entre centros) caen en las 2 ranuras de la pestaña del soporte.
+  - Caja: girada 180° sobre su eje vertical, con la espalda hacia el tubo. La pestaña del soporte cruza por dentro del mango y queda bajo su barra superior.
   - Panel: cara trasera sobre la placa inclinada (37°), borde alto al tope del soporte.
   - Batería: bajo la placa inclinada, misma huella que la caja.
-- La placa vertical del soporte asienta en el tubo de CHAAK (cinchos) del lado de la cara principal; la carcasa de CHAAK queda del lado opuesto.
+- La placa vertical del soporte asienta en el tubo de CHAAK (cinchos) del lado de la cara principal. La carcasa de CHAAK va en la cara opuesta: las dos carcasas se dan la espalda.
 - En `twin.html`, `SMAA_BASE_Y` (= `CHAAK_BASE_Y` + 0.335 m) es la altura de la pestaña. El panel gira con el montaje: es fijo a la carcasa.
 - Mallas → claves: `soporte_panel` → arms, `smaa_top` → smaa_case, `smaa_bottom` → smaa_sens, `panel_solar` → solar, `bateria` → battery.
 - Sensor: Hongyuv HY-WDS6E. Mide viento ultrasónico (velocidad y dirección), temperatura, humedad, presión y precipitación por radar (lluvia, granizo o nieve).
