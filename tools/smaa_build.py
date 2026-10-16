@@ -13,7 +13,7 @@ Uso: python3 tools/smaa_build.py <carpeta_con_archivos> models/smaa.glb
 import json, struct, sys
 import numpy as np
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
-from stl2glb import load_stl, cluster
+from stl2glb import load_stl, cluster, cylinder
 
 N = np.array([0, -0.6018, 0.7986])      # normal de la placa inclinada (hacia arriba y al frente)
 U = np.array([0, 0.7986, 0.6018])       # dirección a lo largo de la pendiente (hacia arriba)
@@ -31,15 +31,41 @@ def main(src, out):
     # la pestaña cruza por dentro del mango y su cara superior toca el techo del mango (z=109.3).
     def place(t):
         t = t.copy(); t[..., 0] = 2*18 - t[..., 0]; t[..., 1] = 2*3 - t[..., 1]
-        return t + np.array([118.4, 33.9, 2.8 - 109.3])
+        return t + np.array([119.0, 43.21, 2.8 - 109.3])   # barrenos del mango (x=-7/43) centrados en las ranuras de la pestaña (x=112/162, y=46.23)
     top = place(step_tris(f"{src}/top_geo.json"))
     bot = place(step_tris(f"{src}/bottom_geo.json"))
     sop = load_stl(f"{src}/8_soporte.stl")
     pan = load_stl(f"{src}/9_panel.stl")
-    pan = pan + N * (40.82 - (-1.16)) + U * (172.2 - 224.5)           # cara trasera sobre la placa; borde alto al tope
+    pan = pan + N * (40.82 - (-1.16)) + U * (172.2 - 224.5 - 19.98)   # cara trasera sobre la placa; barrenos Ø4 del panel sobre los Ø5.4 del soporte
+    pan[:, :, 0] += 0.25
     bat = load_stl(f"{src}/10_bateria.stl")
-    bat = bat + N * ((40.82 - 2.8) - 27.43) + U * 15.0                 # cara superior bajo la placa
-    bat[:, :, 0] += (top[:, :, 0].min() - bat[:, :, 0].min())          # misma huella en x que la caja
+    # Batería a la derecha (vista de frente al panel): sus 4 barrenos Ø3.2 (x 105/224.18, u 24.59/125.89)
+    # concéntricos con los barrenos internos Ø3.5 de la placa (x 130.5/249.68, u 45.96/147.25).
+    bat = bat + N * ((40.82 - 2.8) - 27.43) + U * (45.96 - 24.59)
+    bat[:, :, 0] += 130.5 - 105.0
+    # Tornillería (mm, marco del soporte).
+    # Mango ↔ pestaña: 2 × M5, cabeza sobre la barra del mango, rondana y tuerca bajo la pestaña.
+    tm = []
+    for x in (112.0, 162.0):
+        c = lambda z: [x, 46.23, z]
+        tm += [cylinder(c(15.63), c(18.63), 4.25, 16), cylinder(c(15.63), c(-7.0), 2.5, 16),
+               cylinder(c(-1.0), c(0.0), 5.0, 16), cylinder(c(-5.0), c(-1.0), 4.62, 6)]
+    # Panel ↔ placa inclinada: 5 × M4, cabeza al frente del panel, rondana y tuerca bajo la placa.
+    tp = []
+    P = lambda x, u, d: np.array([x, 0, 0]) + U * u + N * d
+    # El barreno central de arriba (x 137) queda bajo la oreja de la batería: no lleva tornillo.
+    for x, u in ((6.65, 40.76), (267.35, 40.76), (7.65, 147.25), (266.35, 147.25)):
+        tp += [cylinder(P(x, u, 44.02), P(x, u, 46.8), 3.5, 16), cylinder(P(x, u, 44.02), P(x, u, 32.0), 2.0, 12),
+               cylinder(P(x, u, 37.0), P(x, u, 38.02), 4.5, 16), cylinder(P(x, u, 34.0), P(x, u, 37.0), 4.04, 6)]
+    # Batería ↔ placa: 4 × M3 avellanados, a ras de la cara superior de la placa (el panel va encima); tuerca bajo la oreja.
+    tb = []
+    for x in (130.5, 249.68):
+        for u in (45.96, 147.25):
+            tb += [cylinder(P(x, u, 39.4), P(x, u, 40.82), 3.0, 16), cylinder(P(x, u, 40.82), P(x, u, 32.5), 1.5, 12),
+                   cylinder(P(x, u, 35.5), P(x, u, 36.5), 3.5, 16), cylinder(P(x, u, 33.5), P(x, u, 35.5), 3.17, 6)]
+    parts += [("tornillos_bateria_smaa", np.vstack(tb), [0.35, 0.37, 0.40, 1], 0.8, 0.35, 0)]
+    parts += [("tornillos_mango_smaa", np.vstack(tm), [0.35, 0.37, 0.40, 1], 0.8, 0.35, 0),
+              ("tornillos_panel_smaa", np.vstack(tp), [0.35, 0.37, 0.40, 1], 0.8, 0.35, 0)]
     parts += [("smaa_top", top, [0.90, 0.91, 0.90, 1], 0.0, 0.5, 0.4),
               ("smaa_bottom", bot, [0.95, 0.95, 0.94, 1], 0.0, 0.5, 0.4),
               ("soporte_panel_smaa", sop, [0.78, 0.80, 0.82, 1], 0.4, 0.4, 0),
