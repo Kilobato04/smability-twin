@@ -803,13 +803,13 @@ const INFO = {
   wind:  {title:"Anemómetro y veleta", sub:"Velocidad y dirección del viento", metric:"ws"},
   rain:  {title:"Pluviómetro", sub:"Balancín · 0.2 mm por pulso", metric:"rain"},
   solar: {title:"Panel solar", sub:"Fijo a la carcasa · inclinación de fábrica", metric:"solarW"},
-  logger:{title:"Gabinete y datalogger", sub:"Cara principal · electrónica y telemetría 2G/4G", metric:"tInt"},
+  logger:{title:"Gabinete y datalogger", sub:"Cara principal · electrónica y telemetría 2G/4G", metric:"rssi"},
   tripod:{title:"Trípode compartido", sub:"CHAAK y SMAA en el mismo montaje", metric:null},
   mast:  {title:"Mástil compartido", sub:"Aluminio · 3.0 m", metric:null},
   // CHAAK real (models/chaak.glb)
   head:      {title:"Estación meteorológica compacta", sub:"Hongyuv HY-WDS6E · viento ultrasónico, sensores MEMS y lluvia por radar", metric:"temp",
               note:"Rangos: viento 0–60 m/s (±2%) · dirección 0–359° (±3°) · temperatura −40 a 80 °C · humedad 0–100% (±2%) · presión 150–1100 hPa (±1 hPa) · lluvia por radar 0–500 mm/h · radiación solar 0–2000 W/m². Brújula interna (visible en la API) y marca «N» grabada: se orienta al norte verdadero. Sin partes móviles, IP68."},
-  tapa:      {title:"Tapa de la carcasa CHAAK", sub:"Hacia el lado fresco (norte en el hemisferio norte, sur en el sur) · electrónica, GPS y telemetría 2G/4G · alimentación 5 V / 3 A (4 W) desde toma eléctrica", metric:"tInt",
+  tapa:      {title:"Tapa de la carcasa CHAAK", sub:"Hacia el lado fresco (norte en el hemisferio norte, sur en el sur) · electrónica, GPS y telemetría 2G/4G · alimentación 5 V / 3 A (4 W) desde toma eléctrica", metric:"rssi",
               note:"Se fija con 2 tornillos M3 (barrenos 1 y 2 al mismo nivel, 2 y 3 apilada bajo SMAA) o con cinchos por sus abrazaderas. Para el hemisferio sur se invierte con los mismos barrenos. Calibración remota por SMS (OTA)."},
   cabezal:   {title:"Cabezal superior roscado", sub:"Une el sensor con el soporte", metric:null},
   cople_sup: {title:"Cople roscado superior", sub:"Soporte de la estación", metric:null},
@@ -818,7 +818,7 @@ const INFO = {
   screws_head:{title:"Tornillos del sensor", sub:"3 × M3 radiales a 120° · fijan la estación compacta al cabezal roscado", metric:null},
   screws:    {title:"Tornillos de la carcasa", sub:"2 × M3 · atraviesan el tubo y fijan las abrazaderas", metric:null},
   // SMAA real (models/smaa.glb)
-  smaa_case: {title:"Carcasa SMAA · tapa superior", sub:"Fija a la pestaña de la placa soporte con 2 tornillos · electrónica, módem 2G/4G (SIM Hologram), GPS y batería interna LiPo 7.4 Wh de respaldo (10–15 h)", metric:"tInt"},
+  smaa_case: {title:"Carcasa SMAA · tapa superior", sub:"Fija a la pestaña de la placa soporte con 2 tornillos · electrónica, módem 2G/4G (SIM Hologram), GPS y batería interna LiPo 7.4 Wh de respaldo (10–15 h)", metric:"rssi"},
   smaa_sens: {title:"Módulo de sensores SMAA", sub:"PM2.5 y PM10 (cálculo) · 2 gases intercambiables · temperatura y humedad · ruido · GPS · resolución de 1 a 5 min", metric:"pm25",
               note:"Tomas de aire en la parte baja de la carcasa: el panel y la pestaña las cubren de la lluvia directa sin cerrar el paso del aire. Gases disponibles: CO, O₃, NO₂, SO₂, H₂S, CH₄, NH₃ y TRS (una 3.ª ranura si se necesita). Calibración remota por SMS; O₃ publicado: R² 0.72 → 0.91 contra la red oficial (CCA)."},
   screws_smaa:{title:"Tornillos mango ↔ pestaña", sub:"2 × M5 · atraviesan la barra del mango de SMAA y las ranuras de la pestaña del soporte; rondana y tuerca por debajo", metric:null},
@@ -840,6 +840,7 @@ let INLET_SMAA0 = INLET.smaa;               // tomas de SMAA al mismo nivel; api
 const body = new THREE.Group(), solar = new THREE.Group(); scene.add(body); scene.add(solar);
 // CHAAK fija (trípode, tubo y sensor, alineados al norte) · carcasa de CHAAK (gira a su tapa y baja al apilar) · SMAA (gira y sube al apilar)
 const fixedG = new THREE.Group(), caseG = new THREE.Group(), smaaG = new THREE.Group(); scene.add(fixedG); scene.add(caseG); body.add(smaaG);
+fixedG.rotation.y = Math.PI/2;   // barrenos y ventana del tubo en el eje N–S: la «N» del sensor y la tapa (norte o sur) quedan sobre ese eje
 const CASE_KEYS = ["tapa","logger","screws"];
 function parentFor(owner, key){ if(owner === ST.smaa) return smaaG; if(owner === ST.chaak) return CASE_KEYS.includes(key) ? caseG : fixedG; return fixedG; }
 let caseTargetRot = 0, caseTargetY = 0, smaaTargetY = 0;
@@ -1113,7 +1114,6 @@ function mockTick(){
     v.pm10 = Math.round(v.pm25*1.8 + j(4));
     v.no2  = Math.max(4, Math.round(18 + 30*traffic + j(4)));
     v.o3   = Math.max(5, Math.round(20 + 70*Math.max(0,Math.sin((h-10)/8*Math.PI)) - (raining?20:0) + j(5)));
-    v.tInt = +(v.temp + 3 + (small?16:22)*irr*(raining?.4:1) + j(.5)).toFixed(1);
     v.solarW = small ? +Math.max(0, pvNow(city, state.frontAz)*(raining?.25:1) + j(.15)).toFixed(1)
                      : Math.max(0, Math.round(40*Math.sin(Math.max(0,s.alt)*RAD)*(raining?.25:1) + j(1)));
     if(small){
@@ -1138,7 +1138,7 @@ function mapApi(j){
     ws: pick("ws","wind_speed","data.ws"), wd: pick("wd","wind_dir","data.wd"),
     rain: pick("rain","precip","data.rain"), solarW: pick("solar","solar_w"), batt: pick("battery","batt"),
     rssi: pick("rssi","signal"), co: pick("co","CO","data.co"), so2: pick("so2","SO2"), h2s: pick("h2s","H2S"), ch4: pick("ch4","CH4"), nh3: pick("nh3","NH3"), trs: pick("trs","TRS"),
-    rad: pick("radiation","solar_radiation","rad"), compass: pick("compass","heading","brujula"), noise: pick("noise","db","ruido","data.noise"), tInt: pick("t_int","temp_internal","box_temp"),
+    rad: pick("radiation","solar_radiation","rad"), compass: pick("compass","heading","brujula"), noise: pick("noise","db","ruido","data.noise"),
     press: pick("press","pressure","bar","hpa","data.pressure"), dew: pick("dew","dew_point","data.dew")
   };
   Object.keys(out).forEach(k=> out[k]===undefined && delete out[k]);
@@ -1155,7 +1155,7 @@ async function pollStation(st){
   if(live){ st.source = "live"; Object.assign(st.v, live); } else st.source = "demo";
   if(typeof renderTrack === "function") renderTrack();
 }
-function record(){ for(const st of Object.values(ST)) ["pm25","o3","temp","ws","rain","solarW","tInt"].forEach(k=> st.v[k]!=null && push(st,k,st.v[k])); state.lastUpdate = new Date(); }
+function record(){ for(const st of Object.values(ST)) ["pm25","o3","temp","ws","rain","solarW","rssi"].forEach(k=> st.v[k]!=null && push(st,k,st.v[k])); state.lastUpdate = new Date(); }
 
 /* ================= UI ================= */
 function fillCitySelect(){
@@ -1293,7 +1293,7 @@ function applyCity(){
       ? `<b>Lluvia escasa:</b> llovizna en ${months}, con viento del ${up}. El sensor de CHAAK arriba y sin nada encima.`
       : `<b>La lluvia sí debe mojar el equipo.</b> El sensor de CHAAK (lluvia por radar) arriba y sin nada encima. Temporada de lluvias: ${months}.`],
     hasSmaa && ["07", `<b>Panel de SMAA:</b> fijo a ${PV.tilt}° mirando con la cara principal; se lava con la lluvia. ${energyLine(EP, pick)} Sin sombra de ramas ni muros.`],
-    hasChaak && ["08", `<b>Energía de CHAAK.</b> Necesita toma eléctrica (eliminador 5 V / 3 A); su batería interna cubre unas 2 h de corte.`],
+    hasChaak && ["08", `<b>Energía de CHAAK.</b> Necesita toma eléctrica (eliminador 5 V / 3 A, 4 W) protegida de la lluvia.`],
     ["09", `<b>Instalación.</b> Nivela el trípode con burbuja, lastra o ancla cada pata y conecta el tubo a tierra física. Lejos de escapes de aire acondicionado, chimeneas y generadores.`],
   ];
   $("sitingList").innerHTML = items.filter(Boolean).map(([n,t],i)=>`<li><i>${String(i+1).padStart(2,"0")}</i><span>${t}</span></li>`).join("");
@@ -1371,7 +1371,7 @@ function drawPlan(cv, pal, print){
   arrow(city.rainWindFrom + (close?8:0), pal.rain, `Lluvia ${cardinal(city.rainWindFrom)}`, -14);
   if(print){
     // huella del trípode (fija, alineada al norte con el sensor de CHAAK) y tapa de CHAAK
-    const r = 0, w = (x,z)=>[C + (x*Math.cos(r) + z*Math.sin(r))*S, C + (-x*Math.sin(r) + z*Math.cos(r))*S];
+    const r = fixedG.rotation.y, w = (x,z)=>[C + (x*Math.cos(r) + z*Math.sin(r))*S, C + (-x*Math.sin(r) + z*Math.cos(r))*S];
     g.strokeStyle = pal.muted; g.lineWidth = 6;
     for(let i=0;i<3;i++){ const a = i*2*Math.PI/3 + LEG.a0*RAD, [x,y] = w(Math.cos(a)*LEG.r, Math.sin(a)*LEG.r);
       g.beginPath(); g.moveTo(C,C); g.lineTo(x,y); g.stroke(); g.fillStyle = pal.muted; g.beginPath(); g.arc(x,y,9,0,7); g.fill(); }
@@ -1408,8 +1408,8 @@ const ROWS = {
   wind:  [["Velocidad",v=>f(v.ws,1),"m/s"],["Dirección",v=>v.wd==null?"—":`${cardinal(v.wd)} ${v.wd}`,"°"]],
   rain:  [["Intensidad",v=>f(v.rain,1),"mm/h"],["Acumulado hoy",v=>f(v.rainDay,1),"mm"]],
   solar: [["Potencia",v=>f(v.solarW,1),"W"],["Batería",v=>f(v.batt),"%"],["Panel",()=>`${PV.W} W · ${PV.tilt}° fijo`,""],["Mira hacia",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Peor mes",()=> state.energy ? `${MON3[(state.orient==="lluvia"?state.energy.base:state.energy.rec).worstM]} · ${(state.orient==="lluvia"?state.energy.base:state.energy.rec).ratio.toFixed(2)}×` : "—",""]],
-  logger:[["Temperatura interna",v=>f(v.tInt,1),"°C"],["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 2G/4G",v=>f(v.rssi),"dBm"]],
-  smaa_case:[["Temperatura interna",v=>f(v.tInt,1),"°C"],["Mira hacia",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 2G/4G",v=>f(v.rssi),"dBm"],["GPS",()=>c().lat.toFixed(4)+", "+c().lon.toFixed(4),""],["Última calibración",(v,st)=>calTxt(st),""]],
+  logger:[["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 2G/4G",v=>f(v.rssi),"dBm"]],
+  smaa_case:[["Mira hacia",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 2G/4G",v=>f(v.rssi),"dBm"],["GPS",()=>c().lat.toFixed(4)+", "+c().lon.toFixed(4),""],["Última calibración",(v,st)=>calTxt(st),""]],
   smaa_sens:[["PM2.5",v=>f(v.pm25),"µg/m³"],["PM10",v=>f(v.pm10),"µg/m³"],...[0,1].map(i=>[`<span class="gslot">Ranura ${i+1}</span> `+GASES[SMAA_GASES[i]].label, v=>f(v[SMAA_GASES[i]], GASES[SMAA_GASES[i]].d), GASES[SMAA_GASES[i]].u]),["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh),"%"],["Ruido",v=>f(v.noise),"dB"],["Altura de toma",(v,st)=>INLET[st.key],"m"]],
   battery:[["Carga",v=>f(v.batt),"%"],["Panel",v=>f(v.solarW,1),"W"],["Capacidad",()=>`${PV.battWh} Wh externa + ${PV.intWh} Wh interna`,""],["Autonomía sin sol",()=> state.energy ? state.energy.autonomy.toFixed(1) : "—","días"],["Consumo supuesto",()=>`${LOADS[state.load].w} W (${LOADS[state.load].label.toLowerCase()})`,""]],
   screws_smaa:[["Cantidad",()=>"2",""],["Medida",()=>"M5",""],["Separación entre barrenos",()=>"50","mm"]],
@@ -1417,7 +1417,7 @@ const ROWS = {
   screws_panel:[["Cantidad",()=>"4",""],["Medida",()=>"M4",""],["Barrenos",()=>"Ø4 panel · Ø5.4 soporte",""]],
   arms:  [["Sujeción",()=>"cinchos al tubo",""],["Mira hacia",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"]],
   head:  [["Velocidad del viento",v=>f(v.ws,2),"m/s"],["Dirección del viento",v=>v.wd==null?"—":`${cardinal(v.wd)} ${v.wd}`,"°"],["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh,1),"%"],["Presión atmosférica",v=>f(v.press,1),"hPa"],["Precipitación",v=>f(v.rain,2),"mm/h"],["Tipo de precipitación",v=>v.ptype||"—",""],["Acumulado hoy",v=>f(v.rainDay,2),"mm"],["Punto de rocío (calculado)",v=>f(v.dew,1),"°C"],["Radiación solar",v=>f(v.rad),"W/m²"],["Brújula interna (desvío de la «N»)",v=>v.compass==null?"—":(v.compass>0?"+":"")+f(v.compass,1),"°"],["Última calibración",(v,st)=>calTxt(st),""]],
-  tapa:  [["Temperatura interna",v=>f(v.tInt,1),"°C"],["Mira hacia",()=>`${cardinal(state.chaakAz ?? 0)} ${state.chaakAz ?? 0}`,"°"],["Montaje",()=> state.mount ? `barrenos ${state.mount.holes} · ${state.mount.mode}` : "—",""],["Señal 2G/4G",v=>f(v.rssi),"dBm"],["Alimentación",()=>"5 V / 3 A · toma eléctrica",""]],
+  tapa:  [["Mira hacia",()=>`${cardinal(state.chaakAz ?? 0)} ${state.chaakAz ?? 0}`,"°"],["Montaje",()=> state.mount ? `barrenos ${state.mount.holes} · ${state.mount.mode}` : "—",""],["Señal 2G/4G",v=>f(v.rssi),"dBm"],["Alimentación",()=>"5 V / 3 A · toma eléctrica",""]],
   cabezal:[["Rosca hacia",()=>"sensor",""]],
   cople_sup:[["Tipo",()=>"cople roscado",""]],
   tubo:  [["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"]],
@@ -1435,7 +1435,7 @@ function statusFor(key, st){
   if(key==="pm" && v.pm25!=null){ const s = band(v.pm25,BANDS.pm25); return `<span class="pill ${s[2]}">${pre}Aire: ${s[1]}</span>`; }
   if(key==="gas" && v.o3!=null){ const s = band(v.o3,BANDS.o3); return `<span class="pill ${s[2]}">${pre}Ozono: ${s[1]}</span>`; }
   if(key==="head") return v.rain>0 ? `<span class="pill info">${v.ptype||"Lluvia"} · viento del ${cardinal(v.wd)}</span>` : `<span class="pill ok">Sin lluvia · viento del ${cardinal(v.wd)}</span>`;
-  if((key==="logger"||key==="tapa"||key==="smaa_case") && v.tInt!=null) return v.tInt<=40 ? `<span class="pill ok">${pre}Electrónica en rango</span>` : v.tInt<=50 ? `<span class="pill warn">${pre}Calentamiento · agregar sombra</span>` : `<span class="pill bad">${pre}Sobrecalentamiento</span>`;
+  if((key==="logger"||key==="tapa"||key==="smaa_case") && v.rssi!=null) return v.rssi>=-85 ? `<span class="pill ok">${pre}Señal celular buena</span>` : v.rssi>=-100 ? `<span class="pill warn">${pre}Señal débil · revisa cobertura</span>` : `<span class="pill bad">${pre}Sin señal suficiente</span>`;
   if(key==="rain") return v.rain>0 ? `<span class="pill info">Lloviendo · viento del ${cardinal(v.wd)}</span>` : `<span class="pill ok">Sin lluvia</span>`;
   if(key==="solar") return v.solarW>2 ? `<span class="pill ok">${pre}Cargando</span>` : `<span class="pill warn">${pre}Sin generación</span>`;
   return "";

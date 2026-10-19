@@ -175,3 +175,5 @@ Edita `twin.html` y luego ejecuta `python3 build.py`, que regenera `index.html`.
 - QR: `?id=<id del equipo>` (o `?chaak=<id>&smaa=<id>`), opcional `&city=cdmx`, abre el modo campo con ese equipo.
 - Ficha: nombre del sitio, instalador, altura, distancia a vialidad y hasta 4 fotos (también en el PDF). «Enviar a Smability» arma el resumen para WhatsApp o correo; el contacto va en `CONTACT`.
 - Fichas técnicas en PDF: coloca `docs/ficha-smaa.pdf`, `docs/ficha-chaak.pdf` y `docs/ficha-smability.pdf`; los botones aparecen solos cuando existen.
+- Orificio del tubo: el STL trae un barreno pasado de Ø21 mm justo arriba de la carcasa (z 786–807 mm), por donde salen los cables del sensor hacia la carcasa. El alargamiento corta en z 809.5 para no deformarlo. El tubo (`fixedG`) gira 90° para que sus barrenos y este orificio queden en el eje N–S, igual que la carcasa con la tapa al norte o al sur.
+- Sin temperatura interna: los equipos no la miden. Los paneles de gabinete muestran la señal celular (pastilla de señal buena, débil o insuficiente).
