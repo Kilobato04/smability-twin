@@ -2205,6 +2205,7 @@ if(URLQ.has("embed")){
     rig(on){ Object.values(RIG.parts).forEach(p=> p.group.visible = !!on); },
     floor(on){ floor.visible = !!on; },
     zone(on){ inletZone.visible = !!on; sunMarker.visible = !!on; },
+    inlet(){ const v = new THREE.Vector3(); inletZone.getWorldPosition(v); v.project(camera); return [(v.x+1)/2, (1-v.y)/2]; },
     align(){ state.smaaH = "nivel"; applyCity(); },
     snap(){ renderer.render(scene, camera); return renderer.domElement.toDataURL("image/png"); },
     tint(key, hex){ const st = ST[key]; if(!st || tintNow[key] === hex) return; tintNow[key] = hex;
