@@ -174,7 +174,10 @@ Edita `twin.html` y luego ejecuta `python3 build.py`, que regenera `index.html`.
 - Modo campo en 3 pasos (Norte CHAAK, Tapa CHAAK, Cara SMAA), lista «Antes de instalar», interruptor de instalador con experiencia y seguimiento de conexión (Configurado → Conectando → Recibiendo datos).
 - QR: `?id=<id del equipo>` (o `?chaak=<id>&smaa=<id>`), opcional `&city=cdmx`, abre el modo campo con ese equipo.
 - Ficha: nombre del sitio, instalador, altura, distancia a vialidad y hasta 4 fotos (también en el PDF). «Enviar a Smability» arma el resumen para WhatsApp o correo; el contacto va en `CONTACT`.
-- Fichas técnicas en PDF: coloca `docs/ficha-smaa.pdf`, `docs/ficha-chaak.pdf` y `docs/ficha-smability.pdf`; los botones aparecen solos cuando existen.
+- Fichas técnicas en PDF: coloca `docs/ficha-smaa.pdf`, `docs/ficha-chaak.pdf` y `docs/ficha-smaa-chaak.pdf`; los botones «Fichas técnicas» aparecen solos junto a las redes (y en la ficha de instalación) cuando existen.
 - Orificio del tubo: el STL trae un barreno pasado de Ø21 mm justo arriba de la carcasa (z 786–807 mm), por donde salen los cables del sensor hacia la carcasa. El alargamiento corta en z 809.5 para no deformarlo. El tubo (`fixedG`) gira 90° para que sus barrenos y este orificio queden en el eje N–S, igual que la carcasa con la tapa al norte o al sur.
 - Sin temperatura interna: los equipos no la miden. Los paneles de gabinete muestran la señal celular (pastilla de señal buena, débil o insuficiente).
 - Altura de SMAA a criterio del instalador (`state.smaaH`, se guarda en `smab.smaaH`): «Arriba», justo bajo el cople superior (tomas a 1.54 m), o «Mismo nivel» que CHAAK (tomas a 1.37 m). Con CHAAK baja (barrenos 2 y 3) SMAA va arriba por obligación. Nombres en pantalla: «CHAAK alta» (barrenos 1 y 2) y «CHAAK baja» (barrenos 2 y 3).
+
+- Barra inferior: redes sociales y botones de fichas a la izquierda; en escritorio se dejan 200 px libres a la derecha para el aviso flotante de Netlify.
+- Trípode y mástil son de referencia: no se venden (CHAAK y SMAA se entregan con su tubo).

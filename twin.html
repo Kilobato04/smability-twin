@@ -237,6 +237,11 @@ body[data-render="tech"] #stage{background-color:#fbfbf8;background-image:linear
 .btn{font:600 13px var(--f-body);letter-spacing:.02em;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:8px 13px;cursor:pointer}
 .btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .btn:focus-visible,.seg button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.specdl{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding-left:12px;border-left:1px solid var(--line)}
+.specdl a{font:600 12px var(--f-body);color:var(--ink);text-decoration:none;border:1px solid var(--line);border-radius:7px;padding:5px 9px;background:var(--bg);display:inline-flex;align-items:center;gap:5px}
+.specdl a:hover{border-color:var(--accent);color:var(--accent)}
+.specdl a svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media (min-width:761px){.dock{padding-right:200px}}   /* deja libre la esquina del aviso de Netlify */
 .legend{margin-left:auto;display:flex;gap:14px;align-items:center;color:var(--muted);font-size:12px;flex-wrap:wrap}
 .legend em{font-style:normal;display:inline-flex;align-items:center;gap:6px}
 .legend em::before{content:"";width:14px;height:3px;border-radius:2px;background:var(--c)}
@@ -254,6 +259,7 @@ body[data-render="tech"] #stage{background-color:#fbfbf8;background-image:linear
   .brand{margin-right:0}
   .brand-logo{width:34px;height:34px}
   .brand-txt{display:none}
+  .dock .specdl{grid-column:1/-1;justify-content:center;flex-wrap:wrap;border-left:0;padding:8px 0 0}
   .dock .social{grid-column:1/-1;justify-content:center;border-left:0;margin:2px 0 0;padding:10px 0 0;border-top:1px solid var(--line);gap:10px}
   .dock .social a{width:44px;height:44px}
   .mchip{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:72%;min-height:40px;font:600 14px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:6px 12px 6px 10px;cursor:pointer}
@@ -429,19 +435,20 @@ body[data-render="tech"] #stage{background-color:#fbfbf8;background-image:linear
     <div class="field rfield"><span class="lbl" id="rLbl">Vista</span><div class="seg rseg" role="group" aria-labelledby="rLbl"><button type="button" data-mode="real" aria-pressed="true">Realista</button><button type="button" data-mode="xray" aria-pressed="false">Rayos X</button><button type="button" data-mode="tech" aria-pressed="false">Técnica</button><button type="button" data-mode="parts" aria-pressed="false">Componentes</button></div></div>
     <div class="field cfield"><span class="lbl" id="cLbl">Corte</span><div class="seg cseg" role="group" aria-labelledby="cLbl"><button type="button" data-cut="none" aria-pressed="true">Sin corte</button><button type="button" data-cut="long" aria-pressed="false">Longitudinal</button><button type="button" data-cut="trans" aria-pressed="false">Transversal</button></div>
       <label class="cutpos" hidden><span>Posición</span><input type="range" min="-140" max="140" step="1" value="0" aria-label="Posición del corte"><output>0 mm</output></label></div>
+    <nav class="social" aria-label="Smability en línea">
+      <a class="stroke" href="https://smability.io" target="_blank" rel="noopener" title="Smability" aria-label="Smability"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"></rect><text x="12" y="16.6" text-anchor="middle" font-family="Barlow,Arial,sans-serif" font-size="12" font-weight="800" fill="currentColor" stroke="none">S</text></svg></a>
+      <a class="stroke" href="https://airegpt.ai" target="_blank" rel="noopener" title="AIreGPT" aria-label="AIreGPT"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></a>
+      <a class="stroke" href="https://map.airegpt.ai" target="_blank" rel="noopener" title="Mapa en vivo" aria-label="Mapa en vivo"><svg viewBox="0 0 24 24"><polygon points="1 6 8 2 16 6 23 2 23 18 16 22 8 18 1 22 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg></a>
+      <a class="fill" href="https://t.me/airegptcdmx_bot" target="_blank" rel="noopener" title="Bot de Telegram" aria-label="Bot de Telegram"><svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.98 4.23 13.07c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.836.944z"></path></svg></a>
+      <a class="fill" href="https://www.linkedin.com/company/smability" target="_blank" rel="noopener" title="LinkedIn" aria-label="LinkedIn"><svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.125 2.062 2.062 0 0 1 0 4.125zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path></svg></a>
+    </nav>
+    <div class="specdl" id="specDl" hidden><span>Fichas técnicas</span></div>
     <div class="legend">
       <em style="--c:var(--front)">Cara principal</em>
       <em style="--c:var(--accent)">Viento dominante</em>
       <em style="--c:var(--rain)">Viento en lluvias</em>
       <em style="--c:var(--sun)">Trayectoria solar</em>
     </div>
-    <nav class="social" aria-label="Smability en línea">
-      <a class="stroke" href="https://smability.io" target="_blank" rel="noopener" title="Smability" aria-label="Smability"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"></rect><text x="12" y="16.6" text-anchor="middle" font-family="Barlow,Arial,sans-serif" font-size="12" font-weight="800" fill="currentColor" stroke="none">S</text></svg></a>
-      <a class="stroke" href="https://airegpt.ai" target="_blank" rel="noopener" title="AireGPT" aria-label="AireGPT"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></a>
-      <a class="stroke" href="https://map.airegpt.ai" target="_blank" rel="noopener" title="Mapa en vivo" aria-label="Mapa en vivo"><svg viewBox="0 0 24 24"><polygon points="1 6 8 2 16 6 23 2 23 18 16 22 8 18 1 22 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg></a>
-      <a class="fill" href="https://t.me/airegptcdmx_bot" target="_blank" rel="noopener" title="Bot de Telegram" aria-label="Bot de Telegram"><svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.98 4.23 13.07c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.836.944z"></path></svg></a>
-      <a class="fill" href="https://www.linkedin.com/company/smability" target="_blank" rel="noopener" title="LinkedIn" aria-label="LinkedIn"><svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.125 2.062 2.062 0 0 1 0 4.125zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path></svg></a>
-    </nav>
   </div>
   <nav class="tabbar" aria-label="Secciones">
     <button type="button" data-pane="explore" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>Explorar</button>
@@ -475,7 +482,7 @@ const POLL_MS  = 15000;
 /* Contacto de Smability para «Enviar a Smability» (vacío = el instalador elige el contacto) */
 const CONTACT = {wa:"", email:""};
 /* Fichas técnicas en PDF (frente 2). Un botón solo aparece si su archivo existe en el sitio publicado. */
-const SPEC_PDFS = [["SMAA","docs/ficha-smaa.pdf"],["CHAAK","docs/ficha-chaak.pdf"],["SMAA + CHAAK","docs/ficha-smability.pdf"]];
+const SPEC_PDFS = [["SMAA","docs/ficha-smaa.pdf"],["CHAAK","docs/ficha-chaak.pdf"],["SMAA-CHAAK","docs/ficha-smaa-chaak.pdf"]];
 const CLIMATE_YEAR = 2025;                              // año base para calcular vientos y lluvias (Open-Meteo)
 const STATION_DEFS = {
   chaak:{id:"CHAAK", modelUrl:"models/chaak.glb", color:"--accent"},
@@ -796,8 +803,8 @@ const INFO = {
   rain:  {title:"Pluviómetro", sub:"Balancín · 0.2 mm por pulso", metric:"rain"},
   solar: {title:"Panel solar", sub:"Fijo a la carcasa · inclinación de fábrica", metric:"solarW"},
   logger:{title:"Gabinete y datalogger", sub:"Cara principal · electrónica y telemetría 2G/4G", metric:"rssi"},
-  tripod:{title:"Trípode compartido", sub:"CHAAK y SMAA en el mismo montaje", metric:null},
-  mast:  {title:"Mástil compartido", sub:"Aluminio · 3.0 m", metric:null},
+  tripod:{title:"Trípode de referencia", sub:"No incluido: CHAAK y SMAA se entregan con su tubo y se montan sobre un trípode o poste existente", metric:null},
+  mast:  {title:"Mástil de referencia", sub:"No incluido · el tubo de CHAAK se monta encima", metric:null},
   // CHAAK real (models/chaak.glb)
   head:      {title:"Estación meteorológica compacta", sub:"Hongyuv HY-WDS6E · viento ultrasónico, sensores MEMS y lluvia por radar", metric:"temp",
               note:"Rangos: viento 0–60 m/s (±2%) · dirección 0–359° (±3°) · temperatura −40 a 80 °C · humedad 0–100% (±2%) · presión 150–1100 hPa (±1 hPa) · lluvia por radar 0–500 mm/h · radiación solar 0–2000 W/m². Brújula interna (visible en la API) y marca «N» grabada: se orienta al norte verdadero. Sin partes móviles, IP68."},
@@ -1277,7 +1284,7 @@ function applyCity(){
     ? `<b>CHAAK baja</b> (barrenos 2 y 3) porque SMAA queda a menos de 150° de su tapa. SMAA va <b>arriba</b>, justo bajo el cople superior (tomas a ${inUp} m), con 25 cm libres bajo sus tomas`
     : `<b>CHAAK alta</b> (barrenos 1 y 2) y SMAA del lado opuesto con cinchos. La altura de SMAA queda a criterio del instalador: <b>arriba</b>, justo bajo el cople (tomas a ${inUp} m, toma el aire más alto), o <b>al mismo nivel</b> que CHAAK (tomas a ${inLvl} m). En el gemelo: ${state.smaaH === "arriba" ? "arriba" : "al mismo nivel"}`;
   const items = [
-    ["01", `<b>Trípode libre, no sobre muros.</b> A 1 m o más de cualquier muro y a una distancia de al menos 2 veces la altura de obstáculos cercanos. Un muro calienta los equipos y frena el aire que llega a las tomas.`],
+    ["01", `<b>Trípode o poste libre, no sobre muros</b> (no incluido). A 1 m o más de cualquier muro y a una distancia de al menos 2 veces la altura de obstáculos cercanos. Un muro calienta los equipos y frena el aire que llega a las tomas.`],
     hasChaak && ["02", `<b>Norte del sensor de CHAAK.</b> La marca «N» del sensor apunta al norte verdadero (${magOf(0)}° en la brújula magnética). Eso fija el trípode, el tubo de 0.65 m y el sensor, que queda a ${INLET.chaak} m.`],
     hasSmaa && ["03", `<b>Cara principal de SMAA hacia el ${down} (${frontAz}°),</b> ${pick.dev ? `girada ${Math.abs(pick.dev)}° desde la espalda exacta a la lluvia del ${up} (sigue dentro de ±${PV.window}°, tomas protegidas)` : `de espaldas al viento de lluvia del ${up}`}. SMAA gira sobre el tubo con cinchos, sin mover el trípode.`],
     hasChaak && ["04", `<b>Montaje:</b> ${modeTxt}. Tapa de CHAAK hacia el ${lidC} (${MP.lid}°)${MP.lidDefault ? `, el lado más fresco` : `, invertida con los mismos barrenos porque el lado fresco chocaba con SMAA`}${hasSmaa ? `; ${MP.sep}° entre carcasas` : ""}. Prensaestopas siempre hacia abajo.${MP.conflict ? ` <b>Atención:</b> ninguna opción deja las tomas de SMAA protegidas y libres a la vez; se usa visera sobre las tomas.` : ""}`],
@@ -1599,7 +1606,7 @@ const FSTEPS = [
 function preList(){
   const both = state.view !== "chaak", smaa = state.view !== "chaak" ? 1 : 0, chaak = state.view !== "smaa";
   return [
-    "Trípode, mástil y tubo de 0.65 m con 3 barrenos",
+    "Trípode o poste (no incluido) y tubo de 0.65 m con 3 barrenos",
     chaak && `CHAAK: sensor, carcasa, 2 tornillos M3 y eliminador 5 V / 3 A`,
     chaak && "Toma eléctrica cercana o extensión para exterior",
     smaa && "SMAA con panel de 10 W y batería Voltaic cargada",
@@ -1739,9 +1746,18 @@ function shrinkPhoto(file){
     img.onerror = ()=>{ URL.revokeObjectURL(u); res(""); }; img.src = u; });
 }
 let SPEC_OK = null;
-async function renderSpecs(){
+async function loadSpecs(){
   if(SPEC_OK === null){ SPEC_OK = [];
     for(const [l,u] of SPEC_PDFS){ try{ const r = await fetch(u,{method:"HEAD",cache:"no-store"}); if(r.ok && /pdf/.test(r.headers.get("content-type")||"")) SPEC_OK.push([l,u]); }catch(_){} } }
+  return SPEC_OK;
+}
+async function renderSpecDock(){
+  const ok = await loadSpecs(), el = $("specDl"); el.hidden = !ok.length; if(!ok.length) return;
+  const ic = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>';
+  el.innerHTML = `<span>Fichas técnicas</span>${ok.map(([l,u])=>`<a href="${u}" download title="Descargar la ficha técnica de ${l} en PDF">${ic}${l}</a>`).join("")}`;
+}
+async function renderSpecs(){
+  await loadSpecs();
   $("shSpecs").hidden = !SPEC_OK.length;
   $("shSpecs").innerHTML = `Fichas técnicas: ${SPEC_OK.map(([l,u])=>`<a href="${u}" download>${l} · PDF</a>`).join("")}`;
 }
@@ -2159,6 +2175,7 @@ for(let i=0;i<24;i++){ mockTick(); record(); }
 setInterval(livePoll, POLL_MS);
 setInterval(()=>{ mockTick(); record(); refreshPanel(); }, 2500);
 livePoll();
+renderSpecDock();
 if(URLQ.has("id") || URLQ.has("campo") || URLQ.has("chaak") || URLQ.has("smaa")) openField(true);
 refineCity(state.city);
 tryLoadGLB(RIG, RIG_MODEL, "mast"); tryLoadGLB(ST.chaak, ST.chaak.modelUrl, "logger"); tryLoadGLB(ST.smaa, ST.smaa.modelUrl, "logger");
