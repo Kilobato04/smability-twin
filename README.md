@@ -191,9 +191,11 @@ Edita `twin.html` y luego ejecuta `python3 build.py`, que regenera `index.html`.
 - **Personalización:** `?city=gdl` (mismas claves que el gemelo) o `?lat=..&lon=..&name=..`. Los mapas de las escenas 1 y 4 vuelan a esa zona, y el cierre dice "Mira cómo quedaría en {ciudad}".
 - **Otros parámetros:** `?t=30` abre en el segundo 30; `?autoplay=1` arranca solo; `?capture=1` oculta los controles para exportar.
 - **Mapas:** Mapbox GL JS v3 (`CONFIG.mapboxToken`). Restringe el token al dominio de Netlify en el dashboard de Mapbox. Si Mapbox no carga, se dibuja una retícula de respaldo.
-- **3D:** el gemelo se carga en un iframe con `/?embed=reel`. Ese modo oculta la interfaz y expone `window.TWIN` (orbit, tint, explode, clean, rig, floor, zone, render, rain, hour) para que el reel dirija la cámara cuadro a cuadro.
+- **3D:** el gemelo se carga en un iframe con `/?embed=reel`. Ese modo oculta la interfaz y expone `window.TWIN` (orbit, tint, explode, clean, rig, floor, zone, align, snap, render, rain, hour) para que el reel dirija la cámara cuadro a cuadro.
 - **Exportar a MP4:** `render(t)` es determinista; `window.REEL.seek(t)` permite capturar cuadro a cuadro con Playwright y armar el MP4 con ffmpeg.
 - **Chat de AIreGPT (escena 6):** es la simulación del landing de airegpt.ai, sin montos de multas.
 - **Datos:** la red de nodos y los campos de calidad del aire y lluvia de la escena 4 son una simulación ilustrativa (lo dice en pantalla). Están listos para cambiarse por las APIs en vivo.
 
-Archivos: `reel/index.html` y `reel/img/` (logo, tarjeta SMAA OS, estación a color, alerta y los QR del gemelo y del bot).
+Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjeta SMAA OS, los íconos, las redes y los QR (gemelo y bot) están dibujados en SVG/HTML dentro de la página.
+- Escena 3: órbita cercana alrededor de la estación con SMAA y CHAAK al mismo nivel (`TWIN.align()`); arranca en rayos X y cambia a sólido con un barrido de capas (`TWIN.snap()`).
+- En CDMX los mapas se centran en Paseo de la Reforma 510 (Torre BBVA).

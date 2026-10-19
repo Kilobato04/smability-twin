@@ -2195,7 +2195,7 @@ if(URLQ.has("embed")){
   document.documentElement.classList.add("embed");
   if(URLQ.get("theme")) document.documentElement.dataset.theme = URLQ.get("theme");
   controls.enabled = false; controls.enableDamping = false; controls.autoRotate = false;
-  const saved = new Map();
+  const tintNow = {};
   const SUP = ["cabezal","cople_sup","tubo","cople_base"];
   window.TWIN = {
     loaded: () => !!(ST.chaak.parts.head && ST.smaa.parts && Object.keys(ST.smaa.parts).length),
@@ -2205,13 +2205,15 @@ if(URLQ.has("embed")){
     rig(on){ Object.values(RIG.parts).forEach(p=> p.group.visible = !!on); },
     floor(on){ floor.visible = !!on; },
     zone(on){ inletZone.visible = !!on; sunMarker.visible = !!on; },
-    tint(key, hex){ const st = ST[key]; if(!st) return;
+    align(){ state.smaaH = "nivel"; applyCity(); },
+    snap(){ renderer.render(scene, camera); return renderer.domElement.toDataURL("image/png"); },
+    tint(key, hex){ const st = ST[key]; if(!st || tintNow[key] === hex) return; tintNow[key] = hex;
       for(const [k,p] of Object.entries(st.parts)) p.group.traverse(m=>{ if(!m.isMesh || m.userData.isEdge || m.userData.isCap) return;
-        if(hex == null){ if(saved.has(m)){ m.material = saved.get(m); saved.delete(m); } return; }
-        if(!saved.has(m)) saved.set(m, m.material);
-        const mm = saved.get(m).clone(); if(mm.color) mm.color.setHex(SUP.includes(k) ? 0x9AA3B5 : hex); if(mm.emissive) mm.emissive.setHex(0x000000); m.material = mm; }); },
+        if(hex == null){ if(m.userData.tintMat){ m.userData.tintMat.dispose(); m.userData.tintMat = null; } m.material = materialFor(m, false); return; }
+        const base = m.userData.origMat || m.material; const mm = m.userData.tintMat || (m.userData.tintMat = base.clone());
+        if(mm.color) mm.color.setHex(SUP.includes(k) ? 0x9AA3B5 : hex); if(mm.emissive) mm.emissive.setHex(0x000000); m.material = mm; }); },
     explode(v){ state.explodeTarget = v ? 1 : 0; },
-    render(m){ if(RENDER_MODES.includes(m) && RENDER.mode !== m){ RENDER.mode = m; applyRender(); } },
+    render(m){ if(RENDER_MODES.includes(m) && RENDER.mode !== m){ RENDER.mode = m; applyRender(); for(const k in tintNow) delete tintNow[k]; } },
     rain(on){ if(!!state.rain !== !!on) toggleRain(); },
     hour(h){ setHour(h); },
     shadows(on){ renderer.shadowMap.enabled = !!on; }
