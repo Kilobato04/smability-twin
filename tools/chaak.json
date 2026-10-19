@@ -1,0 +1,195 @@
+{
+  "comment": "dy corrige el desplazamiento en Y que AutoCAD aplicó a cada pieza al exportar. Eje del tubo en Y=0; la caja queda del lado +Y (cara principal = tapa). La tapa asienta a hueso sobre la base (hombro 14.98 mm de la tapa sobre el borde 57.71 mm de la base). El cable del sensor se recorta bajo z=853 mm. Tornillos M3 en los barrenos del tubo (z 623.8 y 713.8 mm) y de las abrazaderas de la carcasa. Tornillos del sensor: 3 radiales a 120° (azimut 30/150/270°) a z=897.6 mm, del collar del sensor al cabezal. La carcasa de CHAAK (tapa, base y sus tornillos) va girada 180° alrededor del tubo (flip): su lado original queda libre para SMAA. Tubo de 0.65 m (15 cm más que el original de 0.50 m): el tubo se alarga arriba de z=800 mm y sensor, cabezal, cople superior y tornillos del sensor suben 150 mm. Tercer barreno a z=533.8 mm (90 mm bajo el inferior original) marcado en el tubo; los barrenos 1–2 (713.8/623.8) son el montaje a mismo nivel y 2–3 (623.8/533.8) el apilado.",
+  "axis_x": 113.4,
+  "base_z": 336.7,
+  "front": "+Y",
+  "scale": 0.001,
+  "materials": {
+    "blanco": {
+      "color": [
+        0.93,
+        0.94,
+        0.93
+      ],
+      "rough": 0.45
+    },
+    "carcasa": {
+      "color": [
+        0.86,
+        0.88,
+        0.87
+      ],
+      "rough": 0.5
+    },
+    "tapa": {
+      "color": [
+        0.95,
+        0.96,
+        0.95
+      ],
+      "rough": 0.4
+    },
+    "aluminio": {
+      "color": [
+        0.8,
+        0.82,
+        0.84
+      ],
+      "metal": 0.35,
+      "rough": 0.4
+    },
+    "cople": {
+      "color": [
+        0.55,
+        0.58,
+        0.6
+      ],
+      "metal": 0.3,
+      "rough": 0.5
+    },
+    "acero": {
+      "color": [
+        0.36,
+        0.38,
+        0.4
+      ],
+      "metal": 0.9,
+      "rough": 0.3
+    },
+    "hueco": {
+      "color": [
+        0.08,
+        0.09,
+        0.1
+      ],
+      "rough": 0.9
+    }
+  },
+  "parts": [
+    {
+      "file": "1_estacion_chaak_sensorsolido.stl",
+      "name": "estacion_chaak_sensorsolido",
+      "dy": -69.58,
+      "material": "blanco",
+      "cell": 0.6,
+      "cut_below_z": 853,
+      "dz": 150.0
+    },
+    {
+      "file": "2_cabezal_superior_rosca_soporte.stl",
+      "name": "cabezal_superior_rosca_soporte",
+      "dy": -22.0,
+      "material": "cople",
+      "cell": 1.0,
+      "dz": 150.0
+    },
+    {
+      "file": "3_cople_rosca_soporte.stl",
+      "name": "cople_rosca_soporte",
+      "dy": -23.0,
+      "material": "cople",
+      "cell": 1.0,
+      "dz": 150.0
+    },
+    {
+      "file": "4_tubo_soporte_soporte.stl",
+      "name": "tubo_soporte_soporte",
+      "dy": -21.98,
+      "material": "aluminio",
+      "cell": 0,
+      "stretch": {
+        "z": 800.0,
+        "dz": 150.0
+      }
+    },
+    {
+      "name": "tubo_soporte_barreno3",
+      "material": "hueco",
+      "cell": 0,
+      "screws": {
+        "at": [
+          [
+            113.4,
+            533.8
+          ]
+        ],
+        "y_head": -22.4,
+        "y_tip": 22.4,
+        "r": 1.7,
+        "head_r": 1.7,
+        "head_h": 0.01
+      }
+    },
+    {
+      "file": "5_cople_rosca_base_soporte.stl",
+      "name": "cople_rosca_base_soporte",
+      "dy": -23.0,
+      "material": "cople",
+      "cell": 1.0
+    },
+    {
+      "file": "6_tapa_carcasa_chaak.stl",
+      "name": "tapa_carcasa_chaak",
+      "dy": 64.73,
+      "material": "tapa",
+      "cell": 0,
+      "flip": true
+    },
+    {
+      "file": "7_base_carcasa_chaak.stl",
+      "name": "base_carcasa_chaak",
+      "dy": 22.0,
+      "material": "carcasa",
+      "cell": 0,
+      "flip": true
+    },
+    {
+      "name": "tornillos_carcasa",
+      "material": "acero",
+      "cell": 0,
+      "screws": {
+        "at": [
+          [
+            113.4,
+            623.8
+          ],
+          [
+            113.4,
+            713.8
+          ]
+        ],
+        "y_head": -21.6,
+        "y_tip": 33.0,
+        "r": 1.5,
+        "head_r": 2.9,
+        "head_h": 2.4
+      },
+      "flip": true
+    },
+    {
+      "name": "tornillos_sensor",
+      "material": "acero",
+      "cell": 0,
+      "screws": {
+        "radial": {
+          "center": [
+            113.4,
+            0.0
+          ],
+          "z": 897.6,
+          "angles": [
+            30,
+            150,
+            270
+          ],
+          "r_head": 24.4,
+          "r_tip": 18.4
+        },
+        "r": 1.6,
+        "head_r": 2.9,
+        "head_h": 2.2
+      },
+      "dz": 150.0
+    }
+  ]
+}
