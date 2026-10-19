@@ -679,6 +679,9 @@ function energyPlan(city){
 // SMAA gira sobre el tubo con cinchos. Separación mínima entre carcasas: 150° al mismo nivel (holgura de 3 cm);
 // 105° apiladas, para dejar libres 25 cm bajo las tomas de SMAA. Tubo de 0.65 m con 3 barrenos a 90 mm.
 const MOUNT = {sepLevel:150, sepStack:105, stackDrop:.09, smaaLift:.165, holes:{nivel:"1 y 2", apilado:"2 y 3"}};
+// Nombres para el instalador: «nivel» = CHAAK alta (barrenos 1 y 2), «apilado» = CHAAK baja (barrenos 2 y 3, SMAA forzosamente arriba)
+const MODE_LBL = {nivel:"CHAAK alta", apilado:"CHAAK baja"};
+const smaaUp = ()=> (state.mount && state.mount.mode === "apilado") || state.smaaH === "arriba";
 const angSep = (a,b)=> Math.abs(((a - b)%360 + 540)%360 - 180);
 function mountPlan(city, EP){
   const lidN = city.lat >= 0 ? 0 : 180, lidAlt = (lidN + 180) % 360;
@@ -724,6 +727,8 @@ const state = {
   explode:0, explodeTarget:0, rain:false, plan:false,
   selected:null, hovered:null, env:{}, lastUpdate:null
 };
+state.smaaH = "arriba";   // altura de SMAA a criterio del instalador: «arriba» (bajo el cople) o «nivel» (junto a CHAAK alta)
+try{ const H = localStorage.getItem("smab.smaaH"); if(H==="arriba" || H==="nivel") state.smaaH = H; }catch(_){}
 try{ const L = localStorage.getItem("smab.load"), O = localStorage.getItem("smab.orient"); if(LOADS[L]) state.load = L; if(O==="auto" || O==="lluvia") state.orient = O; }catch(_){}
 
 /* ================= THREE ================= */
@@ -797,7 +802,7 @@ const INFO = {
   head:      {title:"Estación meteorológica compacta", sub:"Hongyuv HY-WDS6E · viento ultrasónico, sensores MEMS y lluvia por radar", metric:"temp",
               note:"Rangos: viento 0–60 m/s (±2%) · dirección 0–359° (±3°) · temperatura −40 a 80 °C · humedad 0–100% (±2%) · presión 150–1100 hPa (±1 hPa) · lluvia por radar 0–500 mm/h · radiación solar 0–2000 W/m². Brújula interna (visible en la API) y marca «N» grabada: se orienta al norte verdadero. Sin partes móviles, IP68."},
   tapa:      {title:"Tapa de la carcasa CHAAK", sub:"Hacia el lado fresco (norte en el hemisferio norte, sur en el sur) · electrónica, GPS y telemetría 2G/4G · alimentación 5 V / 3 A (4 W) desde toma eléctrica", metric:"rssi",
-              note:"Se fija con 2 tornillos M3 (barrenos 1 y 2 al mismo nivel, 2 y 3 apilada bajo SMAA) o con cinchos por sus abrazaderas. Para el hemisferio sur se invierte con los mismos barrenos. Calibración remota por SMS (OTA)."},
+              note:"Se fija con 2 tornillos M3 (barrenos 1 y 2 con CHAAK alta, 2 y 3 con CHAAK baja bajo SMAA) o con cinchos por sus abrazaderas. Para el hemisferio sur se invierte con los mismos barrenos. Calibración remota por SMS (OTA)."},
   cabezal:   {title:"Cabezal superior roscado", sub:"Une el sensor con el soporte", metric:null},
   cople_sup: {title:"Cople roscado superior", sub:"Soporte de la estación", metric:null},
   tubo:      {title:"Tubo soporte", sub:"Lleva la carcasa y el sensor", metric:null},
@@ -821,7 +826,7 @@ const SMAA_EXPLODE = {arms:[0,0,0], smaa_case:[-.1,-.06,0], smaa_sens:[-.1,-.22,
 let LEG = {r:.95, a0:30};           // patas para la ficha (se actualiza con el trípode real)
 const CHAAK_EXPLODE = {head:[0,.34,0], cabezal:[0,.22,0], cople_sup:[0,.12,0], tubo:[0,0,0], cople_base:[0,-.18,0], tapa:[.5,0,0], logger:[.22,0,0], screws:[-.18,0,0], screws_head:[0,.34,0]};
 const INLET = {chaak:1.74, smaa:1.25};   // altura de tomas (m); CHAAK se recalcula con el modelo real
-let INLET_SMAA0 = INLET.smaa;               // tomas de SMAA al mismo nivel; apiladas suben MOUNT.smaaLift
+let INLET_SMAA0 = INLET.smaa;               // tomas de SMAA al mismo nivel que CHAAK; arriba suben MOUNT.smaaLift
 
 /* Un solo montaje: body gira según el viento (brazos de sensores = +X, cara principal = −X); solar mira al ecuador */
 const body = new THREE.Group(), solar = new THREE.Group(); scene.add(body); scene.add(solar);
@@ -1256,7 +1261,7 @@ function applyCity(){
   const frontAz = pick.az, a = frontAz*RAD; state.frontAz = frontAz; state.chaakAz = MP.lid;
   bodyTargetRot = Math.atan2(-Math.cos(a), -Math.sin(a));
   const la = MP.lid*RAD; caseTargetRot = Math.atan2(Math.cos(la), Math.sin(la));
-  caseTargetY = stacked ? -MOUNT.stackDrop : 0; smaaTargetY = stacked ? MOUNT.smaaLift : 0;
+  caseTargetY = stacked ? -MOUNT.stackDrop : 0; smaaTargetY = smaaUp() ? MOUNT.smaaLift : 0;
   INLET.smaa = +(INLET_SMAA0 + smaaTargetY).toFixed(2); inletZone.visible = hasSmaa && stacked;
   const tilt = Math.max(10, Math.round(Math.abs(city.lat)));
   solar.rotation.y = south ? Math.PI : 0;          // paneles miran al ecuador
@@ -1267,14 +1272,15 @@ function applyCity(){
   const up = cardinal(city.rainWindFrom), down = cardinal(frontAz);
   const usual = south ? "norte" : "sur", other = south ? "sur" : "norte";
   $("sitingCity").textContent = `${city.name} · ${latLabel(city.lat)}`;
+  const inUp = +(INLET_SMAA0 + MOUNT.smaaLift).toFixed(2), inLvl = INLET_SMAA0;
   const lidC = cardinal(MP.lid), modeTxt = stacked
-    ? `<b>apiladas:</b> CHAAK baja a los barrenos 2 y 3 y SMAA va arriba con cinchos (tomas a ${INLET.smaa} m), con 25 cm libres bajo sus tomas`
-    : `<b>al mismo nivel:</b> CHAAK en los barrenos 1 y 2 y SMAA del lado opuesto con cinchos (tomas a ${INLET.smaa} m)`;
+    ? `<b>CHAAK baja</b> (barrenos 2 y 3) porque SMAA queda a menos de 150° de su tapa. SMAA va <b>arriba</b>, justo bajo el cople superior (tomas a ${inUp} m), con 25 cm libres bajo sus tomas`
+    : `<b>CHAAK alta</b> (barrenos 1 y 2) y SMAA del lado opuesto con cinchos. La altura de SMAA queda a criterio del instalador: <b>arriba</b>, justo bajo el cople (tomas a ${inUp} m, toma el aire más alto), o <b>al mismo nivel</b> que CHAAK (tomas a ${inLvl} m). En el gemelo: ${state.smaaH === "arriba" ? "arriba" : "al mismo nivel"}`;
   const items = [
     ["01", `<b>Trípode libre, no sobre muros.</b> A 1 m o más de cualquier muro y a una distancia de al menos 2 veces la altura de obstáculos cercanos. Un muro calienta los equipos y frena el aire que llega a las tomas.`],
     hasChaak && ["02", `<b>Norte del sensor de CHAAK.</b> La marca «N» del sensor apunta al norte verdadero (${magOf(0)}° en la brújula magnética). Eso fija el trípode, el tubo de 0.65 m y el sensor, que queda a ${INLET.chaak} m.`],
     hasSmaa && ["03", `<b>Cara principal de SMAA hacia el ${down} (${frontAz}°),</b> ${pick.dev ? `girada ${Math.abs(pick.dev)}° desde la espalda exacta a la lluvia del ${up} (sigue dentro de ±${PV.window}°, tomas protegidas)` : `de espaldas al viento de lluvia del ${up}`}. SMAA gira sobre el tubo con cinchos, sin mover el trípode.`],
-    hasChaak && ["04", `<b>Carcasas ${modeTxt}.</b> Tapa de CHAAK hacia el ${lidC} (${MP.lid}°)${MP.lidDefault ? `, el lado más fresco` : `, invertida con los mismos barrenos porque el lado fresco chocaba con SMAA`}${hasSmaa ? `; ${MP.sep}° entre carcasas` : ""}. Prensaestopas siempre hacia abajo.${MP.conflict ? ` <b>Atención:</b> ninguna opción deja las tomas de SMAA protegidas y libres a la vez; se usa visera sobre las tomas.` : ""}`],
+    hasChaak && ["04", `<b>Montaje:</b> ${modeTxt}. Tapa de CHAAK hacia el ${lidC} (${MP.lid}°)${MP.lidDefault ? `, el lado más fresco` : `, invertida con los mismos barrenos porque el lado fresco chocaba con SMAA`}${hasSmaa ? `; ${MP.sep}° entre carcasas` : ""}. Prensaestopas siempre hacia abajo.${MP.conflict ? ` <b>Atención:</b> ninguna opción deja las tomas de SMAA protegidas y libres a la vez; se usa visera sobre las tomas.` : ""}`],
     ["05", `<b>Electrónica a la sombra.</b> El lado con más horas de sol directo es ${top.label.toLowerCase()} (${cardinal(top.az)}, ${top.pct}% de las horas de sol). Visera o pantalla de ese lado, sin tapar las tomas. ${flip.length ? `El sol de mediodía pasa al ${other} del cenit en <b>${flip.join(", ")}</b>: la sombra cambia de lado a mitad de año.` : `Aquí el sol de mediodía siempre pasa al ${usual} del cenit.`}`],
     ["06", city.drizzle
       ? `<b>Lluvia escasa:</b> llovizna en ${months}, con viento del ${up}. El sensor de CHAAK arriba y sin nada encima.`
@@ -1303,7 +1309,8 @@ function renderEnergy(EP, pick){
   const ratios = pick.ein.map(e=> e/EP.out), top = Math.max(2, ...ratios);
   const segBtns = (k, opts)=> opts.map(([v,l])=>`<button type="button" data-k="${k}" data-v="${v}" aria-pressed="${state[k]===v}">${l}</button>`).join("");
   const MP = state.mount || {mode:"nivel", lid:0, holes:"1 y 2", lidDefault:true};
-  let msg = `Montaje: carcasas ${MP.mode === "apilado" ? `apiladas (CHAAK en barrenos ${MP.holes}, SMAA arriba)` : `al mismo nivel (CHAAK en barrenos ${MP.holes})`}, tapa de CHAAK al ${cardinal(MP.lid)}. `;
+  const hasChaak = state.view !== "smaa";
+  let msg = hasChaak ? `Montaje: ${MODE_LBL[MP.mode]} (barrenos ${MP.holes}), tapa de CHAAK al ${cardinal(MP.lid)}; SMAA ${smaaUp() ? "arriba, bajo el cople" : "al mismo nivel que CHAAK"} (tomas a ${INLET.smaa} m). ` : "";
   if(pick.dev) msg += `SMAA girada ${Math.abs(pick.dev)}° hacia el ${cardinal(pick.az)} desde la espalda a la lluvia (${EP.lee}° → ${pick.az}°)${pick.ratio > EP.base.ratio + .02 ? `: el peor mes sube de ${EP.base.ratio.toFixed(2)}× a ${pick.ratio.toFixed(2)}×` : ", para respetar la separación con CHAAK"}. Las tomas siguen protegidas.`;
   else msg += EP.base.ratio >= ENERGY_OK ? `SMAA de espaldas a la lluvia: el panel ya alcanza.` : `SMAA de espaldas a la lluvia.`;
   if(pick.ratio < 1) msg += ` <b>No alcanza en ${MON3[pick.worstM]}:</b> envía cada 5 min o mide PM por ciclos; la batería cubre ${EP.autonomy.toFixed(1)} días de déficit.`;
@@ -1311,6 +1318,7 @@ function renderEnergy(EP, pick){
   el.innerHTML = `<h4>Energía SMAA · panel ${PV.W} W · batería ${PV.battWh} Wh</h4>
     <div class="erow"><span>Consumo</span><div class="seg">${segBtns("load", Object.entries(LOADS).map(([k,L])=>[k, L.label]))}</div></div>
     <div class="erow"><span>Orientación</span><div class="seg">${segBtns("orient", [["auto","Recomendada"],["lluvia","Espalda a la lluvia"]])}</div></div>
+    ${hasChaak ? `<div class="erow"><span>Altura SMAA</span><div class="seg">${MP.mode === "apilado" ? `<button type="button" aria-pressed="true" disabled title="Con CHAAK baja, SMAA va arriba">Arriba (obligada)</button>` : segBtns("smaaH", [["arriba","Arriba"],["nivel","Mismo nivel"]])}</div></div>` : ""}
     <div class="ebars" role="img" aria-label="Energía que entra contra consumo, por mes">
       <i class="eone" style="bottom:${(1/top*100).toFixed(1)}%"></i>
       ${ratios.map((r,m)=>`<div class="ecol" title="${MONTHS[m]}: ${Math.round(pick.ein[m])} Wh/día que entran · ${r.toFixed(2)}× el consumo"><div class="ebar ${cls(r)}" style="height:${Math.max(3, r/top*100).toFixed(1)}%"></div><small>${MONTHS[m][0]}</small></div>`).join("")}
@@ -1404,7 +1412,7 @@ const ROWS = {
   screws_panel:[["Cantidad",()=>"4",""],["Medida",()=>"M4",""],["Barrenos",()=>"Ø4 panel · Ø5.4 soporte",""]],
   arms:  [["Sujeción",()=>"cinchos al tubo",""],["Mira hacia",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"]],
   head:  [["Velocidad del viento",v=>f(v.ws,2),"m/s"],["Dirección del viento",v=>v.wd==null?"—":`${cardinal(v.wd)} ${v.wd}`,"°"],["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh,1),"%"],["Presión atmosférica",v=>f(v.press,1),"hPa"],["Precipitación",v=>f(v.rain,2),"mm/h"],["Tipo de precipitación",v=>v.ptype||"—",""],["Acumulado hoy",v=>f(v.rainDay,2),"mm"],["Punto de rocío (calculado)",v=>f(v.dew,1),"°C"],["Radiación solar",v=>f(v.rad),"W/m²"],["Brújula interna (desvío de la «N»)",v=>v.compass==null?"—":(v.compass>0?"+":"")+f(v.compass,1),"°"],["Última calibración",(v,st)=>calTxt(st),""]],
-  tapa:  [["Mira hacia",()=>`${cardinal(state.chaakAz ?? 0)} ${state.chaakAz ?? 0}`,"°"],["Montaje",()=> state.mount ? `barrenos ${state.mount.holes} · ${state.mount.mode}` : "—",""],["Señal 2G/4G",v=>f(v.rssi),"dBm"],["Alimentación",()=>"5 V / 3 A · toma eléctrica",""]],
+  tapa:  [["Mira hacia",()=>`${cardinal(state.chaakAz ?? 0)} ${state.chaakAz ?? 0}`,"°"],["Montaje",()=> state.mount ? `${MODE_LBL[state.mount.mode]} · barrenos ${state.mount.holes}` : "—",""],["Señal 2G/4G",v=>f(v.rssi),"dBm"],["Alimentación",()=>"5 V / 3 A · toma eléctrica",""]],
   cabezal:[["Rosca hacia",()=>"sensor",""]],
   cople_sup:[["Tipo",()=>"cople roscado",""]],
   tubo:  [["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"]],
@@ -1585,7 +1593,7 @@ const FSTEPS = [
   {t:"Tapa de CHAAK", tgt:()=>state.chaakAz ?? 0, info:t=>`Tapa de CHAAK: <b>${t}°</b> verdadero (${cardinal(t)}) · barrenos <b>${state.mount ? state.mount.holes : "1 y 2"}</b>`,
    li:t=>[`Pon el celular plano sobre la tapa, con la parte de arriba saliendo de ella.`,`Debe mirar al ${cardinal(t)}${state.mount && !state.mount.lidDefault ? " (carcasa invertida, mismos barrenos)" : ""}. Si no cuadra, invierte la carcasa; el trípode ya no se mueve.`,`Fija con los 2 tornillos M3${state.mount && state.mount.mode === "apilado" ? " en los barrenos 2 y 3" : " en los barrenos 1 y 2"}, o con cinchos por sus abrazaderas.`]},
   {t:"Cara principal SMAA", tgt:()=>state.frontAz, info:t=>`Cara principal SMAA: <b>${t}°</b> verdadero (${cardinal(t)}) · <b>${magOf(t)}°</b> magnético`,
-   li:()=>["Pon el celular plano sobre SMAA, con la parte de arriba saliendo de la cara principal.","Gira SMAA sobre el tubo hasta «Alineado» y aprieta los cinchos.", state.mount && state.mount.mode === "apilado" ? "SMAA va arriba de CHAAK; deja 25 cm libres bajo sus tomas." : "SMAA queda al mismo nivel, del lado opuesto a CHAAK."]},
+   li:()=>["Pon el celular plano sobre SMAA, con la parte de arriba saliendo de la cara principal.","Gira SMAA sobre el tubo hasta «Alineado» y aprieta los cinchos.", state.mount && state.mount.mode === "apilado" ? "SMAA va arriba, justo bajo el cople, y CHAAK abajo; deja 25 cm libres bajo sus tomas." : `Altura a tu criterio: arriba, justo bajo el cople (tomas más altas), o al mismo nivel que CHAAK. El gemelo muestra: ${state.smaaH === "arriba" ? "arriba" : "mismo nivel"}.`]},
 ];
 /* Antes de instalar: material en sitio */
 function preList(){
@@ -1666,7 +1674,7 @@ function sheetData(){
     ...(F.stations.includes("CHAAK") ? [["Norte del sensor CHAAK", `Marca «N» a 0° verdadero · ${magOf(0)}° magnético`]] : []),
     ...(F.stations.includes("SMAA") ? [["Cara principal SMAA", `${state.frontAz}° verdadero (${cardinal(state.frontAz)}) · ${magOf(state.frontAz)}° magnético`]] : []),
     ...(F.stations.includes("CHAAK") ? [] : [["Montaje", `SMAA sola en el tubo con cinchos · sin restricción de separación`]]),
-    ...(!F.stations.includes("CHAAK") ? [] : [["Montaje", `${state.mount.mode === "apilado" ? "Apilado: CHAAK en barrenos 2 y 3, SMAA arriba" : "Mismo nivel: CHAAK en barrenos 1 y 2"} · tapa CHAAK al ${cardinal(state.chaakAz)} (${state.chaakAz}°)${F.stations.includes("SMAA") ? ` · ${state.mount.sep}° entre carcasas` : ""}`]]),
+    ...(!F.stations.includes("CHAAK") ? [] : [["Montaje", `${MODE_LBL[state.mount.mode]}: barrenos ${state.mount.holes} · tapa CHAAK al ${cardinal(state.chaakAz)} (${state.chaakAz}°)${F.stations.includes("SMAA") ? ` · ${state.mount.sep}° entre carcasas · SMAA ${smaaUp() ? "arriba, bajo el cople" : "al mismo nivel"}${state.mount.mode === "apilado" ? " (obligada)" : ` (opción del instalador; la otra: ${state.smaaH === "arriba" ? `mismo nivel, tomas a ${INLET_SMAA0} m` : `arriba, tomas a ${+(INLET_SMAA0 + MOUNT.smaaLift).toFixed(2)} m`})`}` : ""}`]]),
     ["Viento dominante", `Del ${cardinal(city.windFrom)} (${Math.round(city.windFrom)}°)`],
     ["Viento con lluvia", `Del ${cardinal(city.rainWindFrom)} · temporada: ${F.months}`],
     ["Lado con más sol", `${F.top.label} (${cardinal(F.top.az)}), ${F.top.pct}% de las horas de sol: visera o pantalla`],
@@ -1683,7 +1691,7 @@ function sheetData(){
     "Trípode nivelado con burbuja; patas ancladas o lastradas.",
     ...(F.stations.includes("CHAAK") ? [`Marca «N» del sensor de CHAAK a 0° verdadero (${magOf(0)}° magnético), verificada con el modo campo.`,
     `Carcasa de CHAAK en los barrenos ${state.mount.holes} con sus 2 tornillos M3, tapa al ${cardinal(state.chaakAz)}; prensaestopas hacia abajo.`] : [`SMAA con cinchos al tubo, cara principal a ${state.frontAz}° verdadero (${magOf(state.frontAz)}° magnético).`]),
-    ...(both ? [`SMAA con cinchos al tubo, cara principal a ${state.frontAz}° verdadero (${magOf(state.frontAz)}° magnético)${state.mount.mode === "apilado" ? "; 25 cm libres bajo sus tomas" : ""}.`] : []),
+    ...(both ? [`SMAA con cinchos al tubo, cara principal a ${state.frontAz}° verdadero (${magOf(state.frontAz)}° magnético)${smaaUp() ? "; arriba, justo bajo el cople superior" : "; al mismo nivel que CHAAK"}${state.mount.mode === "apilado" ? "; 25 cm libres bajo sus tomas" : ""}.`] : []),
     ...(F.stations.includes("CHAAK") ? ["Toma eléctrica para CHAAK (eliminador 5 V / 3 A) protegida de la lluvia."] : []),
     ...(F.stations.includes("CHAAK") ? ["Sensor de CHAAK (lluvia por radar) arriba, nivelado y sin nada encima."] : []),
     "Tomas de aire libres en 270°, lejos de escapes de aire acondicionado, chimeneas y generadores.",
