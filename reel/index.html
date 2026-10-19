@@ -154,8 +154,8 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
 .node{position:absolute;width:220px;display:flex;flex-direction:column;align-items:center;gap:12px;transform:translate(-50%,-50%);opacity:0}
 .node .ic{width:150px;height:150px;border-radius:50%;background:#0B2A9E;border:3px solid var(--sky);display:grid;place-items:center;overflow:hidden;box-shadow:0 0 40px rgba(32,70,242,.6)}
 .node .ic svg{width:84px;height:84px}
-.node b{font-family:var(--f-mono);font-size:20px;letter-spacing:.1em;color:var(--sky);text-align:center}
-.node span{font-family:var(--f-disp);font-weight:700;font-size:36px;text-align:center;line-height:1}
+.node b{font-family:var(--f-mono);font-size:20px;letter-spacing:.1em;color:var(--sky);text-align:center;background:#0A2690;padding:2px 8px;border-radius:6px}
+.node span{font-family:var(--f-disp);font-weight:700;font-size:36px;text-align:center;line-height:1;background:#0A2690;padding:4px 12px;border-radius:8px}
 #ring .center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:420px}
 #stats{position:absolute;left:0;right:0;bottom:200px;display:flex;justify-content:center;gap:110px}
 .v #stats{bottom:520px;gap:60px}
@@ -163,7 +163,7 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
 .v .stat b{font-size:96px}
 /* S8 */
 #end{position:absolute;right:0;top:0;bottom:0;width:820px;background:linear-gradient(90deg,rgba(0,23,102,0),rgba(0,23,102,.92) 18%,#001766);display:flex;flex-direction:column;justify-content:center;gap:40px;padding:0 96px 120px 180px}
-.v #end{left:0;right:0;top:auto;width:auto;height:1100px;background:linear-gradient(180deg,rgba(0,23,102,0),rgba(0,23,102,.94) 16%,#001766);padding:120px 72px 440px;justify-content:flex-end}
+.v #end{left:0;right:0;top:auto;width:auto;height:1260px;background:linear-gradient(180deg,rgba(0,23,102,0),rgba(0,23,102,.97) 14%,#001766);padding:120px 72px 440px;justify-content:flex-end}
 #end .title{font-size:96px}
 .v #end .title{font-size:92px}
 .qrs{display:flex;gap:40px}.qr{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
@@ -222,7 +222,7 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
     <div class="sup"><span class="kick rise" data-k="s5kick"></span><span class="title rise" data-k="s5title"></span></div>
     <svg class="chart" id="chart" viewBox="0 0 1100 560" aria-hidden="true"></svg>
     <div class="r2">
-      <div class="r2box rise" id="r2a"><div class="r2lbl" data-k="r2lbl"></div><div class="r2num" id="r2num">0.72</div><div class="note" data-k="unam"></div></div>
+      <div class="r2box rise" id="r2a"><div class="r2lbl" data-k="r2lbl"></div><div class="r2num" id="r2num">0.72</div></div>
       <div class="r2box rise" id="r2b"><div class="months" id="months">0</div><div class="r2lbl" data-k="months"></div></div>
     </div>
   </section>
@@ -256,7 +256,7 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
     </div>
     <div id="stats">
       <div class="stat"><b data-k="st1"></b><span data-k="st1s"></span></div>
-      <div class="stat"><b>60</b><span data-k="st2s"></span></div>
+      <div class="stat"><b>60+</b><span data-k="st2s"></span></div>
       <div class="stat"><b data-k="st3"></b><span data-k="st3s"></span></div>
     </div>
   </section>
@@ -368,9 +368,9 @@ const SUBS = [
   [46.4, 50.2, "Y AIreGPT lo pone en tu mano.", "Then AIreGPT puts it in your hand."],
   [50.4, 53.8, "Pregunta cómo está el aire en tu colonia…", "Ask how the air is in your neighborhood…"],
   [54.0, 57.8, "…o recibe la alerta antes de que la tormenta te alcance.", "…or get warned before a storm hits your commute."],
-  [58.4, 62.6, "Del sensor a tu celular: un solo ciclo.", "From the sensor to your phone: one closed loop."],
-  [62.8, 67.6, "Nueve años operando: 60 nodos en tres países.", "Nine years running: 60 nodes in three countries."],
-  [69.6, 77.8, null, null]   // cierre: firma (el titular en pantalla depende de la ciudad)
+  [58.4, 60.9, "Del sensor a tu celular: un solo ciclo.", "From the sensor to your phone: one closed loop."],
+  [61.2, 68.4, "Nueve años operando: más de 60 nodos en tres países.", "Nine years running: more than 60 nodes in three countries."],
+  [70.2, 77.8, null, null]   // cierre: firma (el titular en pantalla depende de la ciudad)
 ];
 function endLine(){
   if(personalized && CITY.key !== "cdmx") return LANG==="en" ? `See how it would look in ${CITY.en}.` : `Mira cómo quedaría en ${CITY.es}.`;
@@ -458,7 +458,7 @@ const NET = [
   {key:"cdmx", es:"Valle de México", en:"Valley of Mexico", lat:19.43, lon:-99.13, n:36, chaak:2, rLat:.21, rLon:.17},
   {key:"gua",  es:"Ciudad de Guatemala", en:"Guatemala City", lat:14.62, lon:-90.53, n:18, chaak:0, rLat:.10, rLon:.09},
   {key:"mty",  es:"Monterrey", en:"Monterrey", lat:25.67, lon:-100.31, n:2, chaak:0, rLat:.06, rLon:.07},
-  {key:"gdl",  es:"Guadalajara", en:"Guadalajara", lat:20.67, lon:-103.35, n:1, chaak:1, rLat:.04, rLon:.04},
+  {key:"gdl",  es:"Guadalajara", en:"Guadalajara", lat:20.67, lon:-103.35, n:2, chaak:1, rLat:.05, rLon:.05},
   {key:"dgo",  es:"Durango", en:"Durango", lat:24.02, lon:-104.66, n:1, chaak:0, rLat:.03, rLon:.03},
   {key:"cun",  es:"Cancún", en:"Cancún", lat:21.16, lon:-86.85, n:1, chaak:0, rLat:.03, rLon:.03},
   {key:"mde",  es:"Medellín", en:"Medellín", lat:6.24, lon:-75.58, n:1, chaak:1, rLat:.03, rLon:.03}
@@ -503,7 +503,7 @@ function field(alpha, valueAt, colorOf){
 }
 function drawFX(t){
   g.clearRect(0,0,W(),H());
-  if(t < 13.6 || (t > 24.4 && t < 36.6) || (t > 62.2 && t < 68.4)) drawGrid();
+  if(t < 13.6 || (t > 24.4 && t < 36.6) || (t > 60.7 && t < 69.2)) drawGrid();
   // S1 · el primer nodo se enciende
   if(t > 2 && t < 9){ const [x,y] = project(CITY.lon, CITY.lat), a = seg(t,2,2.6)*(1-seg(t,7.4,9));
     for(let k=0;k<3;k++){ const p = ((t*0.7 + k/3) % 1); g.beginPath(); g.arc(x,y, 14 + p*160, 0, 7); g.strokeStyle = `rgba(159,178,255,${a*(1-p)*.9})`; g.lineWidth = 3; g.stroke(); }
@@ -514,18 +514,20 @@ function drawFX(t){
       if(c[2]){ const pul = .6 + .4*Math.sin(t*4 + i); g.beginPath(); g.arc(x,y,10,0,7); g.fillStyle = `rgba(159,178,255,${a})`; g.shadowColor = "#9FB2FF"; g.shadowBlur = 24*pul; g.fill(); g.shadowBlur = 0; }
       else { g.beginPath(); g.arc(x,y,8,0,7); g.strokeStyle = `rgba(107,123,176,${a*.9})`; g.lineWidth = 2.5; g.stroke(); } }); }
   // S7 · cobertura: 60 nodos en 3 países
-  if(t > 62.2 && t < 68.4){ const a0 = seg(t,62.6,63.4)*(1 - seg(t,67.8,68.4));
-    NET.forEach((c,ci)=>{ const [cx,cy] = project(c.lon, c.lat), a = a0*seg(t, 63 + ci*.18, 63.5 + ci*.18), R = 10 + Math.sqrt(c.n)*9;
+  if(t > 60.7 && t < 69.2){ const a0 = seg(t,61.1,61.8)*(1 - seg(t,68.6,69.2));
+    NET.forEach((c,ci)=>{ const [cx,cy] = project(c.lon, c.lat), a = a0*seg(t, 61.4 + ci*.22, 61.9 + ci*.22), R = 10 + Math.sqrt(c.n)*9;
       const gr = g.createRadialGradient(cx,cy,0,cx,cy,R*2.6); gr.addColorStop(0,`rgba(32,70,242,${.55*a})`); gr.addColorStop(1,"rgba(32,70,242,0)");
       g.fillStyle = gr; g.beginPath(); g.arc(cx,cy,R*2.6,0,7); g.fill();
       c.nodes.forEach((n,i)=>{ const ang = n.a, rr = n.d*R*1.25, x = cx + Math.cos(ang)*rr, y = cy - Math.sin(ang)*rr, pul = .75 + .25*Math.sin(t*5 + i);
         if(n.chaak){ g.fillStyle = `rgba(127,231,255,${a})`; g.fillRect(x-5,y-5,10,10); }
         else { g.beginPath(); g.arc(x,y,4.2,0,7); g.fillStyle = `rgba(255,255,255,${a*pul})`; g.fill(); } });
       g.font = "600 30px Barlow, system-ui, sans-serif"; g.textBaseline = "middle"; g.fillStyle = `rgba(255,255,255,${a})`;
-      const left = c.key === "dgo" || c.key === "gdl" || c.key === "mde", lx = left ? cx - R - 18 : cx + R + 18; g.textAlign = left ? "right" : "left";
-      g.fillText(LANG === "en" ? c.en : c.es, lx, cy - 14);
+      const left = c.key === "dgo" || c.key === "gdl" || c.key === "mde" || c.key === "cdmx";
+      let lx = left ? cx - R - 18 : cx + R + 18, ly = cy; g.textAlign = left ? "right" : "left";
+      if(c.key === "cdmx"){ lx = cx - 40; ly = cy + R + 92; g.strokeStyle = `rgba(159,178,255,${a*.8})`; g.lineWidth = 2; g.beginPath(); g.moveTo(cx - R*.55, cy + R*.6); g.lineTo(lx + 8, ly - 38); g.stroke(); }
+      g.fillText(LANG === "en" ? c.en : c.es, lx, ly - 14);
       g.font = "700 34px 'Barlow Condensed', 'Arial Narrow', sans-serif"; g.fillStyle = `rgba(159,178,255,${a})`;
-      g.fillText(c.chaak === c.n ? `${c.n} CHAAK` : c.n + (c.chaak ? ` (${c.chaak} CHAAK)` : ""), lx, cy + 20); }); }
+      g.fillText(c.chaak === c.n ? `${c.n} CHAAK` : c.n + (c.chaak ? ` (${c.chaak} CHAAK)` : ""), lx, ly + 20); }); }
   // S4 · red de la ciudad → SMAA OS → modelos
   if(t > 24.6 && t < 36.6){ const out = 1 - seg(t,35.8,36.6);
     const P = NODES.map(n=> project(n.lon, n.lat));
@@ -554,8 +556,8 @@ function osAnchor(){ return FMT === "v" ? [W()/2, 520] : [W()-96-195, 230]; }
 let CH = null;
 function buildChart(){
   const svg = $("chart"), w = 1100, h = 560, n = 120, L = T[LANG];
-  const ref = i => 300 - 120*Math.sin(i/n*Math.PI*4) - 40*Math.sin(i/n*Math.PI*11 + 1);
-  const drift = i => Math.pow(i/n, 1.3)*150;
+  const ref = i => 330 - 100*Math.sin(i/n*Math.PI*4) - 35*Math.sin(i/n*Math.PI*11 + 1);
+  const drift = i => Math.pow(i/n, 1.3)*120;
   const P = f => Array.from({length:n+1}, (_,i)=> `${(60 + i/n*(w-80)).toFixed(1)},${(f(i)).toFixed(1)}`).join(" ");
   svg.innerHTML = `
     <line x1="60" y1="${h-40}" x2="${w-20}" y2="${h-40}" stroke="rgba(159,178,255,.35)" stroke-width="2"/>
@@ -565,9 +567,9 @@ function buildChart(){
     <polyline id="pRaw" points="${P(i=> ref(i) - drift(i) + 14*Math.sin(i*1.7))}" fill="none" stroke="#FF7E5F" stroke-width="5" stroke-linejoin="round"/>
     <polyline id="pCal" points="${P(i=> ref(i) + 5*Math.sin(i*1.3))}" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linejoin="round"/>
     <g font-family="Barlow" font-size="26" font-weight="600">
-      <text id="lRef" x="${w-20}" y="${ref(n)+44}" fill="#E3E9FF" text-anchor="end">${L.ref}</text>
-      <text id="lRaw" x="${w-20}" y="${ref(n)-drift(n)-22}" fill="#FF9F85" text-anchor="end">${L.raw}</text>
-      <text id="lCal" x="${w-20}" y="${ref(n)-26}" fill="#FFFFFF" text-anchor="end">${L.cal}</text>
+      <g id="lRef"><line x1="60" y1="72" x2="100" y2="72" stroke="rgba(227,233,255,.7)" stroke-width="4" stroke-dasharray="8 6"/><text x="112" y="81" fill="#E3E9FF">${L.ref}</text></g>
+      <g id="lRaw"><line x1="300" y1="72" x2="340" y2="72" stroke="#FF7E5F" stroke-width="5"/><text x="352" y="81" fill="#FF9F85">${L.raw}</text></g>
+      <g id="lCal"><line x1="610" y1="72" x2="650" y2="72" stroke="#fff" stroke-width="7"/><text x="662" y="81" fill="#FFFFFF">${L.cal}</text></g>
     </g>
     <text x="60" y="30" fill="#9FB2FF" font-family="JetBrains Mono" font-size="16" letter-spacing="3" opacity=".75">${L.concept}</text>`;
   CH = {};
@@ -612,7 +614,7 @@ const twinPoll = setInterval(()=>{ try{ const w = twin.contentWindow; if(w && w.
 let twinMode = null, snapOK = false;
 const WIPE = [16.4, 17.4];
 function drawTwin(t){
-  const on = (t > 12.6 && t < 25.4) || t > 67.6;
+  const on = (t > 12.6 && t < 25.4) || t > 68.6;
   $("twinLoad").style.display = TW ? "none" : "block";
   const xs = $("xsnap"), sc = $("scan");
   if(!TW || !on){ xs.style.display = sc.style.display = "none"; return; }
@@ -638,14 +640,14 @@ function drawTwin(t){
     xs.style.display = sc.style.display = "none";
     if(twinMode !== "s8" + FMT){ twinMode = "s8" + FMT; TW.align(); TW.tint("smaa", null); TW.tint("chaak", null); TW.explode(false); TW.render("real"); }
     TW.clean(v); TW.floor(false); TW.zone(false); TW.rig(true);
-    const x = seg(t, 67.6, 78);
-    TW.orbit(lerp(280, 400, eio(x)), lerp(14, 8, x), lerp(v ? 4.0 : 2.6, v ? 3.6 : 2.1, x), v ? 1.4 : 1.36);
+    const x = seg(t, 68.6, 78);
+    TW.orbit(lerp(280, 400, eio(x)), lerp(14, 8, x), lerp(v ? 4.6 : 2.6, v ? 4.2 : 2.1, x), v ? 1.4 : 1.36);
   }
 }
 const wx = $("wx"), wg = wx.getContext("2d");
 const BOLTS = [22.6, 24.15].map((at,k)=>{ const r = rng(900 + k*77), pts = [];
   const build = (x1,y1,x2,y2,sp,d)=>{ pts.push([x1,y1]); if(!d){ pts.push([x2,y2]); return; } const mx = (x1+x2)/2 + (r()-.5)*sp, my = (y1+y2)/2 + (r()-.5)*sp*.25; build(x1,y1,mx,my,sp/2,d-1); build(mx,my,x2,y2,sp/2,d-1); };
-  const fromLeft = k === 0; build(fromLeft ? .08 : .92, 0, fromLeft ? .78 : .2, .72, .09, 6); return {at, pts}; });
+  k ? build(.30, 0, .96, .66, .08, 6) : build(.06, 0, .74, .74, .09, 6); return {at, pts}; });
 function drawWeather(t){
   if(wx.width !== W() || wx.height !== H()){ wx.width = W(); wx.height = H(); }
   wg.clearRect(0,0,W(),H());
@@ -676,7 +678,7 @@ function drawWeather(t){
 function twinFrameShift(t){
   // en 16:9 el equipo se recorre a la derecha (S3) o a la izquierda (S8) para dejar lugar al texto
   const f = $("twinWrap").style;
-  if(FMT === "v"){ f.transform = t > 60 ? "translateY(-330px)" : "translateY(-130px)"; return; }
+  if(FMT === "v"){ f.transform = t > 60 ? "translateY(-470px)" : "translateY(-130px)"; return; }
   f.transform = t > 60 ? "translateX(-380px)" : "translateX(230px)";
 }
 
@@ -688,16 +690,17 @@ let lastSub = null;
 function render(t){
   // cámara del mapa
   const C0 = {center:[CITY.lon, CITY.lat], zoom:15.6, pitch:64, bearing:-30}, C1 = {center:[CITY.lon, CITY.lat], zoom:15.1, pitch:58, bearing:6};
-  const LA = {center:[-74,-12], zoom: FMT === "v" ? 2.75 : 2.85, pitch:0, bearing:0}, LA2 = {...LA, zoom:LA.zoom+.12};
-  const K0 = {center:[CITY.lon, CITY.lat], zoom: FMT === "v" ? 9.7 : 10.1, pitch:32, bearing:-12}, K1 = {center:[CITY.lon, CITY.lat], zoom: FMT === "v" ? 10.3 : 10.8, pitch:46, bearing:10};
+  const LA = FMT === "v" ? {center:[-74,-40], zoom:2.75, pitch:0, bearing:0} : {center:[-97.5,-12], zoom:2.85, pitch:0, bearing:0}, LA2 = {...LA, zoom:LA.zoom+.12};
+  const KC = FMT === "v" ? [CITY.lon, CITY.lat - (NET_CITY ? .04 : -.05)] : [CITY.lon - (NET_CITY ? .10 : .08), CITY.lat + (NET_CITY ? .04 : 0)], zk = NET_CITY ? (NET_CITY.rLat > .15 ? (FMT === "v" ? -.85 : -.6) : 0) : 0;
+  const K0 = {center:KC, zoom:(FMT === "v" ? 9.7 : 10.1) + zk, pitch:28, bearing:-8}, K1 = {center:KC, zoom:(FMT === "v" ? 10.0 : 10.5) + zk, pitch:38, bearing:6};
   if(t < 6) setCam(camLerp(C0, C1, seg(t,0,6)));
   else if(t < 13.6) setCam(t < 10 ? camLerp(C1, LA, eio(seg(t,6,10))) : camLerp(LA, LA2, seg(t,10,13.6)));
   else if(t > 24.4 && t < 36.6) setCam(camLerp(K0, K1, seg(t,24.4,36.6)));
-  else if(t > 62.2 && t < 68.4){ const V0 = FMT === "v" ? {center:[-93,4.9], zoom:4.3, pitch:0, bearing:0} : {center:[-90,8.7], zoom:4.0, pitch:0, bearing:0}; setCam(camLerp(V0, {...V0, zoom:V0.zoom+.1, pitch:12}, seg(t,62.2,68.4))); }
-  show($("Lmap"), Math.max(seg(t,0,1)*(1-seg(t,13,13.6)), vis(t,24.6,36.6,.6,.6), vis(t,62.4,68.2,.6,.4)));
+  else if(t > 60.7 && t < 69.2){ const V0 = FMT === "v" ? {center:[-94.8,4.9], zoom:4.3, pitch:0, bearing:0} : {center:[-90,8.7], zoom:4.0, pitch:0, bearing:0}; setCam(camLerp(V0, {...V0, zoom:V0.zoom+.1, pitch:12}, seg(t,60.7,69.2))); }
+  show($("Lmap"), Math.max(seg(t,0,1)*(1-seg(t,13,13.6)), vis(t,24.6,36.6,.6,.6), vis(t,60.9,69.0,.6,.4)));
   $("smog").style.opacity = .9*(1 - seg(t,6,8.5));
-  show($("Lblue"), vis(t,12.8,25.2,.6,.4) || (t > 67.4 ? seg(t,67.4,68) : 0));
-  show($("Ltwin"), Math.max(vis(t,12.8,25.2,.8,.5), t > 67.6 ? seg(t,67.6,68.6) : 0));
+  show($("Lblue"), vis(t,12.8,25.2,.6,.4) || (t > 68.4 ? seg(t,68.4,69) : 0));
+  show($("Ltwin"), Math.max(vis(t,12.8,25.2,.8,.5), t > 68.6 ? seg(t,68.6,69.6) : 0));
   twinFrameShift(t);
   drawTwin(t); drawWeather(t);
   drawFX(t);
@@ -723,18 +726,18 @@ function render(t){
   pw.style.transform = `translate(-50%,${-50 + (1-pin)*30}%) scale(${base}) rotateZ(${(1-pin)*-4}deg)`; pw.style.opacity = pin;
   drawChat(t);
   // S7
-  show($("s7"), vis(t,58,68.2));
-  $("arc").setAttribute("stroke-dashoffset", 1885*(1 - eio(seg(t,58.6,62.4))));
-  $("ring").querySelectorAll(".node").forEach((n,i)=>{ const a = seg(t, 58.6 + i*.9, 59.2 + i*.9); n.style.opacity = a; n.style.transform = `translate(-50%,-50%) scale(${.8 + .2*ease(a)})`; });
-  rise($("loopTxt"), t, 61.8);
-  document.querySelectorAll(".stat").forEach((s,i)=> rise(s, t, 63.4 + i*.5));
-  $("ring").style.opacity = 1 - seg(t,62.2,62.8); $("s7bg").style.opacity = 1 - seg(t,62.3,63.1);
-  rise($("covKick"), t, 63.2); rise($("covLeg"), t, 63.6);
+  show($("s7"), vis(t,58,69.0));
+  $("arc").setAttribute("stroke-dashoffset", 1885*(1 - eio(seg(t,58.4,60.6))));
+  $("ring").querySelectorAll(".node").forEach((n,i)=>{ const a = seg(t, 58.4 + i*.5, 58.9 + i*.5); n.style.opacity = a; n.style.transform = `translate(-50%,-50%) scale(${.8 + .2*ease(a)})`; });
+  rise($("loopTxt"), t, 59.9);
+  document.querySelectorAll(".stat").forEach((s,i)=> rise(s, t, 62.0 + i*.5));
+  $("ring").style.opacity = 1 - seg(t,60.8,61.3); $("s7bg").style.opacity = 1 - seg(t,60.9,61.6);
+  rise($("covKick"), t, 61.8); rise($("covLeg"), t, 62.2);
   // S8
-  show($("s8"), t > 68 ? seg(t,68,68.8) : 0); $("s8").classList.toggle("live", t > 68.6);
-  const s8 = $("end").querySelectorAll(".rise"); rise(s8[0], t, 68.4); rise(s8[1], t, 68.7); rise(s8[2], t, 70.2); rise(s8[3], t, 70.8); rise(s8[4], t, 71.3);
+  show($("s8"), t > 69 ? seg(t,69,69.8) : 0); $("s8").classList.toggle("live", t > 69.6);
+  const s8 = $("end").querySelectorAll(".rise"); rise(s8[0], t, 69.3); rise(s8[1], t, 69.6); rise(s8[2], t, 70.8); rise(s8[3], t, 71.3); rise(s8[4], t, 71.7);
   // logo
-  $("bug").style.opacity = .85*vis(t,1,67.6,1,.4);
+  $("bug").style.opacity = .85*vis(t,1,68.6,1,.4);
   // subtítulos
   const cue = SUBS.find(c=> t >= c[0] && t < c[1]);
   const txt = cue ? (cue[2] === null ? (LANG === "en" ? "Smability · from the sensor to your hand." : "Smability · del sensor a tu mano.") : (LANG === "en" ? cue[3] : cue[2])) : "";
