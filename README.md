@@ -181,3 +181,19 @@ Edita `twin.html` y luego ejecuta `python3 build.py`, que regenera `index.html`.
 
 - Barra inferior: redes sociales y botones de fichas a la izquierda; en escritorio se dejan 200 px libres a la derecha para el aviso flotante de Netlify.
 - Trípode y mástil son de referencia: no se venden (CHAAK y SMAA se entregan con su tubo).
+
+## Reel · `/reel` (v0.1, primer montaje)
+
+`reel/index.html` es el reel de 78 s "Del sensor a tu mano", en HTML. Corre como video, sin música por ahora.
+
+- **Formatos:** 16:9 y 9:16. Se elige con `?format=h|v`; sin parámetro se toma según la orientación de la pantalla. También hay un botón para cambiarlo.
+- **Subtítulos:** español o inglés, con `?lang=es|en` o con el botón.
+- **Personalización:** `?city=gdl` (mismas claves que el gemelo) o `?lat=..&lon=..&name=..`. Los mapas de las escenas 1 y 4 vuelan a esa zona, y el cierre dice "Mira cómo quedaría en {ciudad}".
+- **Otros parámetros:** `?t=30` abre en el segundo 30; `?autoplay=1` arranca solo; `?capture=1` oculta los controles para exportar.
+- **Mapas:** Mapbox GL JS v3 (`CONFIG.mapboxToken`). Restringe el token al dominio de Netlify en el dashboard de Mapbox. Si Mapbox no carga, se dibuja una retícula de respaldo.
+- **3D:** el gemelo se carga en un iframe con `/?embed=reel`. Ese modo oculta la interfaz y expone `window.TWIN` (orbit, tint, explode, clean, rig, floor, zone, render, rain, hour) para que el reel dirija la cámara cuadro a cuadro.
+- **Exportar a MP4:** `render(t)` es determinista; `window.REEL.seek(t)` permite capturar cuadro a cuadro con Playwright y armar el MP4 con ffmpeg.
+- **Chat de AIreGPT (escena 6):** es la simulación del landing de airegpt.ai, sin montos de multas.
+- **Datos:** la red de nodos y los campos de calidad del aire y lluvia de la escena 4 son una simulación ilustrativa (lo dice en pantalla). Están listos para cambiarse por las APIs en vivo.
+
+Archivos: `reel/index.html` y `reel/img/` (logo, tarjeta SMAA OS, estación a color, alerta y los QR del gemelo y del bot).

@@ -343,6 +343,15 @@ body[data-render="tech"] #stage{background-color:#fbfbf8;background-image:linear
   .shbtns .btn{min-height:44px}
   .pgrid{grid-template-columns:1fr}
 }
+
+/* ===== Modo embebido (reel): solo el lienzo 3D, fondo transparente ===== */
+html.embed{color-scheme:normal!important}
+html.embed,html.embed body{background:transparent!important}
+html.embed #app{grid-template-rows:1fr!important;height:100%}
+html.embed .bar,html.embed .dock,html.embed .tabbar,html.embed #sheet{display:none!important}
+html.embed #stage>:not(canvas){display:none!important}
+html.embed #stage{background:transparent!important}
+html.embed #stage canvas{pointer-events:none}
 </style>
 
 <div id="app">
@@ -2180,5 +2189,34 @@ if(URLQ.has("id") || URLQ.has("campo") || URLQ.has("chaak") || URLQ.has("smaa"))
 refineCity(state.city);
 tryLoadGLB(RIG, RIG_MODEL, "mast"); tryLoadGLB(ST.chaak, ST.chaak.modelUrl, "logger"); tryLoadGLB(ST.smaa, ST.smaa.modelUrl, "logger");
 document.fonts?.ready.then(()=>{ drawGround(); drawFrontLabel(); });
+/* ================= EMBED (reel en /reel) =================
+   ?embed=reel oculta la interfaz y expone window.TWIN para que el reel dirija la cámara cuadro a cuadro. */
+if(URLQ.has("embed")){
+  document.documentElement.classList.add("embed");
+  if(URLQ.get("theme")) document.documentElement.dataset.theme = URLQ.get("theme");
+  controls.enabled = false; controls.enableDamping = false; controls.autoRotate = false;
+  const saved = new Map();
+  const SUP = ["cabezal","cople_sup","tubo","cople_base"];
+  window.TWIN = {
+    loaded: () => !!(ST.chaak.parts.head && ST.smaa.parts && Object.keys(ST.smaa.parts).length),
+    orbit(az, el, dist, ty){ const a = az*RAD, e = el*RAD; controls.target.set(0, ty, 0);
+      persp.position.set(Math.sin(a)*Math.cos(e)*dist, ty + Math.sin(e)*dist, Math.cos(a)*Math.cos(e)*dist); persp.lookAt(controls.target); },
+    clean(on){ for(const o of [floor, ground, landmark, sunMarker, frontMark, inletZone]) if(o) o.visible = !on; if(on) rainLines.visible = false; },
+    rig(on){ Object.values(RIG.parts).forEach(p=> p.group.visible = !!on); },
+    floor(on){ floor.visible = !!on; },
+    zone(on){ inletZone.visible = !!on; sunMarker.visible = !!on; },
+    tint(key, hex){ const st = ST[key]; if(!st) return;
+      for(const [k,p] of Object.entries(st.parts)) p.group.traverse(m=>{ if(!m.isMesh || m.userData.isEdge || m.userData.isCap) return;
+        if(hex == null){ if(saved.has(m)){ m.material = saved.get(m); saved.delete(m); } return; }
+        if(!saved.has(m)) saved.set(m, m.material);
+        const mm = saved.get(m).clone(); if(mm.color) mm.color.setHex(SUP.includes(k) ? 0x9AA3B5 : hex); if(mm.emissive) mm.emissive.setHex(0x000000); m.material = mm; }); },
+    explode(v){ state.explodeTarget = v ? 1 : 0; },
+    render(m){ if(RENDER_MODES.includes(m) && RENDER.mode !== m){ RENDER.mode = m; applyRender(); } },
+    rain(on){ if(!!state.rain !== !!on) toggleRain(); },
+    hour(h){ setHour(h); },
+    shadows(on){ renderer.shadowMap.enabled = !!on; }
+  };
+}
+
 frame();
 </script>
