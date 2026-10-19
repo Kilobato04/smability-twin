@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smability · Del sensor a tu mano</title>
+<meta name="description" content="Reel de 78 segundos: dispositivos SMAA y CHAAK, SMAA OS, autocalibración y AIreGPT. Subtítulos en español e inglés.">
+<meta property="og:title" content="Smability · Del sensor a tu mano">
+<meta property="og:description" content="El ecosistema de Smability en menos de 80 segundos: del sensor en la calle a la alerta en tu celular.">
+<meta property="og:type" content="video.other">
+<meta name="theme-color" content="#001766">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Poppins:wght@400;600;700;800&family=Roboto+Mono:wght@600;700;900&display=swap" rel="stylesheet">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" rel="stylesheet">
+<style>
+:root{--navy:#001766;--brand:#002BAD;--accent:#2046F2;--sky:#9FB2FF;--mist:#C7D2FF;--ice:#E3E9FF;--ink:#000;--muted:#6B6B6B;
+  --f-disp:'Barlow Condensed','Arial Narrow',sans-serif;--f-body:'Barlow',system-ui,sans-serif;--f-mono:'JetBrains Mono',ui-monospace,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f-body);overflow:hidden}
+#view{position:fixed;inset:0;display:grid;place-items:center}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:var(--navy)}
+#stage.v{width:1080px;height:1920px}
+.layer{position:absolute;inset:0;opacity:0;pointer-events:none}
+#map{position:absolute;inset:0}
+#map .mapboxgl-ctrl-bottom-left,#map .mapboxgl-ctrl-bottom-right{transform:scale(1.4);transform-origin:bottom right;opacity:.7}
+#fx{position:absolute;inset:0;width:100%;height:100%}
+#twin{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;color-scheme:normal}
+.bgblue{position:absolute;inset:0;background:radial-gradient(70% 80% at 50% 45%,#12339A 0%,#001766 70%,#000B3D 100%)}
+.smog{position:absolute;inset:-10%;background:radial-gradient(40% 30% at 30% 70%,rgba(160,150,190,.30),transparent 70%),radial-gradient(50% 35% at 75% 60%,rgba(140,130,170,.26),transparent 70%),linear-gradient(180deg,rgba(0,10,40,.55),rgba(70,60,90,.25) 60%,rgba(0,8,30,.7))}
+.vignette{position:absolute;inset:0;background:radial-gradient(120% 100% at 50% 50%,transparent 55%,rgba(0,4,20,.75))}
+/* tipografía de escena */
+.kick{font-family:var(--f-mono);font-weight:600;letter-spacing:.16em;font-size:26px;color:var(--sky)}
+.title{font-family:var(--f-disp);font-weight:700;font-size:110px;line-height:.92;letter-spacing:.005em}
+.big{font-family:var(--f-disp);font-weight:700;font-size:150px;line-height:.9}
+.tag{display:inline-flex;align-items:center;gap:12px;font-family:var(--f-mono);font-weight:600;font-size:22px;letter-spacing:.12em;color:#fff;border:1.5px solid var(--sky);border-radius:999px;padding:10px 20px;background:rgba(0,23,102,.55)}
+.tag i{width:12px;height:12px;border-radius:50%;background:#2CE57A;box-shadow:0 0 12px #2CE57A}
+.note{font-family:var(--f-mono);font-size:18px;letter-spacing:.12em;color:var(--mist);opacity:.8}
+.sup{position:absolute;left:96px;top:90px;display:flex;flex-direction:column;gap:16px}
+.v .sup{left:72px;top:150px}
+.rise{opacity:0;transform:translateY(24px)}
+/* subtítulos */
+#subs{position:absolute;left:50%;bottom:86px;transform:translateX(-50%);width:min(1500px,86%);text-align:center;font-family:var(--f-body);font-weight:600;font-size:46px;line-height:1.25;color:#fff;text-shadow:0 2px 3px rgba(0,0,0,.7),0 0 18px rgba(0,0,0,.5);z-index:40}
+#subs span{background:rgba(0,10,40,.62);padding:6px 18px;border-radius:8px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.v #subs{bottom:300px;font-size:50px;width:90%}
+#bug{position:absolute;right:56px;top:48px;height:46px;opacity:0;z-index:39}
+.v #bug{right:56px;top:60px;height:50px}
+/* S2 */
+#s2 .sup{top:auto;bottom:250px}
+.v #s2 .sup{bottom:460px}
+.legend{display:flex;gap:32px;font-family:var(--f-mono);font-size:24px;letter-spacing:.08em;color:var(--mist)}
+.legend b{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:10px;vertical-align:-1px}
+/* S3 */
+#s3 .list{position:absolute;left:96px;top:360px;display:flex;flex-direction:column;gap:34px;width:640px}
+.v #s3 .list{left:72px;right:72px;top:auto;bottom:450px;width:auto;gap:22px}
+.item{display:grid;grid-template-columns:22px 1fr;column-gap:20px;row-gap:6px;align-items:baseline;opacity:0}
+.item i{width:22px;height:22px;border-radius:6px;grid-row:span 2;align-self:start;margin-top:8px}
+.item b{font-family:var(--f-disp);font-weight:700;font-size:54px;line-height:1}
+.item span{font-size:28px;color:var(--ice);line-height:1.3}
+.v .item b{font-size:48px}.v .item span{font-size:28px}
+#s3 .fallback{position:absolute;left:58%;top:50%;height:86%;transform:translate(-50%,-50%)}
+.v #s3 .fallback{left:50%;top:38%;height:52%}
+/* S4 */
+#oscard{position:absolute;right:96px;top:90px;width:360px;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.5);opacity:0}
+.v #oscard{right:50%;transform:translateX(50%);top:330px;width:380px}
+#s4 .tags{position:absolute;left:96px;bottom:250px;display:flex;flex-direction:column;gap:16px;align-items:flex-start}
+.v #s4 .tags{left:72px;bottom:560px}
+.iasbar{display:grid;grid-template-columns:repeat(5,1fr);width:420px;gap:0;font-family:var(--f-mono);font-size:16px;color:var(--mist);letter-spacing:.06em}
+.iasbar div{height:10px;margin-bottom:6px}
+/* S5 */
+#s5 .chart{position:absolute;left:96px;top:300px;width:1100px;height:560px}
+.v #s5 .chart{left:60px;top:640px;width:960px;height:520px}
+#s5 .r2{position:absolute;right:110px;top:330px;width:520px;display:flex;flex-direction:column;gap:22px}
+.v #s5 .r2{right:auto;left:72px;top:330px;width:936px;flex-direction:row;flex-wrap:wrap;gap:14px 40px}
+.r2box{border:1.5px solid rgba(159,178,255,.5);border-radius:16px;padding:24px 28px;background:rgba(0,23,102,.5)}
+.r2num{font-family:var(--f-disp);font-weight:700;font-size:150px;line-height:.9}
+.r2lbl{font-family:var(--f-mono);font-size:20px;letter-spacing:.1em;color:var(--sky)}
+.months{font-family:var(--f-disp);font-weight:700;font-size:84px;line-height:1}
+/* S6 teléfono AIreGPT (estilo de airegpt.ai) */
+#s6 .sup{max-width:640px}
+#phoneWrap{position:absolute;left:62%;top:45%;transform:translate(-50%,-50%) scale(1.4)}
+.v #phoneWrap{left:50%;top:47%;transform:translate(-50%,-50%) scale(1.95)}
+.phone{width:300px;height:560px;background:linear-gradient(160deg,#1c1c1e,#2c2c2e);border:3px solid #00f2fe;border-radius:35px;position:relative;font-family:'Poppins',sans-serif;box-shadow:0 0 0 1px #3a3a3c,0 30px 80px rgba(0,0,0,.8),0 0 10px 3px #00f2fe,0 0 28px 8px rgba(0,242,254,.6),0 0 60px 15px rgba(0,242,254,.3)}
+.phone.shake{animation:shake .55s ease}
+@keyframes shake{15%{transform:translateX(-6px)}30%{transform:translateX(6px)}45%{transform:translateX(-4px)}60%{transform:translateX(4px)}}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:140px;height:26px;background:#1c1c1e;border-radius:0 0 16px 16px;z-index:30;display:flex;align-items:center;justify-content:space-between;padding:0 12px}
+.notch-time{font-size:9px;font-weight:700;color:#fff}.notch-cam{width:8px;height:8px;background:#000;border-radius:50%;border:1.5px solid #333}
+.screen{width:100%;height:100%;border-radius:30px;overflow:hidden;display:flex;flex-direction:column;background:#17212b;position:relative}
+.chat-header{background:linear-gradient(135deg,#1a1a3a,#4a3a8a);height:72px;display:flex;align-items:center;padding:28px 12px 0;gap:9px;flex-shrink:0;border-bottom:1px solid rgba(111,66,193,.4)}
+.h-avatar{width:34px;height:34px;background:rgba(0,0,0,.4);border:2px solid #00f2fe;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.h-avatar svg{width:18px;height:18px;fill:#00f2fe}
+.h-name{color:#fff;font-size:13px;font-weight:800;line-height:1}.h-status{color:#00f2fe;font-size:9px;margin-top:1px;font-weight:600}
+.chat-area{flex:1;overflow:hidden;background:#17212b;display:flex;flex-direction:column;justify-content:flex-end;position:relative}
+.msgs{padding:10px 8px;display:flex;flex-direction:column;gap:7px}
+.msg{display:none;flex-direction:column}.msg.on{display:flex;animation:fin .4s ease both}
+@keyframes fin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.msg.bot{align-items:flex-start}.msg.user{align-items:flex-end}
+.bubble{display:inline-block;padding:8px 11px;border-radius:13px;font-size:11px;line-height:1.5;max-width:85%;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.msg.bot .bubble{background:#212d3b;color:#e8e8e8;border-bottom-left-radius:3px;border:1px solid #2a3a4a}
+.msg.user .bubble{background:#2b5278;color:#fff;border-bottom-right-radius:3px;border:1px solid #3a6a99}
+.bname{font-size:8.5px;font-weight:800;margin-bottom:2px;letter-spacing:.5px;text-transform:uppercase}
+.mtime{font-size:8px;color:rgba(255,255,255,.25);margin-top:2px}.paloma{font-size:8px;color:rgba(42,171,238,.7);margin-top:2px;text-align:right}
+.cont-card{display:flex;flex-direction:column;width:220px;border-radius:10px;border-bottom-left-radius:3px;overflow:hidden;border:1px solid #ff3b30;box-shadow:0 0 16px rgba(255,59,48,.35);margin-top:3px}
+.cont-header{background:linear-gradient(135deg,#5a0000,#a00000);padding:7px 10px;display:flex;align-items:center;gap:6px}
+.cont-title{font-size:10px;font-weight:800;color:#fff;line-height:1.2}.cont-sub{font-size:8px;color:rgba(255,255,255,.6);margin-top:1px}
+.cont-body{background:#1e0808;padding:7px 10px;display:flex;flex-direction:column;gap:5px}
+.cont-row{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+.cont-lbl{font-size:8px;color:rgba(255,120,100,.7);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+.cont-val{font-size:9px;font-weight:700;color:#ffaaaa;text-align:right}
+.cont-val.big{font-family:'Roboto Mono',monospace;font-size:14px;font-weight:900;color:#ff4444}
+.cont-block{border-radius:5px;padding:5px 7px;font-size:9px;line-height:1.45}
+.cont-block.health{background:#2a0808;border:1px solid rgba(255,100,80,.25);color:#ffcccc}.cont-block.health strong{color:#ff8080;display:block}
+.cont-block.hnc{background:#1a0a00;border:1px solid rgba(255,150,0,.3);color:#ffd580}.cont-block.hnc strong{color:#ffa500;display:block}
+.aq-card{display:flex;flex-direction:column;width:220px;border-radius:10px;border-bottom-left-radius:3px;overflow:hidden;border:1px solid #00f2fe;margin-top:3px}
+.aq-header{background:linear-gradient(135deg,#0a1a2a,#0d2a40);padding:7px 10px;display:flex;align-items:center;gap:6px}
+.aq-title{font-size:10px;font-weight:800;color:#00f2fe}.aq-sub{font-size:8px;color:rgba(255,255,255,.5)}
+.aq-body{background:#0d1c26;padding:7px 10px;display:flex;flex-direction:column;gap:5px}
+.aq-row{display:flex;justify-content:space-between;align-items:center}
+.aq-lbl{font-size:8px;color:rgba(255,255,255,.4);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+.aq-val{font-family:'Roboto Mono',monospace;font-size:15px;font-weight:900;color:#ff00ff}
+.wx-row{display:flex;gap:4px;flex-wrap:wrap}.wx-chip{background:rgba(0,242,254,.07);border:1px solid rgba(0,242,254,.18);border-radius:4px;padding:2px 5px;font-size:8px;color:#9ad0e8;font-family:'Roboto Mono',monospace}.wx-chip span{color:#fff;font-weight:700}
+.typing{display:none;align-items:center;gap:4px;padding:7px 10px;background:#212d3b;border-radius:12px;border-bottom-left-radius:3px;width:fit-content;border:1px solid #2a3a4a;margin:0 8px 8px}
+.typing.on{display:flex}.typing span{width:5px;height:5px;background:#00f2fe;border-radius:50%;animation:bounce 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+.push{position:absolute;top:30px;z-index:50;left:6px;right:6px;background:rgba(10,20,30,.97);border-radius:12px;padding:9px 10px;display:flex;gap:8px;box-shadow:0 8px 28px rgba(0,0,0,.7),0 0 0 1px rgba(0,242,254,.25);transform:translateY(-90px);opacity:0;transition:transform .45s cubic-bezier(.34,1.56,.64,1),opacity .35s}
+.push.on{transform:none;opacity:1}
+.push-app{font-size:8px;color:rgba(255,255,255,.4);font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.push-title{font-size:10px;font-weight:800;color:#00f2fe}.push-msg{font-size:9px;color:rgba(255,255,255,.75)}
+.home-ind{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:100px;height:3px;background:rgba(255,255,255,.2);border-radius:2px}
+/* S7 */
+#ring{position:absolute;left:50%;top:47%;width:820px;height:820px;transform:translate(-50%,-50%)}
+.v #ring{top:42%}
+.node{position:absolute;width:220px;display:flex;flex-direction:column;align-items:center;gap:12px;transform:translate(-50%,-50%);opacity:0}
+.node .ic{width:150px;height:150px;border-radius:50%;background:#0B2A9E;border:3px solid var(--sky);display:grid;place-items:center;overflow:hidden;box-shadow:0 0 40px rgba(32,70,242,.6)}
+.node .ic img{max-width:100%;max-height:100%}
+.node b{font-family:var(--f-mono);font-size:20px;letter-spacing:.1em;color:var(--sky);text-align:center}
+.node span{font-family:var(--f-disp);font-weight:700;font-size:36px;text-align:center;line-height:1}
+#ring .center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:420px}
+#stats{position:absolute;left:0;right:0;bottom:200px;display:flex;justify-content:center;gap:110px}
+.v #stats{bottom:520px;gap:60px}
+.stat{text-align:center;opacity:0}.stat b{display:block;font-family:var(--f-disp);font-weight:700;font-size:110px;line-height:.95}.stat span{font-size:28px;color:var(--mist)}
+.v .stat b{font-size:96px}
+/* S8 */
+#end{position:absolute;right:0;top:0;bottom:0;width:820px;background:linear-gradient(90deg,rgba(0,23,102,0),rgba(0,23,102,.92) 18%,#001766);display:flex;flex-direction:column;justify-content:center;gap:40px;padding:0 96px 120px 180px}
+.v #end{left:0;right:0;top:auto;width:auto;height:1100px;background:linear-gradient(180deg,rgba(0,23,102,0),rgba(0,23,102,.94) 16%,#001766);padding:120px 72px 440px;justify-content:flex-end}
+#end .title{font-size:96px}
+.v #end .title{font-size:92px}
+.qrs{display:flex;gap:40px}.qr{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.qr img{width:190px;height:190px;border-radius:12px;background:#fff;padding:8px}
+.qr b{font-family:var(--f-mono);font-size:19px;letter-spacing:.08em;color:var(--sky)}
+.qr span{font-size:22px;color:var(--ice)}
+#end .logo{height:64px;align-self:flex-start}
+/* controles */
+#ctl{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(0deg,rgba(0,8,30,.85),rgba(0,8,30,0));z-index:100;transition:opacity .4s;font-family:var(--f-mono);font-size:13px}
+#ctl.hide{opacity:0}
+#ctl button{font:600 13px var(--f-mono);letter-spacing:.06em;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:8px 12px;cursor:pointer;min-width:44px;min-height:40px}
+#ctl button[aria-pressed="true"]{background:#fff;color:var(--navy)}
+#ctl input[type=range]{flex:1;accent-color:var(--accent);min-width:60px}
+#ctl .t{min-width:96px;text-align:center;color:var(--mist)}
+#play{position:fixed;inset:0;display:grid;place-items:center;z-index:90;background:rgba(0,8,30,.35);cursor:pointer;border:0;color:#fff}
+#play div{display:flex;flex-direction:column;align-items:center;gap:14px;font-family:var(--f-mono);letter-spacing:.14em;font-size:14px}
+#play svg{width:96px;height:96px}
+#play[hidden]{display:none}
+@media (max-width:560px){#ctl{gap:6px;padding-left:8px;padding-right:8px}#ctl button{padding:6px 8px}#ctl .t{min-width:0}#ctl .fs{display:none}}
+</style>
+</head>
+<body>
+<div id="view">
+<div id="stage">
+  <div class="layer" id="Lmap"><div id="map"></div><div class="smog" id="smog"></div><canvas id="fx" width="1920" height="1080"></canvas><div class="vignette"></div></div>
+  <div class="layer" id="Lblue"><div class="bgblue"></div></div>
+  <div class="layer" id="Ltwin"><img class="fallback" id="twinFallback" src="img/estacion.png" alt=""><iframe id="twin" title="Gemelo digital SMAA y CHAAK" loading="eager"></iframe></div>
+
+  <section class="layer" id="s2">
+    <div class="sup"><span class="big rise" id="s2big" data-k="s2big"></span><div class="legend rise" id="s2leg"></div></div>
+  </section>
+
+  <section class="layer" id="s3">
+    <div class="sup"><span class="kick rise" data-k="s3kick"></span><span class="title rise">SMAA + CHAAK</span></div>
+    <div class="list">
+      <div class="item" id="it1"><i style="background:#2046F2"></i><b>SMAA</b><span data-k="s3smaa"></span></div>
+      <div class="item" id="it2"><i style="background:#7C9BFF"></i><b>CHAAK</b><span data-k="s3chaak"></span></div>
+      <div class="item" id="it3"><i style="background:#fff"></i><b data-k="s3poleT"></b><span data-k="s3pole"></span></div>
+    </div>
+  </section>
+
+  <section class="layer" id="s4">
+    <div class="sup"><span class="kick rise" data-k="s4kick"></span><span class="title rise" data-k="s4title"></span></div>
+    <img id="oscard" src="img/smaa-os.png" alt="SMAA OS, el cerebro del ecosistema: AWS, IoT en tiempo real, big data, APIs abiertas">
+    <div class="tags">
+      <span class="tag rise" id="tagAQ"><i></i><span data-k="s4aq"></span></span>
+      <div class="iasbar rise" id="ias"><div style="background:#00E400"></div><div style="background:#FFFF00"></div><div style="background:#FF7E00"></div><div style="background:#FF0000"></div><div style="background:#8F3F97"></div><span>0</span><span>50</span><span>100</span><span>150</span><span>200+</span></div>
+      <span class="tag rise" id="tagRain"><i style="background:#8B5CF6;box-shadow:0 0 12px #8B5CF6"></i><span data-k="s4rain"></span></span>
+      <span class="note rise" id="s4note" data-k="sim"></span>
+    </div>
+  </section>
+
+  <section class="layer" id="s5">
+    <div class="bgblue"></div>
+    <div class="sup"><span class="kick rise" data-k="s5kick"></span><span class="title rise" data-k="s5title"></span></div>
+    <svg class="chart" id="chart" viewBox="0 0 1100 560" aria-hidden="true"></svg>
+    <div class="r2">
+      <div class="r2box rise" id="r2a"><div class="r2lbl" data-k="r2lbl"></div><div class="r2num" id="r2num">0.72</div><div class="note" data-k="unam"></div></div>
+      <div class="r2box rise" id="r2b"><div class="months" id="months">0</div><div class="r2lbl" data-k="months"></div></div>
+    </div>
+  </section>
+
+  <section class="layer" id="s6">
+    <div class="bgblue"></div>
+    <div class="sup"><span class="kick rise" data-k="s6kick"></span><span class="title rise" data-k="s6title"></span><span class="tag rise" id="s6tag" style="align-self:flex-start"><i style="background:#2AABEE;box-shadow:0 0 12px #2AABEE"></i><span data-k="s6tag"></span></span></div>
+    <div id="phoneWrap">
+      <div class="phone" id="phone">
+        <div class="notch"><span class="notch-time">08:14</span><div class="notch-cam"></div></div>
+        <div class="screen">
+          <div class="chat-header"><div class="h-avatar"><svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.98 4.23 13.07c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.836.944z"/></svg></div><div><div class="h-name">AIreGPT</div><div class="h-status" data-k="online"></div></div></div>
+          <div class="push" id="push"><div><div class="push-app">Telegram · AIreGPT</div><div class="push-title" data-k="pushT"></div><div class="push-msg" data-k="pushM"></div></div></div>
+          <div class="chat-area"><div class="msgs" id="msgs"></div><div class="typing" id="typing"><span></span><span></span><span></span></div></div>
+        </div>
+        <div class="home-ind"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="layer" id="s7">
+    <div class="bgblue"></div>
+    <div id="ring">
+      <svg viewBox="0 0 820 820" style="position:absolute;inset:0" aria-hidden="true"><circle cx="410" cy="410" r="300" fill="none" stroke="rgba(159,178,255,.18)" stroke-width="4"/><circle id="arc" cx="410" cy="410" r="300" fill="none" stroke="#9FB2FF" stroke-width="5" stroke-linecap="round" transform="rotate(-90 410 410)" stroke-dasharray="1885" stroke-dashoffset="1885"/></svg>
+      <div class="node" style="left:410px;top:110px"><div class="ic" style="background:#0B2A9E"><img src="img/estacion.png" alt="" style="height:135px"></div><b>01</b><span data-k="n1"></span></div>
+      <div class="node" style="left:710px;top:410px"><div class="ic"><img src="img/smaa-os.png" alt="" style="width:140px"></div><b>02</b><span>SMAA OS</span></div>
+      <div class="node" style="left:410px;top:710px"><div class="ic"><svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/></svg></div><b>03</b><span data-k="n3"></span></div>
+      <div class="node" style="left:110px;top:410px"><div class="ic"><img src="img/alerta.png" alt="" style="width:120px;margin-top:60px"></div><b>04</b><span>AIreGPT</span></div>
+      <div class="center"><div class="title rise" id="loopTxt" style="font-size:84px" data-k="loop"></div></div>
+    </div>
+    <div id="stats">
+      <div class="stat"><b data-k="st1"></b><span data-k="st1s"></span></div>
+      <div class="stat"><b>45+</b><span data-k="st2s"></span></div>
+      <div class="stat"><b data-k="st3"></b><span data-k="st3s"></span></div>
+    </div>
+  </section>
+
+  <section class="layer" id="s8">
+    <div id="end">
+      <span class="kick rise" data-k="s8kick"></span>
+      <div class="title rise" id="endTitle"></div>
+      <div class="qrs rise" id="qrs">
+        <div class="qr"><img id="qrTwin" src="img/qr-gemelo.png" alt="QR al gemelo digital"><b data-k="qr1"></b><span>smability-digitaltwin.netlify.app</span></div>
+        <div class="qr"><img src="img/qr-bot.png" alt="QR al bot AIreGPT en Telegram"><b data-k="qr2"></b><span>@airegptcdmx_bot</span></div>
+      </div>
+      <img class="logo rise" id="endLogo" src="img/logo-white.png" alt="Smability">
+    </div>
+  </section>
+
+  <img id="bug" src="img/logo-white.png" alt="Smability">
+  <div id="subs" aria-live="polite"></div>
+</div>
+</div>
+
+<button id="play" type="button" aria-label="Reproducir"><div><svg viewBox="0 0 96 96"><circle cx="48" cy="48" r="46" fill="rgba(0,43,173,.85)" stroke="#9FB2FF" stroke-width="2"/><path d="M39 30l30 18-30 18z" fill="#fff"/></svg><span id="playLbl">REPRODUCIR · 1:18</span></div></button>
+<div id="ctl">
+  <button id="bPlay" type="button" aria-label="Pausa">❚❚</button>
+  <span class="t" id="tOut">0:00 / 1:18</span>
+  <input id="scrub" type="range" min="0" max="78" step="0.05" value="0" aria-label="Posición">
+  <button id="bLang" type="button" aria-label="Idioma de subtítulos">ES</button>
+  <button id="bFmt" type="button" aria-label="Formato">16:9</button>
+  <button id="bFs" class="fs" type="button" aria-label="Pantalla completa">⛶</button>
+</div>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"></script>
+<script>
+/* =====================================================================
+   Smability · Reel "Del sensor a tu mano" (78 s, 16:9 y 9:16, subtítulos ES/EN)
+   Todo se dibuja en función del tiempo t (render(t) es determinista): se puede
+   adelantar, pausar y exportar cuadro a cuadro.
+   Parámetros: ?lang=es|en  ?format=h|v  ?city=gdl  (o ?lat=..&lon=..&name=..)  ?t=30  ?autoplay=1
+   ===================================================================== */
+const CONFIG = {
+  // Token público de Mapbox. En el dashboard de Mapbox restríngelo al dominio de Netlify.
+  mapboxToken: 'pk.eyJ1Ijoia2lsb2JhdG8iLCJhIjoiY21jd2g2b3RzMDJiNDJxcTA0cTFhZmE4OCJ9.u5zPxYCxqEaF2jnj32l4ng',
+  mapStyle: 'mapbox://styles/mapbox/dark-v11',
+  terrain: true,
+  buildings3D: true,
+  twinUrl: '/index.html',          // gemelo digital (mismo sitio)
+  duration: 78
+};
+const Q = new URLSearchParams(location.search);
+const $ = id => document.getElementById(id);
+const clamp = (x,a=0,b=1)=> Math.min(b, Math.max(a, x));
+const seg = (t,a,b)=> clamp((t-a)/(b-a));
+const ease = x => x*x*(3-2*x);
+const eio = x => x<.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2;
+const lerp = (a,b,x)=> a+(b-a)*x;
+
+/* ---------- ciudades (mismas claves que el gemelo) ---------- */
+const CITIES = {
+  cdmx:["Ciudad de México","Mexico City",19.43,-99.13], gdl:["Guadalajara","Guadalajara",20.67,-103.35], mty:["Monterrey","Monterrey",25.67,-100.31],
+  pue:["Puebla","Puebla",19.04,-98.21], dgo:["Durango","Durango",24.02,-104.66], cun:["Cancún","Cancún",21.16,-86.85], tij:["Tijuana","Tijuana",32.53,-117.02],
+  lpz:["La Paz","La Paz",24.14,-110.31], tula:["Tula","Tula",20.05,-99.34], gua:["Ciudad de Guatemala","Guatemala City",14.63,-90.51],
+  bog:["Bogotá","Bogotá",4.71,-74.07], mde:["Medellín","Medellín",6.24,-75.58], cali:["Cali","Cali",3.45,-76.53], suarez:["Suárez","Suárez",2.95,-76.69],
+  scl:["Santiago de Chile","Santiago",-33.45,-70.67], pmc:["Puerto Montt","Puerto Montt",-41.47,-72.94], lima:["Lima","Lima",-12.05,-77.04]
+};
+let cityKey = CITIES[Q.get("city")] ? Q.get("city") : "cdmx";
+const CITY = { key: cityKey, es: CITIES[cityKey][0], en: CITIES[cityKey][1], lat: CITIES[cityKey][2], lon: CITIES[cityKey][3] };
+if(Q.get("lat") && Q.get("lon") && isFinite(+Q.get("lat")) && isFinite(+Q.get("lon"))){
+  CITY.key = null; CITY.lat = +Q.get("lat"); CITY.lon = +Q.get("lon"); CITY.es = CITY.en = (Q.get("name")||"").slice(0,40) || "tu sitio";
+}
+const personalized = Q.has("city") || Q.has("lat");
+
+/* ---------- textos ---------- */
+let LANG = (Q.get("lang") || (navigator.language||"es")).toLowerCase().startsWith("en") ? "en" : "es";
+const T = {
+  es:{ s2big:"CARAS.<br>ESCASAS.", leg:'<span><b style="background:#9FB2FF;box-shadow:0 0 10px #9FB2FF"></b>con red de monitoreo</span><span><b style="border:2px solid #6B7BB0"></b>pocas o ninguna</span><span style="opacity:.7">ilustrativo</span>',
+    s3kick:"01 · DISPOSITIVOS", s3smaa:"Aire: PM2.5, PM10, gases y ruido", s3chaak:"Clima: viento, lluvia por radar y radiación", s3poleT:"UN SOLO TUBO", s3pole:"Datos en vivo, 24/7",
+    s4kick:"02 · SMAA OS", s4title:"Cada minuto", s4aq:"CALIDAD DEL AIRE · EN VIVO", s4rain:"LLUVIA · EN VIVO", sim:"SIMULACIÓN ILUSTRATIVA",
+    s5kick:"03 · AUTOCALIBRACIÓN", s5title:"Se corrige sola", r2lbl:"OZONO VS. RED OFICIAL (R²)", unam:"AUDITADO POR ICAyCC · UNAM", months:"MESES SIN VISITAS DE CAMPO",
+    ref:"Referencia", raw:"Sensor sin corregir", cal:"Autocalibrado", concept:"ESQUEMA ILUSTRATIVO",
+    s6kick:"04 · AIreGPT", s6title:"En tu mano", s6tag:"TELEGRAM HOY · WHATSAPP 2027", online:"● EN LÍNEA · Aire + Lluvia",
+    pushT:"🚨 CONTINGENCIA FASE I · ZMVM", pushM:"Ozono muy alto · Doble Hoy No Circula",
+    n1:"Dispositivos", n3:"Autocalibración", loop:"Un solo<br>ciclo", st1:"9 años", st1s:"operando", st2s:"nodos en vivo", st3:"3 países", st3s:"con nodos operando",
+    s8kick:"GEMELO DIGITAL", qr1:"GEMELO DIGITAL", qr2:"HABLA CON AIreGPT" },
+  en:{ s2big:"EXPENSIVE.<br>SCARCE.", leg:'<span><b style="background:#9FB2FF;box-shadow:0 0 10px #9FB2FF"></b>monitoring network</span><span><b style="border:2px solid #6B7BB0"></b>few or none</span><span style="opacity:.7">illustrative</span>',
+    s3kick:"01 · DEVICES", s3smaa:"Air: PM2.5, PM10, gases and noise", s3chaak:"Weather: wind, radar rain and radiation", s3poleT:"ONE POLE", s3pole:"Live data, 24/7",
+    s4kick:"02 · SMAA OS", s4title:"Every minute", s4aq:"AIR QUALITY · LIVE", s4rain:"RAIN · LIVE", sim:"ILLUSTRATIVE SIMULATION",
+    s5kick:"03 · SELF-CALIBRATION", s5title:"It fixes itself", r2lbl:"OZONE VS. OFFICIAL NETWORK (R²)", unam:"AUDITED BY ICAyCC · UNAM", months:"MONTHS WITHOUT FIELD VISITS",
+    ref:"Reference", raw:"Uncorrected sensor", cal:"Self-calibrated", concept:"ILLUSTRATIVE DIAGRAM",
+    s6kick:"04 · AIreGPT", s6title:"In your hand", s6tag:"TELEGRAM TODAY · WHATSAPP 2027", online:"● ONLINE · Air + Rain",
+    pushT:"🚨 PHASE I CONTINGENCY · MEXICO CITY", pushM:"Very high ozone · No-drive day extended",
+    n1:"Devices", n3:"Self-calibration", loop:"One closed<br>loop", st1:"9 years", st1s:"in operation", st2s:"live nodes", st3:"3 countries", st3s:"with live nodes",
+    s8kick:"DIGITAL TWIN", qr1:"DIGITAL TWIN", qr2:"TALK TO AIreGPT" }
+};
+const cityName = () => LANG === "en" ? CITY.en : CITY.es;
+const SUBS = [
+  [0.8, 5.6, "Cada día, millones respiran un aire que no pueden ver.", "Every day, millions breathe air they can't see."],
+  [6.4, 9.6, "Las estaciones de monitoreo son caras y escasas.", "Monitoring stations are expensive and scarce."],
+  [9.7, 12.8, "La mayoría de las ciudades de Latinoamérica tiene pocas, o ninguna.", "Most cities in Latin America have few, or none."],
+  [13.4, 16.3, "Por eso hicimos las nuestras.", "So we built our own."],
+  [16.5, 20.4, "SMAA lee el aire. CHAAK, el viento y la lluvia.", "SMAA reads the air. CHAAK reads wind and rain."],
+  [20.6, 24.6, "Un solo tubo, en vivo 24/7.", "One pole, live 24/7."],
+  [25.4, 30.2, "Cada minuto, sus datos llegan a SMAA OS…", "Every minute, their data flows into SMAA OS…"],
+  [30.4, 35.6, "…que los convierte en mapas en vivo de calidad del aire y lluvia para toda la ciudad.", "…which turns it into live maps of air quality and rain for the whole city."],
+  [36.4, 38.9, "Los sensores se desvían.", "Sensors drift."],
+  [39.1, 42.4, "Los nuestros se corrigen solos con aprendizaje automático:", "Ours correct themselves with machine learning:"],
+  [42.6, 45.8, "sin estación de referencia y sin visitas de campo hasta por dos años.", "no reference station, no field visits for up to two years."],
+  [46.4, 50.2, "Y AIreGPT lo pone en tu mano.", "Then AIreGPT puts it in your hand."],
+  [50.4, 53.8, "Pregunta cómo está el aire en tu colonia…", "Ask how the air is in your neighborhood…"],
+  [54.0, 57.8, "…o recibe la alerta antes de que la tormenta te alcance.", "…or get warned before a storm hits your commute."],
+  [58.4, 62.6, "Del sensor a tu celular: un solo ciclo.", "From the sensor to your phone: one closed loop."],
+  [62.8, 67.6, "Nueve años operando, en vivo en la Ciudad de México.", "Nine years running, live in Mexico City."],
+  [69.6, 77.8, null, null]   // cierre: firma (el titular en pantalla depende de la ciudad)
+];
+function endLine(){
+  if(personalized && CITY.key !== "cdmx") return LANG==="en" ? `See how it would look in ${CITY.en}.` : `Mira cómo quedaría en ${CITY.es}.`;
+  return LANG==="en" ? "See how it would look on your street." : "Mira cómo quedaría en tu calle.";
+}
+function applyLang(){
+  document.documentElement.lang = LANG;
+  document.querySelectorAll("[data-k]").forEach(el=>{ const v = T[LANG][el.dataset.k]; if(v != null) el.innerHTML = v; });
+  $("s2leg").innerHTML = T[LANG].leg;
+  $("endTitle").textContent = endLine();
+  $("bLang").textContent = LANG.toUpperCase();
+  buildChat(); buildChart(); lastSub = null;
+}
+
+/* ---------- formato ---------- */
+let FMT = Q.get("format") === "v" ? "v" : Q.get("format") === "h" ? "h" : (innerHeight > innerWidth ? "v" : "h");
+const W = () => FMT === "v" ? 1080 : 1920, H = () => FMT === "v" ? 1920 : 1080;
+function fit(){
+  const st = $("stage"); st.classList.toggle("v", FMT === "v");
+  const s = Math.min(innerWidth / W(), innerHeight / H());
+  st.style.transform = `translate(${(innerWidth - W()*s)/2}px,${(innerHeight - H()*s)/2}px) scale(${s})`;
+  const fx = $("fx"); fx.width = W(); fx.height = H();
+  $("bFmt").textContent = FMT === "v" ? "9:16" : "16:9";
+  if(map) map.resize();
+  lastT = -1;
+}
+addEventListener("resize", fit);
+
+/* ---------- mapa (Mapbox) con respaldo propio ---------- */
+let map = null, mapOK = false;
+try{
+  if(window.mapboxgl && mapboxgl.supported()){
+    mapboxgl.accessToken = CONFIG.mapboxToken;
+    map = new mapboxgl.Map({container:"map", style:CONFIG.mapStyle, center:[CITY.lon, CITY.lat], zoom:15, pitch:60, bearing:-30,
+      interactive:false, attributionControl:true, fadeDuration:0, preserveDrawingBuffer:Q.has("capture"), antialias:true});
+    map.on("style.load", ()=>{
+      try{
+        map.setFog({color:"rgb(18,28,70)", "high-color":"#12339A", "horizon-blend":.12, "space-color":"#000814", "star-intensity":.25});
+        if(CONFIG.terrain){ map.addSource("dem",{type:"raster-dem", url:"mapbox://mapbox.mapbox-terrain-dem-v1", tileSize:512, maxzoom:14}); map.setTerrain({source:"dem", exaggeration:1.25}); }
+        if(CONFIG.buildings3D && map.getSource("composite")){
+          map.addLayer({id:"b3d", source:"composite", "source-layer":"building", filter:["==","extrude","true"], type:"fill-extrusion", minzoom:13,
+            paint:{"fill-extrusion-color":["interpolate",["linear"],["get","height"],0,"#1A2A66",60,"#2B44A8",200,"#4C66D6"],
+                   "fill-extrusion-height":["get","height"], "fill-extrusion-base":["get","min_height"], "fill-extrusion-opacity":.85}});
+        }
+      }catch(e){ console.warn(e); }
+      mapOK = true; lastT = -1;
+    });
+    map.on("error", e=> console.warn("Mapbox:", e && e.error && e.error.message));
+  }
+}catch(e){ console.warn("Mapbox no disponible", e); map = null; }
+
+// respaldo: Web Mercator plano (sin inclinación) para dibujar sobre el lienzo cuando no hay mapa
+let CAM = {center:[CITY.lon, CITY.lat], zoom:15, pitch:0, bearing:0};
+function mercX(lon){ return (lon+180)/360; }
+function mercY(lat){ const s = Math.sin(lat*Math.PI/180); return .5 - Math.log((1+s)/(1-s))/(4*Math.PI); }
+function project(lon, lat){
+  if(map && mapOK){ const p = map.project([lon, lat]); return [p.x, p.y]; }
+  const ws = 512*Math.pow(2, CAM.zoom);
+  return [(mercX(lon) - mercX(CAM.center[0]))*ws + W()/2, (mercY(lat) - mercY(CAM.center[1]))*ws + H()/2];
+}
+function setCam(c){
+  CAM = c;
+  if(map) try{ map.jumpTo({center:c.center, zoom:c.zoom, pitch:c.pitch, bearing:c.bearing}); }catch(_){}
+}
+function camLerp(a, b, x){
+  const ax = mercX(a.center[0]), ay = mercY(a.center[1]), bx = mercX(b.center[0]), by = mercY(b.center[1]);
+  // interpolación tipo "vuelo": el centro sigue al zoom para que la ciudad no se escape
+  const z = lerp(a.zoom, b.zoom, x), sa = Math.pow(2, a.zoom), sb = Math.pow(2, b.zoom), sz = Math.pow(2, z);
+  const k = sa === sb ? x : (1/sz - 1/sa) / (1/sb - 1/sa);
+  const mx = lerp(ax, bx, clamp(k)), my = lerp(ay, by, clamp(k));
+  const lon = mx*360 - 180, lat = Math.atan(Math.sinh(Math.PI*(1 - 2*my)))*180/Math.PI;
+  return {center:[lon, lat], zoom:z, pitch:lerp(a.pitch, b.pitch, x), bearing:lerp(a.bearing, b.bearing, x)};
+}
+
+/* ---------- datos simulados ---------- */
+function rng(seed){ let s = seed >>> 0; return ()=>{ s = (s*1664525 + 1013904223) >>> 0; return s/4294967296; }; }
+const LATAM = [[19.43,-99.13,1],[20.67,-103.35,0],[25.67,-100.31,1],[19.04,-98.21,0],[21.16,-86.85,0],[32.53,-117.02,0],[24.02,-104.66,0],[16.85,-99.88,0],[17.06,-96.72,0],[20.97,-89.62,0],
+  [14.63,-90.51,0],[13.69,-89.19,0],[14.07,-87.19,0],[12.13,-86.25,0],[9.93,-84.08,0],[8.98,-79.52,0],[18.47,-69.9,0],[23.13,-82.38,0],[18.47,-66.1,1],
+  [4.71,-74.07,1],[6.24,-75.58,1],[3.45,-76.53,0],[10.97,-74.8,0],[10.48,-66.9,0],[-0.18,-78.47,0],[-2.17,-79.92,0],[-12.05,-77.04,0],[-16.4,-71.54,0],[-16.5,-68.15,0],[-17.78,-63.18,0],
+  [-25.26,-57.58,0],[-34.9,-56.16,0],[-34.6,-58.38,1],[-31.42,-64.18,0],[-32.95,-60.65,0],[-33.45,-70.67,1],[-41.47,-72.94,0],[-36.83,-73.05,0],
+  [-23.55,-46.63,1],[-22.91,-43.17,1],[-15.79,-47.88,0],[-19.92,-43.94,0],[-12.97,-38.5,0],[-8.05,-34.9,0],[-3.73,-38.52,0],[-1.46,-48.5,0],[-3.12,-60.02,0],[-30.03,-51.23,0],[-25.43,-49.27,0]];
+const NODES = (()=>{ const r = rng(42 + Math.round(CITY.lat*100)), out = [];
+  for(let i=0;i<26;i++){ const a = r()*Math.PI*2, d = Math.sqrt(r())*.13;
+    const lat = CITY.lat + Math.sin(a)*d, lon = CITY.lon + Math.cos(a)*d/Math.cos(CITY.lat*Math.PI/180);
+    const ias = 38 + 120*clamp(.5 + .55*Math.sin(a+.6)*d/.13 + (r()-.5)*.35); out.push({lat, lon, ias, ph:r()}); }
+  return out; })();
+function iasColor(v){ const S = [[0,[0,228,0]],[50,[255,255,0]],[100,[255,126,0]],[150,[255,0,0]],[200,[143,63,151]]];
+  for(let i=1;i<S.length;i++) if(v <= S[i][0]){ const x = (v-S[i-1][0])/(S[i][0]-S[i-1][0]); return S[i-1][1].map((c,j)=> c + (S[i][1][j]-c)*x); }
+  return S[S.length-1][1]; }
+function rainColor(v){ const S = [[0,[60,140,255]],[.4,[40,90,255]],[.7,[139,92,246]],[1,[230,70,240]]];
+  v = clamp(v); for(let i=1;i<S.length;i++) if(v <= S[i][0]){ const x = (v-S[i-1][0])/(S[i][0]-S[i-1][0]); return S[i-1][1].map((c,j)=> c + (S[i][1][j]-c)*x); }
+  return S[S.length-1][1]; }
+
+/* ---------- lienzo de efectos ---------- */
+const fx = $("fx"), g = fx.getContext("2d");
+const low = document.createElement("canvas"), lg = low.getContext("2d");
+function kmPx(km){ const a = project(CITY.lon, CITY.lat), b = project(CITY.lon + km/(111*Math.cos(CITY.lat*Math.PI/180)), CITY.lat); return Math.hypot(b[0]-a[0], b[1]-a[1]); }
+function drawGrid(){
+  if(map && mapOK) return;
+  g.fillStyle = "#06103A"; g.fillRect(0,0,W(),H());
+  const step = CAM.zoom < 6 ? 10 : CAM.zoom < 10 ? 1 : .1;
+  g.strokeStyle = "rgba(159,178,255,.12)"; g.lineWidth = 1;
+  const [l0, t0] = [CAM.center[0] - 400/Math.pow(2,CAM.zoom)*2, 0];
+  for(let lon = Math.floor((CAM.center[0]-180)/step)*step; lon <= CAM.center[0]+180; lon += step){ const x = project(lon, CAM.center[1])[0]; if(x<-10||x>W()+10) continue; g.beginPath(); g.moveTo(x,0); g.lineTo(x,H()); g.stroke(); }
+  for(let lat = -80; lat <= 80; lat += step){ const y = project(CAM.center[0], lat)[1]; if(y<-10||y>H()+10) continue; g.beginPath(); g.moveTo(0,y); g.lineTo(W(),y); g.stroke(); }
+}
+function field(alpha, valueAt, colorOf){
+  const sc = 10, w = Math.ceil(W()/sc), h = Math.ceil(H()/sc);
+  if(low.width !== w || low.height !== h){ low.width = w; low.height = h; }
+  const img = lg.createImageData(w, h), d = img.data;
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const r = valueAt(x*sc, y*sc); if(!r) continue; const c = colorOf(r.v), o = (y*w+x)*4;
+    d[o]=c[0]; d[o+1]=c[1]; d[o+2]=c[2]; d[o+3]=255*alpha*r.a; }
+  lg.putImageData(img, 0, 0);
+  g.save(); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high"; g.drawImage(low, 0, 0, W(), H()); g.restore();
+}
+function drawFX(t){
+  g.clearRect(0,0,W(),H());
+  if(t < 13.6 || (t > 24.4 && t < 36.6)) drawGrid();
+  // S1 · el primer nodo se enciende
+  if(t > 2 && t < 9){ const [x,y] = project(CITY.lon, CITY.lat), a = seg(t,2,2.6)*(1-seg(t,7.4,9));
+    for(let k=0;k<3;k++){ const p = ((t*0.7 + k/3) % 1); g.beginPath(); g.arc(x,y, 14 + p*160, 0, 7); g.strokeStyle = `rgba(159,178,255,${a*(1-p)*.9})`; g.lineWidth = 3; g.stroke(); }
+    g.beginPath(); g.arc(x,y,12,0,7); g.fillStyle = `rgba(32,70,242,${a})`; g.fill(); g.lineWidth = 3; g.strokeStyle = `rgba(255,255,255,${a})`; g.stroke(); }
+  // S2 · ciudades de Latinoamérica: pocas con red, la mayoría a oscuras
+  if(t > 8 && t < 13.6){ const a0 = (1-seg(t,12.8,13.6));
+    LATAM.forEach((c,i)=>{ const [x,y] = project(c[1], c[0]), a = seg(t, 8 + i*.025, 8.5 + i*.025)*a0;
+      if(c[2]){ const pul = .6 + .4*Math.sin(t*4 + i); g.beginPath(); g.arc(x,y,10,0,7); g.fillStyle = `rgba(159,178,255,${a})`; g.shadowColor = "#9FB2FF"; g.shadowBlur = 24*pul; g.fill(); g.shadowBlur = 0; }
+      else { g.beginPath(); g.arc(x,y,8,0,7); g.strokeStyle = `rgba(107,123,176,${a*.9})`; g.lineWidth = 2.5; g.stroke(); } }); }
+  // S4 · red de la ciudad → SMAA OS → modelos
+  if(t > 24.6 && t < 36.6){ const out = 1 - seg(t,35.8,36.6);
+    const P = NODES.map(n=> project(n.lon, n.lat));
+    // modelo de calidad del aire
+    const aq = seg(t,29.2,31.2)*(1 - .55*seg(t,32.4,33.6))*out, R = kmPx(5.5);
+    if(aq > 0.01) field(.62*aq, (x,y)=>{ let sw = 0, sv = 0, dmin = 1e9; for(let i=0;i<P.length;i++){ const dx = x-P[i][0], dy = y-P[i][1], d2 = dx*dx+dy*dy+1; dmin = Math.min(dmin, d2); const w = 1/d2; sw += w; sv += w*NODES[i].ias; }
+      const a = clamp(1.25 - Math.sqrt(dmin)/R); return a > 0 ? {v: sv/sw, a} : null; }, iasColor);
+    // modelo de lluvia (celdas que avanzan con el viento)
+    const rn = seg(t,32.4,33.8)*out;
+    if(rn > 0.01){ const R2 = kmPx(4), cells = [[-.10,.06,1],[.02,-.03,.8],[.10,.09,.6],[-.02,.12,.5]].map(([dx,dy,s],i)=>{ const drift = (t-32.4)*.012; return [project(CITY.lon + dx + drift, CITY.lat + dy - drift*.4), s]; });
+      field(.7*rn, (x,y)=>{ let v = 0; for(const [[cx,cy],s] of cells){ const d2 = ((x-cx)**2 + (y-cy)**2)/(R2*R2); v += s*Math.exp(-d2*1.4); } return v > .12 ? {v: clamp(v), a: clamp((v-.12)*3)} : null; }, rainColor); }
+    // nodos
+    const na = seg(t,25.2,26.4)*out;
+    P.forEach(([x,y],i)=>{ const a = na*seg(t, 25.2 + i*.03, 25.8 + i*.03); g.beginPath(); g.arc(x,y,9,0,7); g.fillStyle = `rgba(255,255,255,${a})`; g.fill(); g.lineWidth = 4; g.strokeStyle = `rgba(32,70,242,${a})`; g.stroke(); });
+    // pulsos de datos hacia SMAA OS
+    const os = osAnchor(), pa = seg(t,26,26.6)*(1 - seg(t,29.6,30.4));
+    if(pa > 0) P.forEach(([x,y],i)=>{ for(let k=0;k<2;k++){ const ph = ((t - 26)*.55 + NODES[i].ph + k*.5) % 1, e = ease(ph);
+      const px = lerp(x, os[0], e), py = lerp(y, os[1], e) - Math.sin(e*Math.PI)*80; g.beginPath(); g.arc(px,py,4.5,0,7); g.fillStyle = `rgba(159,178,255,${pa*(1-ph*.6)})`; g.fill(); } });
+  }
+}
+function osAnchor(){ return FMT === "v" ? [W()/2, 480] : [W()-96-180, 200]; }
+
+/* ---------- S5 · gráfica de autocalibración ---------- */
+let CH = null;
+function buildChart(){
+  const svg = $("chart"), w = 1100, h = 560, n = 120, L = T[LANG];
+  const ref = i => 300 - 120*Math.sin(i/n*Math.PI*4) - 40*Math.sin(i/n*Math.PI*11 + 1);
+  const drift = i => Math.pow(i/n, 1.3)*150;
+  const P = f => Array.from({length:n+1}, (_,i)=> `${(60 + i/n*(w-80)).toFixed(1)},${(f(i)).toFixed(1)}`).join(" ");
+  svg.innerHTML = `
+    <line x1="60" y1="${h-40}" x2="${w-20}" y2="${h-40}" stroke="rgba(159,178,255,.35)" stroke-width="2"/>
+    <text x="60" y="${h-6}" fill="#9FB2FF" font-family="JetBrains Mono" font-size="18" letter-spacing="2">0</text>
+    <text x="${w-20}" y="${h-6}" fill="#9FB2FF" font-family="JetBrains Mono" font-size="18" text-anchor="end" letter-spacing="2">24 ${LANG==="en"?"MONTHS":"MESES"}</text>
+    <polyline id="pRef" points="${P(ref)}" fill="none" stroke="rgba(227,233,255,.55)" stroke-width="4" stroke-dasharray="10 10"/>
+    <polyline id="pRaw" points="${P(i=> ref(i) - drift(i) + 14*Math.sin(i*1.7))}" fill="none" stroke="#FF7E5F" stroke-width="5" stroke-linejoin="round"/>
+    <polyline id="pCal" points="${P(i=> ref(i) + 5*Math.sin(i*1.3))}" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linejoin="round"/>
+    <g font-family="Barlow" font-size="26" font-weight="600">
+      <text id="lRef" x="${w-20}" y="${ref(n)+44}" fill="#E3E9FF" text-anchor="end">${L.ref}</text>
+      <text id="lRaw" x="${w-20}" y="${ref(n)-drift(n)-22}" fill="#FF9F85" text-anchor="end">${L.raw}</text>
+      <text id="lCal" x="${w-20}" y="${ref(n)-26}" fill="#FFFFFF" text-anchor="end">${L.cal}</text>
+    </g>
+    <text x="60" y="30" fill="#9FB2FF" font-family="JetBrains Mono" font-size="16" letter-spacing="3" opacity=".75">${L.concept}</text>`;
+  CH = {};
+  for(const id of ["pRef","pRaw","pCal"]){ const el = svg.querySelector("#"+id), len = el.getTotalLength(); el.style.strokeDasharray = id === "pRef" ? "" : `${len} ${len}`; CH[id] = {el, len}; }
+}
+function drawChart(t){
+  if(!CH) return;
+  const a = seg(t,36.4,38.6), b = seg(t,39.2,41.8);
+  CH.pRef.el.style.opacity = seg(t,36.2,36.8);
+  CH.pRaw.el.style.strokeDashoffset = CH.pRaw.len*(1-a); CH.pRaw.el.style.opacity = 1 - .65*seg(t,41.8,42.6);
+  CH.pCal.el.style.strokeDashoffset = CH.pCal.len*(1-b);
+  $("chart").querySelector("#lRaw").style.opacity = seg(t,38.2,38.8); $("chart").querySelector("#lCal").style.opacity = seg(t,41.4,42); $("chart").querySelector("#lRef").style.opacity = seg(t,36.8,37.4);
+  $("r2num").textContent = (0.72 + 0.19*eio(seg(t,39.4,42))).toFixed(2);
+  $("months").textContent = LANG === "en" ? `Up to ${Math.round(24*eio(seg(t,42.6,45.2)))}` : `Hasta ${Math.round(24*eio(seg(t,42.6,45.2)))}`;
+}
+
+/* ---------- S6 · chat simulado (de airegpt.ai) ---------- */
+let CHAT = [];
+function buildChat(){
+  const es = LANG !== "en", box = $("msgs");
+  const user = txt => `<div class="msg user"><div class="bubble">${txt}</div><span class="paloma">✓✓ 08:1${CHAT.length}</span></div>`;
+  const aq = `<div class="msg bot"><div class="bname" style="color:#00f2fe">🏠 ${es?"CALIDAD DEL AIRE · CASA":"AIR QUALITY · HOME"}</div><div class="aq-card"><div class="aq-header"><span style="font-size:14px">🌬️</span><div><div class="aq-title">${es?"Resumen · Col. Doctores":"Summary · Col. Doctores"}</div><div class="aq-sub">${es?"Sensor más cercano · ahora":"Nearest sensor · now"}</div></div></div><div class="aq-body"><div class="aq-row"><span class="aq-lbl">${es?"IAS AHORA":"AQI NOW"}</span><span class="aq-val">152</span></div><div class="aq-row"><span class="aq-lbl">${es?"NIVEL":"LEVEL"}</span><span style="font-size:9px;font-weight:700;color:#ff00ff">🔴 ${es?"MUY MALO":"VERY POOR"}</span></div><div class="wx-row"><div class="wx-chip">🌡️ <span>22°C</span></div><div class="wx-chip">💧 <span>61%</span></div><div class="wx-chip">💨 <span>14km/h NE</span></div></div></div></div><span class="mtime">08:12</span></div>`;
+  const cont = `<div class="msg bot"><div class="bname" style="color:#ff6060">🚨 ${es?"CONTINGENCIA AMBIENTAL FASE I":"ENVIRONMENTAL CONTINGENCY · PHASE I"}</div><div class="cont-card"><div class="cont-header"><span style="font-size:16px">🚨</span><div><div class="cont-title">${es?"CONTINGENCIA FASE I ACTIVA":"PHASE I CONTINGENCY ACTIVE"}</div><div class="cont-sub">${es?"ZMVM · Declarada hace 8 min":"Mexico City metro · declared 8 min ago"}</div></div></div><div class="cont-body"><div class="cont-row"><span class="cont-lbl">${es?"ESTACIÓN CRÍTICA":"CRITICAL STATION"}</span><span class="cont-val">Merced · ${es?"Ozono":"Ozone"}</span></div><div class="cont-row"><span class="cont-lbl">${es?"IAS MERCED":"MERCED AQI"}</span><span class="cont-val big">198</span></div><div class="cont-block hnc"><strong>🚗 ${es?"DOBLE HOY NO CIRCULA":"EXTENDED NO-DRIVE DAY"}</strong>${es?"Hologramas 1 y 2 · Placas 5 y 6":"Stickers 1 and 2 · Plates ending 5 and 6"}</div><div class="cont-block health"><strong>🫁 ${es?"Recomendaciones de salud":"Health advice"}</strong>${es?"· Evita actividad física al aire libre<br>· Cierra ventanas":"· Avoid outdoor exercise<br>· Keep windows closed"}</div></div></div><span class="mtime">08:13</span></div>`;
+  const rain = `<div class="msg bot"><div class="bname" style="color:#7eb8ff">🌧️ ${es?"ALERTA DE LLUVIA · TRABAJO":"RAIN ALERT · WORK"}</div><div class="cont-card" style="border-color:#1a6fff;box-shadow:0 0 16px rgba(26,111,255,.3)"><div class="cont-header" style="background:linear-gradient(135deg,#0a1a40,#0d2a80)"><span style="font-size:16px">⛈️</span><div><div class="cont-title" style="color:#7eb8ff">${es?"LLUVIA INTENSA EN CAMINO":"HEAVY RAIN ON ITS WAY"}</div><div class="cont-sub">${es?"Alcaldía Cuauhtémoc · en 10–15 min":"Cuauhtémoc · in 10–15 min"}</div></div></div><div class="cont-body" style="background:#080d1e"><div class="cont-row"><span class="cont-lbl" style="color:rgba(126,184,255,.7)">${es?"INTENSIDAD":"INTENSITY"}</span><span class="cont-val" style="color:#7eb8ff">${es?"Torrencial (&gt;20 mm/h)":"Torrential (&gt;20 mm/h)"}</span></div><div class="cont-block" style="background:#0a1030;border:1px solid rgba(26,111,255,.3);color:#aac8ff"><strong style="color:#7eb8ff;display:block">⚠️ ${es?"Evita zonas de encharcamiento":"Avoid flood-prone streets"}</strong>${es?"Lleva paraguas o espera 20 min antes de salir.":"Take an umbrella or wait 20 min before leaving."}</div></div></div><span class="mtime">08:14</span></div>`;
+  box.innerHTML = user(es ? "¿Cómo está el aire en mi colonia? 🏠" : "How's the air in my neighborhood? 🏠") + aq + cont + rain;
+  CHAT = [...box.children].map((el,i)=> ({el, at:[47.2, 49.4, 51.8, 54.9][i]}));
+}
+const TYPING = [[48.2,49.4],[54.0,54.9]];
+function drawChat(t){
+  CHAT.forEach(m=> m.el.classList.toggle("on", t >= m.at));
+  $("typing").classList.toggle("on", TYPING.some(([a,b])=> t>=a && t<b));
+  $("push").classList.toggle("on", t >= 51.2 && t < 53.6);
+  const sh = t >= 51.2 && t < 51.8; if(sh !== shaking){ shaking = sh; $("phone").classList.toggle("shake", sh); }
+}
+let shaking = false;
+
+/* ---------- gemelo digital (iframe) ---------- */
+const twin = $("twin");
+let TW = null;
+twin.src = `${CONFIG.twinUrl}?embed=reel&view=both&theme=dark&city=${CITY.key || "cdmx"}`;
+const twinPoll = setInterval(()=>{ try{ const w = twin.contentWindow; if(w && w.TWIN && w.TWIN.loaded()){ TW = w.TWIN; TW.shadows(false); clearInterval(twinPoll); lastT = -1; } }catch(_){} }, 300);
+let twinMode = null;
+function drawTwin(t){
+  const on = (t > 12.6 && t < 25.4) || t > 67.6;
+  $("twinFallback").style.display = TW ? "none" : "block";
+  if(!TW || !on) return;
+  if(t < 40){
+    if(twinMode !== "s3"){ twinMode = "s3"; TW.clean(true); TW.rig(false); TW.render("real"); }
+    TW.tint("smaa", t >= 16.6 ? 0x2046F2 : null); TW.tint("chaak", t >= 18.2 ? 0x7C9BFF : null);
+    TW.explode(FMT === "h" && t >= 21 && t < 23.4);
+    const x = seg(t, 12.6, 25.4), v = FMT === "v";
+    TW.orbit(lerp(205, 330, eio(x)), lerp(6, 16, x), lerp(v ? 3.5 : 2.15, v ? 3.1 : 1.75, eio(x)), 1.45);
+  } else {
+    if(twinMode !== "s8" + FMT){ twinMode = "s8" + FMT; TW.tint("smaa", null); TW.tint("chaak", null); TW.explode(false); TW.clean(FMT === "v"); TW.floor(false); TW.zone(false); TW.rig(false); TW.render("real"); }
+    const x = seg(t, 67.6, 78), v = FMT === "v";
+    TW.orbit(lerp(300, 340, x), lerp(14, 10, x), lerp(v ? 4.2 : 3.4, v ? 3.8 : 3.0, x), v ? 1.3 : 1.35);
+  }
+}
+function twinFrameShift(t){
+  // en 16:9 el equipo se recorre a la derecha (S3) o a la izquierda (S8) para dejar lugar al texto
+  const f = twin.style;
+  if(FMT === "v"){ f.transform = t > 60 ? "translateY(-420px)" : "translateY(-250px)"; return; }
+  f.transform = t > 60 ? "translateX(-380px)" : "translateX(230px)";
+}
+
+/* ---------- capas y animaciones de texto ---------- */
+const vis = (t,a,b,fi=.5,fo=.5)=> seg(t,a,a+fi)*(1-seg(t,b-fo,b));
+function show(el, o){ el.style.opacity = o; }
+function rise(el, t, a, b=99){ const x = ease(seg(t,a,a+.6))*(1-seg(t,b-.4,b)); el.style.opacity = x; el.style.transform = `translateY(${(1-ease(seg(t,a,a+.6)))*24}px)`; }
+let lastSub = null;
+function render(t){
+  // cámara del mapa
+  const C0 = {center:[CITY.lon, CITY.lat], zoom:15.6, pitch:64, bearing:-30}, C1 = {center:[CITY.lon, CITY.lat], zoom:15.1, pitch:58, bearing:6};
+  const LA = {center:[-74,-12], zoom: FMT === "v" ? 2.75 : 2.85, pitch:0, bearing:0}, LA2 = {...LA, zoom:LA.zoom+.12};
+  const K0 = {center:[CITY.lon, CITY.lat], zoom: FMT === "v" ? 9.7 : 10.1, pitch:32, bearing:-12}, K1 = {center:[CITY.lon, CITY.lat], zoom: FMT === "v" ? 10.3 : 10.8, pitch:46, bearing:10};
+  if(t < 6) setCam(camLerp(C0, C1, seg(t,0,6)));
+  else if(t < 13.6) setCam(t < 10 ? camLerp(C1, LA, eio(seg(t,6,10))) : camLerp(LA, LA2, seg(t,10,13.6)));
+  else if(t > 24.4 && t < 36.6) setCam(camLerp(K0, K1, seg(t,24.4,36.6)));
+  show($("Lmap"), Math.max(seg(t,0,1)*(1-seg(t,13,13.6)), vis(t,24.6,36.6,.6,.6)));
+  $("smog").style.opacity = .9*(1 - seg(t,6,8.5));
+  show($("Lblue"), vis(t,12.8,25.2,.6,.4) || (t > 67.4 ? seg(t,67.4,68) : 0));
+  show($("Ltwin"), Math.max(vis(t,12.8,25.2,.8,.5), t > 67.6 ? seg(t,67.6,68.6) : 0));
+  twinFrameShift(t);
+  drawTwin(t);
+  drawFX(t);
+  // S2
+  show($("s2"), vis(t,9.2,13.4)); rise($("s2big"), t, 9.6); rise($("s2leg"), t, 10.2);
+  // S3
+  show($("s3"), vis(t,13.2,25.2));
+  const s3 = $("s3").querySelectorAll(".sup .rise"); rise(s3[0], t, 13.6); rise(s3[1], t, 13.9);
+  rise($("it1"), t, 16.6); rise($("it2"), t, 18.2); rise($("it3"), t, 20.8);
+  // S4
+  show($("s4"), vis(t,25,36.4));
+  const s4 = $("s4").querySelectorAll(".sup .rise"); rise(s4[0], t, 25.6); rise(s4[1], t, 25.9);
+  const oc = $("oscard"); oc.style.opacity = ease(seg(t,26,26.8)); oc.style.transform = (FMT === "v" ? "translateX(50%) " : "") + `scale(${.9 + .1*ease(seg(t,26,26.8)) + .03*Math.sin(Math.max(0,t-26)*3)*(1-seg(t,29.5,30.5))})`;
+  rise($("tagAQ"), t, 29.4); rise($("ias"), t, 29.8); rise($("tagRain"), t, 32.6); rise($("s4note"), t, 26.4);
+  // S5
+  show($("s5"), vis(t,36,46.2));
+  const s5 = $("s5").querySelectorAll(".sup .rise"); rise(s5[0], t, 36.4); rise(s5[1], t, 36.7);
+  rise($("r2a"), t, 39.2); rise($("r2b"), t, 42.6); drawChart(t);
+  // S6
+  show($("s6"), vis(t,46,58.2));
+  const s6 = $("s6").querySelectorAll(".sup .rise"); rise(s6[0], t, 46.4); rise(s6[1], t, 46.7); rise(s6[2], t, 47.2);
+  const pw = $("phoneWrap"), pin = ease(seg(t,46.2,47.2)), base = FMT === "v" ? 1.95 : 1.4;
+  pw.style.transform = `translate(-50%,${-50 + (1-pin)*30}%) scale(${base}) rotateZ(${(1-pin)*-4}deg)`; pw.style.opacity = pin;
+  drawChat(t);
+  // S7
+  show($("s7"), vis(t,58,68.2));
+  $("arc").setAttribute("stroke-dashoffset", 1885*(1 - eio(seg(t,58.6,62.4))));
+  $("ring").querySelectorAll(".node").forEach((n,i)=>{ const a = seg(t, 58.6 + i*.9, 59.2 + i*.9); n.style.opacity = a; n.style.transform = `translate(-50%,-50%) scale(${.8 + .2*ease(a)})`; });
+  rise($("loopTxt"), t, 61.8);
+  document.querySelectorAll(".stat").forEach((s,i)=> rise(s, t, 63 + i*.5));
+  { const k = eio(seg(t,62.6,63.6)); $("ring").style.transform = `translate(-50%,${-50 - k*(FMT === "v" ? 16 : 22)}%) scale(${1 - .38*k})`; }
+  // S8
+  show($("s8"), t > 68 ? seg(t,68,68.8) : 0);
+  const s8 = $("end").querySelectorAll(".rise"); rise(s8[0], t, 68.4); rise(s8[1], t, 68.7); rise(s8[2], t, 70.2); rise(s8[3], t, 71);
+  // logo
+  $("bug").style.opacity = .85*vis(t,1,67.6,1,.4);
+  // subtítulos
+  const cue = SUBS.find(c=> t >= c[0] && t < c[1]);
+  const txt = cue ? (cue[2] === null ? (LANG === "en" ? "Smability · from the sensor to your hand." : "Smability · del sensor a tu mano.") : (LANG === "en" ? cue[3] : cue[2])) : "";
+  if(txt !== lastSub){ lastSub = txt; $("subs").innerHTML = txt ? `<span>${txt}</span>` : ""; }
+  // controles
+  $("tOut").textContent = `${fmt(t)} / ${fmt(CONFIG.duration)}`;
+  if(!scrubbing) $("scrub").value = t;
+}
+const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
+
+/* ---------- reproducción ---------- */
+let t = clamp(+Q.get("t") || 0, 0, CONFIG.duration), playing = false, last = 0, lastT = -1, scrubbing = false;
+function loop(now){
+  if(playing){ t += Math.min(.1, (now - last)/1000); if(t >= CONFIG.duration){ t = CONFIG.duration; setPlaying(false); } }
+  last = now;
+  if(t !== lastT){ render(t); lastT = t; }
+  else if(t > 24.4 && t < 36.6 && map && mapOK) drawFX(t);   // los mosaicos del mapa siguen cargando
+  requestAnimationFrame(loop);
+}
+function setPlaying(p){
+  playing = p; last = performance.now();
+  if(p && t >= CONFIG.duration) t = 0;
+  $("bPlay").textContent = p ? "❚❚" : "▶"; $("bPlay").setAttribute("aria-label", p ? "Pausa" : "Reproducir");
+  $("play").hidden = p || t > 0; poke();
+}
+$("play").onclick = ()=> setPlaying(true);
+$("bPlay").onclick = ()=> setPlaying(!playing);
+$("scrub").oninput = e=>{ scrubbing = true; t = +e.target.value; $("play").hidden = true; };
+$("scrub").onchange = ()=>{ scrubbing = false; };
+$("bLang").onclick = ()=>{ LANG = LANG === "en" ? "es" : "en"; applyLang(); lastT = -1; };
+$("bFmt").onclick = ()=>{ FMT = FMT === "v" ? "h" : "v"; twinMode = null; fit(); };
+$("bFs").onclick = ()=>{ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.(); };
+addEventListener("keydown", e=>{ if(e.code === "Space"){ e.preventDefault(); setPlaying(!playing); } if(e.key === "ArrowRight"){ t = Math.min(CONFIG.duration, t+5); } if(e.key === "ArrowLeft"){ t = Math.max(0, t-5); } });
+let idle;
+function poke(){ $("ctl").classList.remove("hide"); clearTimeout(idle); if(playing) idle = setTimeout(()=> $("ctl").classList.add("hide"), 2500); }
+addEventListener("pointermove", poke); addEventListener("pointerdown", poke);
+
+// API para exportar cuadro a cuadro (Playwright): REEL.seek(t)
+window.REEL = { duration: CONFIG.duration, seek(x){ t = clamp(x, 0, CONFIG.duration); render(t); lastT = t; return t; }, ready: ()=> !!TW, mapReady: ()=> mapOK };
+
+fit(); applyLang(); render(t); lastT = t;
+$("play").hidden = t > 0;
+if(Q.has("capture")){ $("ctl").style.display = "none"; $("play").hidden = true; }
+if(Q.get("autoplay") === "1") setPlaying(true);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
