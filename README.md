@@ -165,3 +165,13 @@ Edita `twin.html` y luego ejecuta `python3 build.py`, que regenera `index.html`.
   - **Transversal:** contiene el eje del tubo, de lado a lado. En 0 mm corta el sensor, el tubo y los coples de CHAAK; con el deslizador a unos −95 mm corta la carcasa de SMAA.
 - El deslizador mueve el plano (mm). Siempre se oculta la mitad del lado de la cámara, así que al girar se sigue viendo el interior.
 - Las caras cortadas se rellenan con el color del grupo de la pieza (sensores, carcasa, soporte, tornillería, energía). `fixWinding()` corrige la orientación de las caras de cada malla para que el relleno salga bien. La caseta de referencia no se corta.
+
+## Montaje en cascada (frente 1, 19 oct)
+- Tubo de CHAAK de 0.65 m con 3 barrenos a 90 mm (`tools/chaak.json`: `dz` y `stretch` por pieza; marcador `tubo_soporte_barreno3`).
+- Grupos en el visor: `fixedG` (trípode, tubo y sensor; la «N» del sensor al norte verdadero), `caseG` (carcasa de CHAAK: gira a su tapa y baja 9 cm al apilar), `smaaG` (SMAA: gira a su cara principal y sube 16.5 cm al apilar).
+- `mountPlan(city, EP)` recorre: 1) tapa al lado fresco + mismo nivel, 2) tapa al lado fresco + apilado, 3) tapa invertida + mismo nivel, 4) tapa invertida + apilado. Toma la primera con energía ≥ 1.25× y el menor giro. Separación mínima 150° al mismo nivel (3 cm de holgura), 105° apiladas (25 cm libres bajo las tomas de SMAA, cilindro verde).
+- Datos de producto: consumo típico de SMAA 0.6 W, baterías de 72 Wh + 7.4 Wh, 2 gases intercambiables (selector en el panel del módulo de sensores, se guarda en `smab.gases`), CHAAK con radiación, brújula interna, toma eléctrica 5 V / 3 A y calibración remota por SMS.
+- Modo campo en 3 pasos (Norte CHAAK, Tapa CHAAK, Cara SMAA), lista «Antes de instalar», interruptor de instalador con experiencia y seguimiento de conexión (Configurado → Conectando → Recibiendo datos).
+- QR: `?id=<id del equipo>` (o `?chaak=<id>&smaa=<id>`), opcional `&city=cdmx`, abre el modo campo con ese equipo.
+- Ficha: nombre del sitio, instalador, altura, distancia a vialidad y hasta 4 fotos (también en el PDF). «Enviar a Smability» arma el resumen para WhatsApp o correo; el contacto va en `CONTACT`.
+- Fichas técnicas en PDF: coloca `docs/ficha-smaa.pdf`, `docs/ficha-chaak.pdf` y `docs/ficha-smability.pdf`; los botones aparecen solos cuando existen.
