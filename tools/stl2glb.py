@@ -39,6 +39,35 @@ def cylinder(p0, p1, r, seg):
     return np.array(out)
 
 
+def ring(cx, cy, z0, z1, r, seg, inward=False):
+    """Pared cilíndrica abierta (sin tapas) entre z0 y z1; inward=True para la cara interior de un tubo."""
+    a = np.linspace(0, 2 * np.pi, seg + 1)
+    P = lambda k, z: [cx + r * np.cos(a[k]), cy + r * np.sin(a[k]), z]
+    out = []
+    for i in range(seg):
+        t1, t2 = [P(i, z0), P(i + 1, z0), P(i + 1, z1)], [P(i, z0), P(i + 1, z1), P(i, z1)]
+        if inward: t1, t2 = t1[::-1], t2[::-1]
+        out += [t1, t2]
+    return np.array(out, float)
+
+
+def clip_z(tris, z0, keep_below):
+    """Recorta triángulos contra el plano z = z0 y devuelve la parte de abajo (o de arriba), re-triangulada."""
+    out = []
+    for t in tris:
+        inside = (t[:, 2] <= z0) if keep_below else (t[:, 2] >= z0)
+        if inside.all(): out.append(t); continue
+        if not inside.any(): continue
+        poly = []
+        for i in range(3):
+            a, b = t[i], t[(i + 1) % 3]; ia, ib = inside[i], inside[(i + 1) % 3]
+            if ia: poly.append(a)
+            if ia != ib:
+                k = (z0 - a[2]) / (b[2] - a[2]); poly.append(a + k * (b - a))
+        for i in range(1, len(poly) - 1): out.append(np.array([poly[0], poly[i], poly[i + 1]]))
+    return np.array(out, float)
+
+
 def screws(spec):
     """Tornillos con eje en Y: cabeza hexagonal en y_head (lado opuesto a la carcasa) y vástago hasta y_tip."""
     tris = []
@@ -95,6 +124,11 @@ def main(cfg_path, src_dir, out_path):
         tris = screws(p["screws"]) if "screws" in p else load_stl(f"{src_dir}/{p['file']}")
         if "cut_below_z" in p:                                    # recorta lo que cuelga bajo esa altura (p. ej. cable)
             tris = tris[tris[:, :, 2].mean(1) >= p["cut_below_z"]]
+        if "fill_ring" in p:                                      # tapa una ventana del tubo: quita lo que cae en la franja y la rehace lisa
+            f = p["fill_ring"]
+            tris = np.vstack([clip_z(tris, f["z0"], keep_below=True), clip_z(tris, f["z1"], keep_below=False)])
+            tris = np.vstack([tris, ring(*f["center"], f["z0"], f["z1"], f["r_out"], f.get("seg", 72)),
+                              ring(*f["center"], f["z0"], f["z1"], f["r_in"], f.get("seg", 72), inward=True)])
         n0 = len(tris)
         v = tris.reshape(-1, 3).copy()
         v[:, 0] -= axis_x
