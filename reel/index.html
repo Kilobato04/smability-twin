@@ -292,6 +292,7 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
   <button id="bPlay" type="button" aria-label="Pausa">❚❚</button>
   <button id="bLang" type="button" aria-label="Idioma de subtítulos">ES</button>
   <button id="bFmt" type="button" aria-label="Formato">16:9</button>
+  <button id="bSnd" type="button" aria-label="Silenciar música" aria-pressed="false">♪</button>
   <button id="bFs" class="fs" type="button" aria-label="Pantalla completa">⛶</button>
   <span class="t" id="tOut">0:00 / 1:18</span>
   <input id="scrub" type="range" min="0" max="78" step="0.05" value="0" aria-label="Posición">
@@ -855,9 +856,23 @@ const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")
 
 /* ---------- reproducción ---------- */
 let t = clamp(+Q.get("t") || 0, 0, CONFIG.duration), playing = false, last = 0, lastT = -1, scrubbing = false;
+/* ---------- música (tech house, 77 s: intro · drop · intro · drop · cierre) ---------- */
+const music = new Audio("audio/musica.mp3"); music.preload = "auto";
+let muted = Q.get("mute") === "1", primed = false;
+function primeAudio(){ if(primed) return; primed = true; music.muted = true; const pr = music.play(); if(pr) pr.then(()=>{ music.pause(); music.muted = false; }).catch(()=>{ music.muted = false; }); }
+function syncAudio(){
+  const ok = playing && !muted && !Q.has("capture") && t < (music.duration || 77) - .05;
+  if(ok){ if(music.paused){ try{ music.currentTime = t; }catch(_){} music.play().catch(()=>{}); } else if(Math.abs(music.currentTime - t) > .25){ try{ music.currentTime = t; }catch(_){} } }
+  else if(!music.paused) music.pause();
+  music.volume = .85*(1 - seg(t, 75.8, 77.1));
+}
+function setMute(m){ muted = m; $("bSnd").setAttribute("aria-pressed", m ? "true" : "false"); $("bSnd").textContent = m ? "♪̸" : "♪"; $("bSnd").setAttribute("aria-label", m ? "Activar música" : "Silenciar música"); }
+$("bSnd").onclick = ()=>{ primeAudio(); setMute(!muted); };
+setMute(muted);
 function loop(now){
   if(playing){ t += Math.min(.1, (now - last)/1000); if(t >= CONFIG.duration){ t = CONFIG.duration; setPlaying(false); } }
   last = now;
+  syncAudio();
   if(t !== lastT){ render(t); lastT = t; }
   else if(t > 24.4 && t < 36.6 && map && mapOK) drawFX(t);   // los mosaicos del mapa siguen cargando
   requestAnimationFrame(loop);
@@ -869,14 +884,14 @@ function setPlaying(p){
   $("bPlay").textContent = p ? "❚❚" : "▶"; $("bPlay").setAttribute("aria-label", p ? "Pausa" : "Reproducir");
   $("play").hidden = p || t > 0; poke();
 }
-$("play").onclick = ()=> setPlaying(true);
-$("bPlay").onclick = ()=> setPlaying(!playing);
+$("play").onclick = ()=>{ primeAudio(); setPlaying(true); };
+$("bPlay").onclick = ()=>{ primeAudio(); setPlaying(!playing); };
 $("scrub").oninput = e=>{ scrubbing = true; t = +e.target.value; $("play").hidden = true; };
 $("scrub").onchange = ()=>{ scrubbing = false; };
 $("bLang").onclick = ()=>{ LANG = LANG === "en" ? "es" : "en"; applyLang(); lastT = -1; };
 $("bFmt").onclick = ()=>{ FMT = FMT === "v" ? "h" : "v"; twinMode = null; fit(); };
 $("bFs").onclick = ()=>{ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.(); };
-addEventListener("keydown", e=>{ if(e.code === "Space"){ e.preventDefault(); setPlaying(!playing); } if(e.key === "ArrowRight"){ t = Math.min(CONFIG.duration, t+5); } if(e.key === "ArrowLeft"){ t = Math.max(0, t-5); } });
+addEventListener("keydown", e=>{ if(e.code === "Space"){ e.preventDefault(); primeAudio(); setPlaying(!playing); } if(e.key === "ArrowRight"){ t = Math.min(CONFIG.duration, t+5); } if(e.key === "ArrowLeft"){ t = Math.max(0, t-5); } });
 let idle;
 function poke(){ $("ctl").classList.remove("hide"); clearTimeout(idle); if(playing) idle = setTimeout(()=> $("ctl").classList.add("hide"), 2500); }
 addEventListener("pointermove", poke); addEventListener("pointerdown", poke);
