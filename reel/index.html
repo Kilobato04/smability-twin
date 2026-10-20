@@ -417,12 +417,12 @@ try{
   if(window.mapboxgl && (typeof mapboxgl.supported !== "function" || mapboxgl.supported())){
     mapboxgl.accessToken = CONFIG.mapboxToken;
     map = new mapboxgl.Map({container:"map", style:CONFIG.mapStyle, center:[CITY.lon, CITY.lat], zoom:15, pitch:60, bearing:-30,
-      interactive:false, attributionControl:true, fadeDuration:0, preserveDrawingBuffer:Q.has("capture"), antialias:!MOBILE, pixelRatio:STAGE_PR(), maxTileCacheSize: MOBILE ? 200 : null});
+      interactive:false, attributionControl:true, fadeDuration:0, preserveDrawingBuffer:Q.has("capture"), antialias:!MOBILE, pixelRatio:STAGE_PR(), maxTileCacheSize: MOBILE ? 60 : 400, projection:"mercator", refreshExpiredTiles:false, collectResourceTiming:false, trackResize:false});
     map.on("style.load", ()=>{
       try{
         map.setFog({color:"rgb(18,28,70)", "high-color":"#12339A", "horizon-blend":.12, "space-color":"#000814", "star-intensity":.25});
         if(CONFIG.terrain && !MOBILE){ map.addSource("dem",{type:"raster-dem", url:"mapbox://mapbox.mapbox-terrain-dem-v1", tileSize:512, maxzoom:14}); map.setTerrain({source:"dem", exaggeration:1.25}); }
-        if(CONFIG.buildings3D && map.getSource("composite")){
+        if(CONFIG.buildings3D && !MOBILE && map.getSource("composite")){
           map.addLayer({id:"b3d", source:"composite", "source-layer":"building", filter:["==","extrude","true"], type:"fill-extrusion", minzoom:13,
             paint:{"fill-extrusion-color":["interpolate",["linear"],["get","height"],0,"#1A2A66",60,"#2B44A8",200,"#4C66D6"],
                    "fill-extrusion-height":["get","height"], "fill-extrusion-base":["get","min_height"], "fill-extrusion-opacity":.85}});
@@ -437,12 +437,12 @@ try{
 let preloading = false, preDone = !CONFIG.mapboxToken;
 async function preload(){
   if(preloading || !map) return; preloading = true;
-  const times = [0, 5, 8, 10.5, 25, 30, 36, 61, 68.5];
+  const times = MOBILE ? [0, 8, 25] : [0, 7, 8, 25, 31, 36, 61, 68.5];
   for(let i=0;i<times.length;i++){ const c = camAt(times[i]); if(!c) continue;
     $("playLbl").textContent = `${LANG === "en" ? "LOADING MAPS" : "CARGANDO MAPAS"} ${i+1}/${times.length}`;
     try{ map.jumpTo({center:c.center, zoom:c.zoom, pitch:c.pitch, bearing:c.bearing}); }catch(_){}
     await new Promise(res=>{ let done = false; const fin = ()=>{ if(!done){ done = true; res(); } }; map.once("idle", fin); setTimeout(fin, 7000); }); }
-  preDone = true; $("playLbl").textContent = LANG === "en" ? "PLAY · 1:18" : "REPRODUCIR · 1:18"; lastT = -1;
+  preDone = true; loadTwin(); $("playLbl").textContent = LANG === "en" ? "PLAY · 1:18" : "REPRODUCIR · 1:18"; lastT = -1;
 }
 // respaldo: Web Mercator plano (sin inclinación) para dibujar sobre el lienzo cuando no hay mapa
 let CAM = {center:[CITY.lon, CITY.lat], zoom:15, pitch:0, bearing:0};
@@ -514,7 +514,7 @@ function drawGrid(){
   for(let lat = -80; lat <= 80; lat += step){ const y = project(CAM.center[0], lat)[1]; if(y<-10||y>H()+10) continue; g.beginPath(); g.moveTo(0,y); g.lineTo(W(),y); g.stroke(); }
 }
 function field(alpha, valueAt, colorOf){
-  const sc = 10, w = Math.ceil(W()/sc), h = Math.ceil(H()/sc);
+  const sc = MOBILE ? 18 : 10, w = Math.ceil(W()/sc), h = Math.ceil(H()/sc);
   if(low.width !== w || low.height !== h){ low.width = w; low.height = h; }
   const img = lg.createImageData(w, h), d = img.data;
   for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const r = valueAt(x*sc, y*sc); if(!r) continue; const c = colorOf(r.v), o = (y*w+x)*4;
@@ -635,13 +635,16 @@ let shaking = false;
 /* ---------- gemelo digital (iframe) ---------- */
 const twin = $("twin");
 let TW = null;
-twin.src = `${CONFIG.twinUrl}?embed=reel&view=both&theme=dark&city=${CITY.key || "cdmx"}&pr=${STAGE_PR().toFixed(2)}`;
+const TWIN_SRC = `${CONFIG.twinUrl}?embed=reel&view=both&theme=dark&city=${CITY.key || "cdmx"}&pr=${STAGE_PR().toFixed(2)}`;
+function loadTwin(){ if(!twin.src || twin.src === location.href) twin.src = TWIN_SRC; }
+if(!MOBILE || !map) loadTwin(); else setTimeout(loadTwin, 15000);
 const twinPoll = setInterval(()=>{ try{ const w = twin.contentWindow; if(w && w.TWIN && w.TWIN.loaded()){ TW = w.TWIN; TW.shadows(false); clearInterval(twinPoll); lastT = -1; } }catch(_){} }, 300);
 let twinMode = null, snapOK = false;
 const WIPES = [{at:16.4, dur:1, from:"xray"}, {at:20.6, dur:.9, from:"parts"}];
 function drawTwin(t){
   if(TW && t > 62 && t < 68.6 && twinMode !== "s8" + FMT){ twinMode = "s8" + FMT; TW.city(personalized && CITY.key ? CITY.key : "gdl", "arriba"); TW.tint("smaa", null); TW.tint("chaak", null); TW.render("real"); }
   const on = (t > 12.6 && t < 25.4) || t > 68.6;
+  if(TW) TW.pause(!(on || (t > 11.6 && t < 12.6) || (t > 67.6 && t < 68.6)));
   $("twinLoad").style.display = TW ? "none" : "block";
   const xs = $("xsnap"), sc = $("scan");
   if(!TW || !on){ xs.style.display = sc.style.display = "none"; return; }
@@ -656,13 +659,13 @@ function drawTwin(t){
     // capas: rayos X → componentes en color (como en las fichas) → sólido con SMAA y CHAAK en azul
     const mode = t < WIPES[0].at ? "xray" : t < WIPES[1].at ? "parts" : "real";
     const wp = WIPES.find(q=> t >= q.at && t < q.at + q.dur);
-    if(wp && snapOK !== wp.at){ TW.render(wp.from); TW.tint("smaa", null); TW.tint("chaak", null); TW.orbit(...cam); xs.src = TW.snap(); snapOK = wp.at; }
+    if(wp && snapOK !== wp.at && !MOBILE){ TW.render(wp.from); TW.tint("smaa", null); TW.tint("chaak", null); TW.orbit(...cam); xs.src = TW.snap(); snapOK = wp.at; }
     if(!wp) snapOK = false;
     TW.render(mode);
     TW.tint("smaa", mode === "real" ? 0x2046F2 : null); TW.tint("chaak", mode === "real" ? 0x7C9BFF : null);
     TW.orbit(...cam);
     // barrido de capas: la capa anterior se levanta y deja ver la siguiente
-    xs.style.display = sc.style.display = wp ? "block" : "none";
+    xs.style.display = wp && !MOBILE ? "block" : "none"; sc.style.display = wp ? "block" : "none";
     if(wp){ const e = eio(seg(t, wp.at, wp.at + wp.dur)); xs.style.clipPath = `inset(0 0 ${e*100}% 0)`; sc.style.top = `calc(${(1-e)*100}% - 2px)`; sc.style.opacity = 1 - seg(t, wp.at + wp.dur - .15, wp.at + wp.dur); }
   } else {
     xs.style.display = sc.style.display = "none";
@@ -687,7 +690,7 @@ let SURF = null, SURFKEY = null;
 const BOLTS = [4.3, 22.6, 24.15].map((at,k)=>{ const r = rng(900 + k*77), pts = [];
   const build = (x1,y1,x2,y2,sp,d)=>{ pts.push([x1,y1]); if(!d){ pts.push([x2,y2]); return; } const mx = (x1+x2)/2 + (r()-.5)*sp, my = (y1+y2)/2 + (r()-.5)*sp*.25; build(x1,y1,mx,my,sp/2,d-1); build(mx,my,x2,y2,sp/2,d-1); };
   k % 2 ? build(.30, 0, .96, .66, .08, 6) : build(.06, 0, .74, .74, .09, 6); return {at, pts}; });
-const CALLOUTS = [["chaak",["head","cabezal"],"call1"],["chaak",["tubo","cople_sup"],"call2",.18],["smaa",["solar"],"call3"],["chaak",["tapa","logger"],"call4"],["smaa",["smaa_case","smaa_sens"],"call5"]];
+const CALLOUTS = [["chaak",["head","cabezal"],"call1"],["chaak",["tubo","cople_sup"],"call2",.42],["smaa",["solar"],"call3"],["chaak",["tapa","logger"],"call4"],["smaa",["smaa_case","smaa_sens"],"call5"]];
 function drawCallouts(t){
   const a0 = seg(t,17.5,17.9)*(1 - seg(t,20.3,20.7)); if(a0 <= 0 || !TW || !TW.centers) return;
   const off = FMT === "v" ? [0,-130] : [230,0], P = TW.centers(CALLOUTS.map(c=> [c[0], c[1], c[3]]));
@@ -721,7 +724,7 @@ function drawWeather(t){
   // aire que SMAA "respira": corrientes que entran a las cavidades de abajo (ritmo de respiración)
   const sm = seg(t,19.2,20.0)*(1 - seg(t,24.6,25.4));
   if(sm > 0 && TW.sinlet){ const [ix,iy] = S(...TW.sinlet()), br = .75 + .25*Math.sin(t*2.4);
-    for(let i=0;i<110;i++){ const r = rng(i*13+5), a0 = Math.PI*(.15 + r()*.7), R0 = 160 + r()*230, sp = (.38 + r()*.22)*br, p = ((t - 19.2)*sp + r()) % 1, e = p*p*(3-2*p);
+    for(let i=0;i<(MOBILE ? 50 : 110);i++){ const r = rng(i*13+5), a0 = Math.PI*(.15 + r()*.7), R0 = 160 + r()*230, sp = (.38 + r()*.22)*br, p = ((t - 19.2)*sp + r()) % 1, e = p*p*(3-2*p);
       const ang = a0 + (r() < .5 ? 1 : -1)*e*1.1, rad = R0*Math.pow(1-e, 1.35), x = ix + Math.cos(ang)*rad*1.3, y = iy + Math.sin(ang)*rad*.95;
       const s0 = 26*(1-e) + 3, al = .5*Math.sin(Math.PI*Math.min(1, p*1.15))*sm;
       // estela hacia la toma
@@ -733,8 +736,8 @@ function drawWeather(t){
     const gl = wg.createRadialGradient(ix,iy,0,ix,iy,40); gl.addColorStop(0,`rgba(159,232,255,${.45*sm*br})`); gl.addColorStop(1,"rgba(159,232,255,0)"); wg.fillStyle = gl; wg.beginPath(); wg.arc(ix,iy,40,0,7); wg.fill(); }
   // lluvia intensa con salpicaduras sobre los equipos
   const rn = seg(t,21.6,22.4)*(1 - seg(t,25,25.5));
-  if(rn > 0){ drawRain(wg, t, rn, 300);
-    if(TW.surfaces){ if(SURFKEY !== twinMode){ SURF = TW.surfaces(16); SURFKEY = twinMode; }
+  if(rn > 0){ drawRain(wg, t, rn, MOBILE ? 140 : 300);
+    if(TW.surfaces){ if(SURFKEY !== twinMode){ SURF = TW.surfaces(MOBILE ? 9 : 16); SURFKEY = twinMode; }
       const pts = TW.project(SURF);
       pts.forEach(([u,v,z],i)=>{ if(z > 1) return; const [px,py] = S(u,v), r = rng(i*31+11), rate = 1.6 + r()*1.4, ph = r();
         for(let k = Math.floor(t*rate + ph) - 1; k <= Math.floor(t*rate + ph); k++){ const t0 = (k - ph)/rate, age = t - t0; if(age < 0 || age > .42) continue;
@@ -760,8 +763,8 @@ function camAt(t){
   const LA = FMT === "v" ? {center:[-74,-40], zoom:2.75, pitch:0, bearing:0} : {center:[-97.5,-12], zoom:2.85, pitch:0, bearing:0}, LA2 = {...LA, zoom:LA.zoom+.12};
   const KC = FMT === "v" ? [CITY.lon, CITY.lat - (NET_CITY ? .04 : -.05)] : [CITY.lon - (NET_CITY ? .10 : .08), CITY.lat + (NET_CITY ? .04 : 0)], zk = NET_CITY ? (NET_CITY.rLat > .15 ? (FMT === "v" ? -.85 : -.6) : 0) : 0;
   const K0 = {center:KC, zoom:(FMT === "v" ? 9.7 : 10.1) + zk, pitch:28, bearing:-8}, K1 = {center:KC, zoom:(FMT === "v" ? 10.0 : 10.5) + zk, pitch:38, bearing:6};
-  if(t < 6) return camLerp(C0, C1, seg(t,0,6));
-  if(t < 13.6) return t < 10 ? camLerp(C1, LA, eio(seg(t,6,10))) : camLerp(LA, LA2, seg(t,10,13.6));
+  if(t < 7.5) return camLerp(C0, C1, seg(t,0,7.5));
+  if(t < 13.6) return camLerp(LA, LA2, seg(t,7.5,13.6));
   if(t > 24.4 && t < 36.6) return camLerp(K0, K1, seg(t,24.4,36.6));
   if(t > 60.7 && t < 69.2){ const V0 = FMT === "v" ? {center:[-94.8,4.9], zoom:4.3, pitch:0, bearing:0} : {center:[-90,8.7], zoom:4.0, pitch:0, bearing:0}; return camLerp(V0, {...V0, zoom:V0.zoom+.1, pitch:12}, seg(t,60.7,69.2)); }
   return null;
@@ -769,7 +772,7 @@ function camAt(t){
 function render(t){
   // cámara del mapa
   const cam = camAt(t); if(cam) setCam(cam);
-  show($("Lmap"), Math.max(seg(t,0,1)*(1-seg(t,13,13.6)), vis(t,24.6,36.6,.6,.6), vis(t,60.9,69.0,.6,.4)));
+  show($("Lmap"), Math.max(seg(t,0,1)*(1-seg(t,13,13.6))*(1 - seg(t,6.9,7.4)*(1 - seg(t,7.6,8.3))), vis(t,24.6,36.6,.6,.6), vis(t,60.9,69.0,.6,.4)));
   $("smog").style.opacity = .9*(1 - seg(t,6,8.5));
   show($("Lblue"), vis(t,12.8,25.2,.6,.4) || (t > 68.4 ? seg(t,68.4,69) : 0));
   show($("Ltwin"), Math.max(vis(t,12.8,25.2,.8,.5), t > 68.6 ? seg(t,68.6,69.6) : 0));
@@ -830,7 +833,7 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 function setPlaying(p){
-  if(p && map && !preDone){ $("playLbl").textContent = (LANG === "en" ? "LOADING MAPS…" : "CARGANDO MAPAS…"); const iv = setInterval(()=>{ if(preDone){ clearInterval(iv); setPlaying(true); } }, 300); setTimeout(()=>{ preDone = true; }, 25000); return; }
+  if(p && map && !preDone){ $("playLbl").textContent = (LANG === "en" ? "LOADING MAPS…" : "CARGANDO MAPAS…"); const iv = setInterval(()=>{ if(preDone){ clearInterval(iv); setPlaying(true); } }, 300); setTimeout(()=>{ preDone = true; loadTwin(); }, 25000); return; }
   playing = p; last = performance.now();
   if(p && t >= CONFIG.duration) t = 0;
   $("bPlay").textContent = p ? "❚❚" : "▶"; $("bPlay").setAttribute("aria-label", p ? "Pausa" : "Reproducir");
