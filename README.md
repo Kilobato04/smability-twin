@@ -212,3 +212,8 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 - Escena 1 sin lluvia ni rayo; escena 3 sin rayos (solo lluvia con salpicaduras).
 - Escena 3 en tres capas con barrido: rayos X → componentes en color (como las fichas) → sólido con SMAA/CHAAK en azul, justo antes de la lluvia.
 - Modo embebido del gemelo con resolución reducida (más fluido en celulares).
+
+### v0.7
+- Escena 3: callouts numerados sobre el modelo en color (1 sensor meteorológico CHAAK, 2 tubo de ensamble, 3 panel solar, 4 dispositivo CHAAK, 5 dispositivo SMAA) con `TWIN.centers()`; la cámara se detiene en un ángulo donde se ven todos.
+- Cierre más cerrado sobre SMAA-CHAAK con paneo vertical; QR sin URL (son clicables).
+- Celulares: resolución de Mapbox y del gemelo ajustada al tamaño real en pantalla (`pixelRatio`, `?pr=`), sin terreno 3D ni antialias en móvil, caché de mosaicos acotada.

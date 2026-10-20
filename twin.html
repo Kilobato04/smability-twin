@@ -2195,7 +2195,7 @@ if(URLQ.has("embed")){
   document.documentElement.classList.add("embed");
   if(URLQ.get("theme")) document.documentElement.dataset.theme = URLQ.get("theme");
   controls.enabled = false; controls.enableDamping = false; controls.autoRotate = false;
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25)); resize();   // más ligero dentro del reel (en celulares sobre todo)
+  { const pr = +URLQ.get("pr"); renderer.setPixelRatio(pr > 0 ? Math.min(pr, 1.25) : Math.min(devicePixelRatio, 1.25)); resize(); }   // resolución acotada dentro del reel (memoria en celulares)   // más ligero dentro del reel (en celulares sobre todo)
   const tintNow = {};
   const SUP = ["cabezal","cople_sup","tubo","cople_base"];
   window.TWIN = {
@@ -2218,6 +2218,8 @@ if(URLQ.has("embed")){
         if(h && h.point.y > b.min.y + .25) out.push(h.point.clone()); }
       return out; },
     project(pts){ return pts.map(p=>{ const v = p.clone().project(camera); return [(v.x+1)/2, (1-v.y)/2, v.z]; }); },
+    centers(list){ return list.map(([st, keys, fy])=>{ const own = st === "rig" ? RIG : ST[st]; const k = keys.find(q=> own && own.parts[q]); if(!k) return null;
+      const b = new THREE.Box3().setFromObject(own.parts[k].group); if(b.isEmpty()) return null; const v = b.getCenter(new THREE.Vector3()); if(fy != null) v.y = b.min.y + (b.max.y - b.min.y)*fy; v.project(camera); return [(v.x+1)/2, (1-v.y)/2, v.z]; }); },
     align(){ state.smaaH = "nivel"; applyCity(); },
     snap(){ renderer.render(scene, camera); return renderer.domElement.toDataURL("image/png"); },
     tint(key, hex){ const st = ST[key]; if(!st || tintNow[key] === hex) return; tintNow[key] = hex;
