@@ -223,3 +223,7 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 - Ciudad → continente con corte (fundido) en lugar de vuelo continuo: evita cientos de mosaicos intermedios.
 - Mapbox en Mercator, sin terreno ni edificios 3D en celular, caché de mosaicos acotada (60 en celular, 400 en escritorio), precarga de 3 tomas en celular y 8 en escritorio.
 - En celular: sin captura de pantalla para el barrido de capas, menos partículas y mapas de calor a menor resolución.
+
+### v0.9
+- Escritorio: mapa tipo globo (Mapbox GL, proyección globe) con vuelo ciudad → continente; precarga de 10 tomas.
+- Celular (o `?lite=1` / `?static`): sin Mapbox GL. Cada escena de mapa usa una imagen estática (Mapbox Static Images, vista plana; la primera es el Valle de México) y las capas se dibujan encima. Sin rayos X en el 3D (sus aristas consumen mucha memoria): color → sólido.
