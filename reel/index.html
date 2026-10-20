@@ -22,7 +22,7 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
 #stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:var(--navy)}
 #stage.v{width:1080px;height:1920px}
 .layer{position:absolute;inset:0;opacity:0;pointer-events:none}
-#map{position:absolute;inset:0}
+#map{position:absolute;left:0;top:0;width:100%;height:100%}
 #map .mapboxgl-ctrl-bottom-left,#map .mapboxgl-ctrl-bottom-right{transform:scale(1.4);transform-origin:bottom right;opacity:.7}
 #fx{position:absolute;inset:0;width:100%;height:100%}
 #twinWrap{position:absolute;inset:0}
@@ -309,7 +309,7 @@ const CONFIG = {
   // Token público de Mapbox. En el dashboard de Mapbox restríngelo al dominio de Netlify.
   mapboxToken: 'pk.eyJ1Ijoia2lsb2JhdG8iLCJhIjoiY21jd2g2b3RzMDJiNDJxcTA0cTFhZmE4OCJ9.u5zPxYCxqEaF2jnj32l4ng',
   mapStyle: 'mapbox://styles/mapbox/dark-v11',
-  terrain: true,
+  terrain: false,       // sin relieve: la escena 1 carga más rápido (la ciudad es plana a esta escala)
   buildings3D: true,
   twinUrl: '/index.html',          // gemelo digital (mismo sitio)
   duration: 78
@@ -407,6 +407,7 @@ function fit(){
   st.style.transform = `translate(${(innerWidth - W()*s)/2}px,${(innerHeight - H()*s)/2}px) scale(${s})`;
   const fx = $("fx"); fx.width = W(); fx.height = H();
   $("bFmt").textContent = FMT === "v" ? "9:16" : "16:9";
+  if(typeof MAPBOX !== "undefined") MAPBOX.small = null;
   if(map){ try{ if(map.setPixelRatio) map.setPixelRatio(STAGE_PR()); }catch(_){} map.resize(); }
   lastT = -1;
 }
@@ -422,7 +423,7 @@ function initMap(){
       interactive:false, attributionControl:true, fadeDuration:0, preserveDrawingBuffer:Q.has("capture"), antialias:true, pixelRatio:STAGE_PR(), maxTileCacheSize:400, projection:"globe", refreshExpiredTiles:false, trackResize:false});
     map.on("style.load", ()=>{
       try{
-        map.setFog({color:"rgb(18,28,70)", "high-color":"#12339A", "horizon-blend":.12, "space-color":"#000814", "star-intensity":.25});
+        map.setFog({range:[0.6, 3.2], color:"rgb(18,28,70)", "high-color":"#12339A", "horizon-blend":.12, "space-color":"#000814", "star-intensity":.25});   // la niebla corta los mosaicos lejanos
         if(CONFIG.terrain){ map.addSource("dem",{type:"raster-dem", url:"mapbox://mapbox.mapbox-terrain-dem-v1", tileSize:512, maxzoom:14}); map.setTerrain({source:"dem", exaggeration:1.25}); }
         if(CONFIG.buildings3D && map.getSource("composite")){
           map.addLayer({id:"b3d", source:"composite", "source-layer":"building", filter:["==","extrude","true"], type:"fill-extrusion", minzoom:13,
@@ -464,7 +465,7 @@ async function preload(){
   const times = [0, 6, 7.5, 9, 10.5, 25, 31, 36, 61, 68.5];
   for(let i=0;i<times.length;i++){ const c = camAt(times[i]); if(!c) continue;
     $("playLbl").textContent = `${LANG === "en" ? "LOADING MAPS" : "CARGANDO MAPAS"} ${i+1}/${times.length}`;
-    try{ map.jumpTo({center:c.center, zoom:c.zoom, pitch:c.pitch, bearing:c.bearing}); }catch(_){}
+    mapFrame(times[i]); try{ map.jumpTo({center:c.center, zoom:c.zoom, pitch:c.pitch, bearing:c.bearing}); }catch(_){}
     await new Promise(res=>{ let done = false; const fin = ()=>{ if(!done){ done = true; res(); } }; map.once("idle", fin); setTimeout(fin, 7000); }); }
   preDone = true; loadTwin(); $("playLbl").textContent = LANG === "en" ? "PLAY · 1:18" : "REPRODUCIR · 1:18"; lastT = -1;
 }
@@ -472,8 +473,22 @@ async function preload(){
 let CAM = {center:[CITY.lon, CITY.lat], zoom:15, pitch:0, bearing:0};
 function mercX(lon){ return (lon+180)/360; }
 function mercY(lat){ const s = Math.sin(lat*Math.PI/180); return .5 - Math.log((1+s)/(1-s))/(4*Math.PI); }
+/* Escena 1: la ciudad en una "lente" circular. El lienzo del mapa se reduce al círculo (menos mosaicos y edificios 3D)
+   y al empezar el vuelo se abre a pantalla completa. */
+const MAPBOX = {l:0, t:0, small:null};
+function mapFrame(t){
+  if(!map || LITE) return;
+  const small = t < 6.1, S = FMT === "v" ? 1000 : 940;
+  if(small !== MAPBOX.small){ MAPBOX.small = small; const el = $("map").style;
+    if(small){ MAPBOX.l = Math.round((W()-S)/2); MAPBOX.t = Math.round((H()-S)/2); el.left = MAPBOX.l+"px"; el.top = MAPBOX.t+"px"; el.width = el.height = S+"px"; }
+    else { MAPBOX.l = MAPBOX.t = 0; el.left = el.top = "0px"; el.width = W()+"px"; el.height = H()+"px"; }
+    try{ map.resize(); }catch(_){} }
+  // máscara circular con borde suave; se abre durante el vuelo
+  const R0 = S/2 - 30, R = small ? R0 : lerp(R0, Math.hypot(W(), H())/2 + 80, ease(seg(t, 6.1, 8.6))), m = `radial-gradient(circle at 50% 50%, #000 ${R}px, transparent ${R + 40}px)`;
+  const el = $("map").style; if(t < 8.6){ el.webkitMaskImage = el.maskImage = m; } else { el.webkitMaskImage = el.maskImage = "none"; }
+}
 function project(lon, lat){
-  if(map && mapOK){ const p = map.project([lon, lat]); return [p.x, p.y]; }
+  if(map && mapOK){ const p = map.project([lon, lat]); return [p.x + MAPBOX.l, p.y + MAPBOX.t]; }
   const ws = 512*Math.pow(2, CAM.zoom);
   return [(mercX(lon) - mercX(CAM.center[0]))*ws + W()/2, (mercY(lat) - mercY(CAM.center[1]))*ws + H()/2];
 }
@@ -550,6 +565,9 @@ function field(alpha, valueAt, colorOf){
 function drawFX(t){
   g.clearRect(0,0,W(),H());
   if(t < 13.6 || (t > 24.4 && t < 36.6) || (t > 60.7 && t < 69.2)) drawGrid();
+  // S1 · borde de la lente
+  if(map && mapOK && !LITE && t < 8.6){ const S = FMT === "v" ? 1000 : 940, R = t < 6.1 ? S/2 - 30 : lerp(S/2 - 30, Math.hypot(W(), H())/2 + 80, ease(seg(t, 6.1, 8.6))), a = .55*(1 - seg(t, 6.1, 7.6));
+    g.beginPath(); g.arc(W()/2, H()/2, R + 6, 0, 7); g.strokeStyle = `rgba(159,178,255,${a})`; g.lineWidth = 2; g.stroke(); }
   // S1 · el primer nodo se enciende
   if(t > 2 && t < 9){ const [x,y] = project(CITY.lon, CITY.lat), a = seg(t,2,2.6)*(1-seg(t,7.4,9));
     for(let k=0;k<3;k++){ const p = ((t*0.7 + k/3) % 1); g.beginPath(); g.arc(x,y, 14 + p*160, 0, 7); g.strokeStyle = `rgba(159,178,255,${a*(1-p)*.9})`; g.lineWidth = 3; g.stroke(); }
@@ -784,7 +802,7 @@ function show(el, o){ el.style.opacity = o; }
 function rise(el, t, a, b=99){ const x = ease(seg(t,a,a+.6))*(1-seg(t,b-.4,b)); el.style.opacity = x; el.style.transform = `translateY(${(1-ease(seg(t,a,a+.6)))*24}px)`; }
 let lastSub = null;
 function camAt(t){
-  const C0 = {center:[CITY.lon, CITY.lat], zoom:15.6, pitch:64, bearing:-30}, C1 = {center:[CITY.lon, CITY.lat], zoom:15.1, pitch:58, bearing:6};
+  const C0 = {center:[CITY.lon, CITY.lat], zoom:15.5, pitch:54, bearing:-30}, C1 = {center:[CITY.lon, CITY.lat], zoom:15.1, pitch:48, bearing:6};
   const LA = FMT === "v" ? {center:[-74,-40], zoom:2.75, pitch:0, bearing:0} : {center:[-97.5,-12], zoom:2.85, pitch:0, bearing:0}, LA2 = {...LA, zoom:LA.zoom+.12};
   const KC = FMT === "v" ? [CITY.lon, CITY.lat - (NET_CITY ? .04 : -.05)] : [CITY.lon - (NET_CITY ? .10 : .08), CITY.lat + (NET_CITY ? .04 : 0)], zk = NET_CITY ? (NET_CITY.rLat > .15 ? (FMT === "v" ? -.85 : -.6) : 0) : 0;
   const K0 = {center:KC, zoom:(FMT === "v" ? 9.7 : 10.1) + zk, pitch:28, bearing:-8}, K1 = {center:KC, zoom:(FMT === "v" ? 10.0 : 10.5) + zk, pitch:38, bearing:6};
@@ -801,6 +819,7 @@ function camAt(t){
 }
 function render(t){
   // cámara del mapa
+  mapFrame(t);
   const cam = camAt(t); if(cam) setCam(cam);
   if(LITE) drawStatic(t);
   show($("Lmap"), Math.max(seg(t,0,1)*(1-seg(t,13,13.6))*(LITE ? 1 - seg(t,6.9,7.4)*(1 - seg(t,7.6,8.3)) : 1), vis(t,24.6,36.6,.6,.6), vis(t,60.9,69.0,.6,.4)));
