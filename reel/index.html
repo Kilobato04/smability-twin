@@ -32,14 +32,16 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
 #twinLoad{position:absolute;left:58%;top:50%;transform:translate(-50%,-50%);font-family:var(--f-mono);font-size:22px;letter-spacing:.14em;color:var(--sky)}
 .v #twinLoad{left:50%;top:38%}
 .lg{display:block;color:#fff}
-.oscard{background:linear-gradient(160deg,#1E2A3C,#141C2A);border:1px solid rgba(255,255,255,.08);padding:26px 26px 24px;font-family:var(--f-body)}
-.os-t{font-family:var(--f-body);font-weight:700;font-size:58px;line-height:1;letter-spacing:-.01em;color:#E9EEF6}
-.os-s{font-size:22px;color:#7FD3E6;margin:10px 0 18px}
-.os-aws{display:flex;align-items:center;gap:14px;border:1.5px solid #6B5640;background:rgba(60,45,30,.35);border-radius:10px;padding:10px 16px;margin-bottom:18px}
-.os-aws b{font-family:var(--f-body);font-weight:800;font-size:26px;color:#FF9900}
-.os-aws span{font-family:var(--f-mono);font-size:16px;letter-spacing:.2em;color:#C9B9A6}
-.oscard ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;font-family:var(--f-mono);font-size:17px;letter-spacing:.14em;color:#B9C3D3}
-.oscard li::before{content:"";display:inline-block;width:8px;height:8px;background:#38C8F0;margin-right:12px;vertical-align:2px}
+.oscard{background:linear-gradient(155deg,rgba(32,70,242,.92),rgba(0,23,102,.96));border:1.5px solid rgba(159,178,255,.55);padding:26px 28px 26px;font-family:var(--f-body);box-shadow:0 0 0 6px rgba(32,70,242,.12),0 24px 60px rgba(0,0,0,.5)}
+.os-head{display:flex;align-items:center;gap:10px;font-family:var(--f-mono);font-size:15px;letter-spacing:.18em}
+.os-pulse{width:12px;height:12px;border-radius:50%;background:#2CE57A;box-shadow:0 0 0 0 rgba(44,229,122,.6);animation:ospulse 1.6s infinite}
+@keyframes ospulse{70%{box-shadow:0 0 0 12px rgba(44,229,122,0)}100%{box-shadow:0 0 0 0 rgba(44,229,122,0)}}
+.os-live{color:#2CE57A}.os-aws{margin-left:auto;color:var(--mist);border:1px solid rgba(199,210,255,.4);border-radius:6px;padding:2px 8px}
+.os-t{font-family:var(--f-disp);font-weight:700;font-size:64px;line-height:.95;margin-top:10px;color:#fff;white-space:nowrap}
+.os-s{font-size:22px;color:var(--mist);margin:4px 0 18px}
+.os-row{display:flex;align-items:center;gap:14px;padding:10px 0;border-top:1px solid rgba(199,210,255,.18);font-size:24px;font-weight:600;color:#fff}
+.os-row i{width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.12);display:grid;place-items:center;color:#9FE8FF;flex:none}
+.os-row svg{width:22px;height:22px}
 .soc{display:flex;gap:22px;align-items:center}
 .soc a{display:grid;place-items:center;width:52px;height:52px;border-radius:12px;border:1.5px solid rgba(159,178,255,.45);color:var(--ice)}
 .soc svg{width:28px;height:28px}
@@ -208,7 +210,13 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
 
   <section class="layer" id="s4">
     <div class="sup"><span class="kick rise" data-k="s4kick"></span><span class="title rise" data-k="s4title"></span></div>
-    <div id="oscard" class="oscard" role="img" aria-label="SMAA OS"><div class="os-t">SMAA OS</div><div class="os-s" data-k="osSub"></div><div class="os-aws"><b>▲ aws</b><span>POWERED BY AWS</span></div><ul><li data-k="os1"></li><li>BIG DATA</li><li data-k="os3"></li></ul></div>
+    <div id="oscard" class="oscard" role="img" aria-label="SMAA OS">
+      <div class="os-head"><span class="os-pulse"></span><span class="os-live">LIVE</span><span class="os-aws">AWS</span></div>
+      <div class="os-t">SMAA OS</div><div class="os-s" data-k="osSub"></div>
+      <div class="os-row"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg></i><span data-k="os1"></span></div>
+      <div class="os-row"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></i><span data-k="os2"></span></div>
+      <div class="os-row"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></i><span data-k="os3"></span></div>
+    </div>
     <div class="tags">
       <span class="tag rise" id="tagAQ"><i></i><span data-k="s4aq"></span></span>
       <div class="iasbar rise" id="ias"><div style="background:#00E400"></div><div style="background:#FFFF00"></div><div style="background:#FF7E00"></div><div style="background:#FF0000"></div><div style="background:#8F3F97"></div><span>0</span><span>50</span><span>100</span><span>150</span><span>200+</span></div>
@@ -334,8 +342,8 @@ const personalized = Q.has("city") || Q.has("lat");
 let LANG = (Q.get("lang") || (navigator.language||"es")).toLowerCase().startsWith("en") ? "en" : "es";
 const T = {
   es:{ s2big:"CARAS.<br>ESCASAS.", leg:'<span><b style="background:#9FB2FF;box-shadow:0 0 10px #9FB2FF"></b>con red de monitoreo</span><span><b style="border:2px solid #6B7BB0"></b>pocas o ninguna</span><span style="opacity:.7">ilustrativo</span>',
-    s3kick:"01 · DISPOSITIVOS", s3smaa:"Aire: PM2.5, PM10, gases y ruido", s3chaak:"Clima: viento, lluvia por radar y radiación", s3poleT:"UN SOLO TUBO", s3pole:"Datos en vivo, 24/7",
-    s4kick:"02 · SMAA OS", s4title:"Cada minuto", osSub:"El cerebro del ecosistema", os1:"IOT EN TIEMPO REAL", os3:"APIS ABIERTAS", loading:"CARGANDO GEMELO 3D…", s4aq:"CALIDAD DEL AIRE · EN VIVO", s4rain:"LLUVIA · EN VIVO", sim:"SIMULACIÓN ILUSTRATIVA",
+    s3kick:"01 · DISPOSITIVOS", s3smaa:"Aire: PM2.5, PM10, gases y ruido", s3chaak:"Lluvia y tormentas: radar, viento y radiación", s3poleT:"UNA SOLA SOLUCIÓN", s3pole:"Aire y clima en un solo montaje, 24/7",
+    s4kick:"02 · SMAA OS", s4title:"Cada minuto", osSub:"El cerebro del ecosistema", os1:"IoT en tiempo real", os2:"Modelos de aire y lluvia", os3:"APIs abiertas", storm:"TORMENTA DETECTADA", loading:"CARGANDO GEMELO 3D…", s4aq:"CALIDAD DEL AIRE · EN VIVO", s4rain:"LLUVIA Y TORMENTAS · EN VIVO", sim:"SIMULACIÓN ILUSTRATIVA",
     s5kick:"03 · AUTOCALIBRACIÓN", s5title:"Se corrige sola", r2lbl:"OZONO VS. RED OFICIAL (R²)", unam:"AUDITADO POR ICAyCC · UNAM", months:"MESES SIN VISITAS DE CAMPO",
     ref:"Referencia", raw:"Sensor sin corregir", cal:"Autocalibrado", concept:"ESQUEMA ILUSTRATIVO",
     s6kick:"04 · AIreGPT", s6title:"En tu mano", s6tag:"TELEGRAM HOY · WHATSAPP 2027", online:"● EN LÍNEA · Aire + Lluvia",
@@ -343,8 +351,8 @@ const T = {
     n1:"Dispositivos", n3:"Autocalibración", loop:"Un solo<br>ciclo", st1:"9 años", st1s:"operando", st2s:"nodos en vivo", st3:"3 países", st3s:"México · Guatemala · Colombia", covKick:"COBERTURA SMABILITY", covLeg:'<span><b style="background:#fff;box-shadow:0 0 10px #9FB2FF"></b>SMAA</span><span><b style="background:#7FE7FF;border-radius:3px"></b>CHAAK</span><span style="opacity:.7">ubicaciones aproximadas</span>', netNote:"NODOS SMABILITY · VALORES ILUSTRATIVOS",
     s8kick:"GEMELO DIGITAL", qr1:"GEMELO DIGITAL", qr2:"HABLA CON AIreGPT" },
   en:{ s2big:"EXPENSIVE.<br>SCARCE.", leg:'<span><b style="background:#9FB2FF;box-shadow:0 0 10px #9FB2FF"></b>monitoring network</span><span><b style="border:2px solid #6B7BB0"></b>few or none</span><span style="opacity:.7">illustrative</span>',
-    s3kick:"01 · DEVICES", s3smaa:"Air: PM2.5, PM10, gases and noise", s3chaak:"Weather: wind, radar rain and radiation", s3poleT:"ONE POLE", s3pole:"Live data, 24/7",
-    s4kick:"02 · SMAA OS", s4title:"Every minute", osSub:"The brain of the ecosystem", os1:"REAL-TIME IOT", os3:"OPEN APIS", loading:"LOADING 3D TWIN…", s4aq:"AIR QUALITY · LIVE", s4rain:"RAIN · LIVE", sim:"ILLUSTRATIVE SIMULATION",
+    s3kick:"01 · DEVICES", s3smaa:"Air: PM2.5, PM10, gases and noise", s3chaak:"Rain and storms: radar, wind and radiation", s3poleT:"ONE POLE", s3pole:"Air and weather in one mount, 24/7",
+    s4kick:"02 · SMAA OS", s4title:"Every minute", osSub:"The brain of the ecosystem", os1:"Real-time IoT", os2:"Air and rain models", os3:"Open APIs", storm:"STORM DETECTED", loading:"LOADING 3D TWIN…", s4aq:"AIR QUALITY · LIVE", s4rain:"RAIN AND STORMS · LIVE", sim:"ILLUSTRATIVE SIMULATION",
     s5kick:"03 · SELF-CALIBRATION", s5title:"It fixes itself", r2lbl:"OZONE VS. OFFICIAL NETWORK (R²)", unam:"AUDITED BY ICAyCC · UNAM", months:"MONTHS WITHOUT FIELD VISITS",
     ref:"Reference", raw:"Uncorrected sensor", cal:"Self-calibrated", concept:"ILLUSTRATIVE DIAGRAM",
     s6kick:"04 · AIreGPT", s6title:"In your hand", s6tag:"TELEGRAM TODAY · WHATSAPP 2027", online:"● ONLINE · Air + Rain",
@@ -354,12 +362,13 @@ const T = {
 };
 const cityName = () => LANG === "en" ? CITY.en : CITY.es;
 const SUBS = [
-  [0.8, 5.6, "Cada día, millones respiran un aire que no pueden ver.", "Every day, millions breathe air they can't see."],
-  [6.4, 9.6, "Las estaciones de monitoreo son caras y escasas.", "Monitoring stations are expensive and scarce."],
+  [0.8, 3.4, "Cada día, millones respiran un aire que no ven…", "Every day, millions breathe air they can't see…"],
+  [3.6, 5.9, "…y las tormentas llegan sin aviso.", "…and storms strike without warning."],
+  [6.4, 9.6, "Las estaciones de aire y lluvia son caras y escasas.", "Air and rain monitoring stations are expensive and scarce."],
   [9.7, 12.8, "La mayoría de las ciudades de Latinoamérica tiene pocas, o ninguna.", "Most cities in Latin America have few, or none."],
   [13.4, 16.3, "Por eso hicimos las nuestras.", "So we built our own."],
   [16.5, 20.4, "SMAA lee el aire. CHAAK, el viento y la lluvia.", "SMAA reads the air. CHAAK reads wind and rain."],
-  [20.6, 24.6, "Un solo tubo, en vivo 24/7.", "One pole, live 24/7."],
+  [20.6, 24.6, "Una sola solución, en vivo 24/7.", "One pole, live 24/7."],
   [25.4, 30.2, "Cada minuto, sus datos llegan a SMAA OS…", "Every minute, their data flows into SMAA OS…"],
   [30.4, 35.6, "…que los convierte en mapas en vivo de calidad del aire y lluvia para toda la ciudad.", "…which turns it into live maps of air quality and rain for the whole city."],
   [36.4, 38.9, "Los sensores se desvían.", "Sensors drift."],
@@ -417,12 +426,22 @@ try{
                    "fill-extrusion-height":["get","height"], "fill-extrusion-base":["get","min_height"], "fill-extrusion-opacity":.85}});
         }
       }catch(e){ console.warn(e); }
-      mapOK = true; lastT = -1;
+      mapOK = true; lastT = -1; preload();
     });
     map.on("error", e=> console.warn("Mapbox:", e && e.error && e.error.message));
   }
 }catch(e){ console.warn("Mapbox no disponible", e); map = null; }
 
+let preloading = false, preDone = !CONFIG.mapboxToken;
+async function preload(){
+  if(preloading || !map) return; preloading = true;
+  const times = [0, 5, 8, 10.5, 25, 30, 36, 61, 68.5];
+  for(let i=0;i<times.length;i++){ const c = camAt(times[i]); if(!c) continue;
+    $("playLbl").textContent = `${LANG === "en" ? "LOADING MAPS" : "CARGANDO MAPAS"} ${i+1}/${times.length}`;
+    try{ map.jumpTo({center:c.center, zoom:c.zoom, pitch:c.pitch, bearing:c.bearing}); }catch(_){}
+    await new Promise(res=>{ let done = false; const fin = ()=>{ if(!done){ done = true; res(); } }; map.once("idle", fin); setTimeout(fin, 7000); }); }
+  preDone = true; $("playLbl").textContent = LANG === "en" ? "PLAY · 1:18" : "REPRODUCIR · 1:18"; lastT = -1;
+}
 // respaldo: Web Mercator plano (sin inclinación) para dibujar sobre el lienzo cuando no hay mapa
 let CAM = {center:[CITY.lon, CITY.lat], zoom:15, pitch:0, bearing:0};
 function mercX(lon){ return (lon+180)/360; }
@@ -434,7 +453,7 @@ function project(lon, lat){
 }
 function setCam(c){
   CAM = c;
-  if(map) try{ map.jumpTo({center:c.center, zoom:c.zoom, pitch:c.pitch, bearing:c.bearing}); }catch(_){}
+  if(map && !(preloading && !preDone)) try{ map.jumpTo({center:c.center, zoom:c.zoom, pitch:c.pitch, bearing:c.bearing}); }catch(_){}
 }
 function camLerp(a, b, x){
   const ax = mercX(a.center[0]), ay = mercY(a.center[1]), bx = mercX(b.center[0]), by = mercY(b.center[1]);
@@ -461,7 +480,7 @@ const NET = [
   {key:"gdl",  es:"Guadalajara", en:"Guadalajara", lat:20.67, lon:-103.35, n:2, chaak:1, rLat:.05, rLon:.05},
   {key:"dgo",  es:"Durango", en:"Durango", lat:24.02, lon:-104.66, n:1, chaak:0, rLat:.03, rLon:.03},
   {key:"cun",  es:"Cancún", en:"Cancún", lat:21.16, lon:-86.85, n:1, chaak:0, rLat:.03, rLon:.03},
-  {key:"mde",  es:"Medellín", en:"Medellín", lat:6.24, lon:-75.58, n:1, chaak:1, rLat:.03, rLon:.03}
+  {key:"mde",  es:"Medellín", en:"Medellín", lat:6.24, lon:-75.58, n:2, chaak:1, rLat:.04, rLon:.04}
 ];
 NET.forEach((c,ci)=>{ const r = rng(7 + ci*131); c.nodes = [];
   for(let i=0;i<c.n;i++){ const a = r()*Math.PI*2, d = c.n > 1 ? Math.pow(r(), .6) : 0;
@@ -504,6 +523,8 @@ function field(alpha, valueAt, colorOf){
 function drawFX(t){
   g.clearRect(0,0,W(),H());
   if(t < 13.6 || (t > 24.4 && t < 36.6) || (t > 60.7 && t < 69.2)) drawGrid();
+  // S1 · tormenta sobre la ciudad
+  if(t > 3.2 && t < 7.4){ const k = seg(t,3.2,4)*(1 - seg(t,6.4,7.4)); drawRain(g, t, k*.85, 220); drawBolt(g, t, BOLTS[0]); }
   // S1 · el primer nodo se enciende
   if(t > 2 && t < 9){ const [x,y] = project(CITY.lon, CITY.lat), a = seg(t,2,2.6)*(1-seg(t,7.4,9));
     for(let k=0;k<3;k++){ const p = ((t*0.7 + k/3) % 1); g.beginPath(); g.arc(x,y, 14 + p*160, 0, 7); g.strokeStyle = `rgba(159,178,255,${a*(1-p)*.9})`; g.lineWidth = 3; g.stroke(); }
@@ -518,7 +539,7 @@ function drawFX(t){
     NET.forEach((c,ci)=>{ const [cx,cy] = project(c.lon, c.lat), a = a0*seg(t, 61.4 + ci*.22, 61.9 + ci*.22), R = 10 + Math.sqrt(c.n)*9;
       const gr = g.createRadialGradient(cx,cy,0,cx,cy,R*2.6); gr.addColorStop(0,`rgba(32,70,242,${.55*a})`); gr.addColorStop(1,"rgba(32,70,242,0)");
       g.fillStyle = gr; g.beginPath(); g.arc(cx,cy,R*2.6,0,7); g.fill();
-      c.nodes.forEach((n,i)=>{ const ang = n.a, rr = n.d*R*1.25, x = cx + Math.cos(ang)*rr, y = cy - Math.sin(ang)*rr, pul = .75 + .25*Math.sin(t*5 + i);
+      c.nodes.forEach((n,i)=>{ const [px,py] = project(c.lon + (n.lon - c.lon)*5, c.lat + (n.lat - c.lat)*5), x = px, y = py, pul = .75 + .25*Math.sin(t*5 + i);
         if(n.chaak){ g.fillStyle = `rgba(127,231,255,${a})`; g.fillRect(x-5,y-5,10,10); }
         else { g.beginPath(); g.arc(x,y,4.2,0,7); g.fillStyle = `rgba(255,255,255,${a*pul})`; g.fill(); } });
       g.font = "600 30px Barlow, system-ui, sans-serif"; g.textBaseline = "middle"; g.fillStyle = `rgba(255,255,255,${a})`;
@@ -544,6 +565,11 @@ function drawFX(t){
     P.forEach(([x,y],i)=>{ const a = na*seg(t, 25.2 + i*.03, 25.8 + i*.03);
       if(NODES[i].chaak){ g.fillStyle = `rgba(127,231,255,${a})`; g.fillRect(x-10,y-10,20,20); g.lineWidth = 4; g.strokeStyle = `rgba(0,23,102,${a})`; g.strokeRect(x-10,y-10,20,20); }
       else { g.beginPath(); g.arc(x,y,9,0,7); g.fillStyle = `rgba(255,255,255,${a})`; g.fill(); g.lineWidth = 4; g.strokeStyle = `rgba(32,70,242,${a})`; g.stroke(); } });
+    // tormenta: los CHAAK la detectan (pulso) y se marcan las celdas más intensas
+    if(rn > .2){ P.forEach(([x,y],i)=>{ if(!NODES[i].chaak) return; const ph = ((t - 32.4)*1.1) % 1; g.beginPath(); g.arc(x,y,14 + ph*90,0,7); g.strokeStyle = `rgba(127,231,255,${(1-ph)*.9*rn})`; g.lineWidth = 4; g.stroke(); });
+      const [bx,by] = project(CITY.lon - .10 + (t-32.4)*.012, CITY.lat + .06 - (t-32.4)*.005), fl = (Math.sin(t*9) > .6 ? 1 : .55)*seg(t,33.2,33.8)*out;
+      g.save(); g.translate(bx, by); g.fillStyle = `rgba(255,236,120,${fl})`; g.shadowColor = "#FFE066"; g.shadowBlur = 24*fl; g.beginPath(); g.moveTo(6,-34); g.lineTo(-12,4); g.lineTo(2,4); g.lineTo(-6,34); g.lineTo(14,-6); g.lineTo(0,-6); g.closePath(); g.fill(); g.restore();
+      { const la = seg(t,33.4,34)*out; g.font = "600 22px 'JetBrains Mono', monospace"; g.textAlign = "left"; const tw = g.measureText(T[LANG].storm).width; g.fillStyle = `rgba(0,14,60,${.85*la})`; g.fillRect(bx + 22, by - 14, tw + 20, 36); g.fillStyle = `rgba(255,236,120,${la})`; g.fillText(T[LANG].storm, bx + 32, by + 4); } }
     // pulsos de datos hacia SMAA OS
     const os = osAnchor(), pa = seg(t,26,26.6)*(1 - seg(t,29.6,30.4));
     if(pa > 0) P.forEach(([x,y],i)=>{ for(let k=0;k<2;k++){ const ph = ((t - 26)*.55 + NODES[i].ph + k*.5) % 1, e = ease(ph);
@@ -614,13 +640,14 @@ const twinPoll = setInterval(()=>{ try{ const w = twin.contentWindow; if(w && w.
 let twinMode = null, snapOK = false;
 const WIPE = [16.4, 17.4];
 function drawTwin(t){
+  if(TW && t > 62 && t < 68.6 && twinMode !== "s8" + FMT){ twinMode = "s8" + FMT; TW.city(personalized && CITY.key ? CITY.key : "gdl", "arriba"); TW.tint("smaa", null); TW.tint("chaak", null); TW.render("real"); }
   const on = (t > 12.6 && t < 25.4) || t > 68.6;
   $("twinLoad").style.display = TW ? "none" : "block";
   const xs = $("xsnap"), sc = $("scan");
   if(!TW || !on){ xs.style.display = sc.style.display = "none"; return; }
   const v = FMT === "v";
   if(t < 40){
-    if(twinMode !== "s3" + FMT){ twinMode = "s3" + FMT; TW.align(); TW.rig(false); snapOK = false; }
+    if(twinMode !== "s3" + FMT){ twinMode = "s3" + FMT; TW.city(CITY.key || "cdmx", "nivel"); TW.align(); TW.rig(false); snapOK = false; }
     TW.clean(true); TW.rig(false);
     // órbita cercana alrededor de la estación (casi una vuelta completa)
     const x = seg(t, 12.6, 25.4), pull = ease(seg(t, 18.5, 25.4));
@@ -638,47 +665,62 @@ function drawTwin(t){
     if(inWipe){ const e = eio(w); xs.style.clipPath = `inset(0 0 ${e*100}% 0)`; sc.style.top = `calc(${(1-e)*100}% - 2px)`; sc.style.opacity = 1 - seg(t, WIPE[1]-.15, WIPE[1]); }
   } else {
     xs.style.display = sc.style.display = "none";
-    if(twinMode !== "s8" + FMT){ twinMode = "s8" + FMT; TW.align(); TW.tint("smaa", null); TW.tint("chaak", null); TW.explode(false); TW.render("real"); }
+    if(twinMode !== "s8" + FMT){ twinMode = "s8" + FMT; TW.city(personalized && CITY.key ? CITY.key : "gdl", "arriba"); TW.tint("smaa", null); TW.tint("chaak", null); TW.explode(false); TW.render("real"); }
     TW.clean(v); TW.floor(false); TW.zone(false); TW.rig(true);
     const x = seg(t, 68.6, 78);
-    TW.orbit(lerp(280, 400, eio(x)), lerp(14, 8, x), lerp(v ? 4.6 : 2.6, v ? 4.2 : 2.1, x), v ? 1.4 : 1.36);
+    TW.orbit(lerp(298, 342, eio(x)), lerp(9, 6, x), lerp(v ? 5.0 : 2.9, v ? 4.6 : 2.5, x), v ? 1.25 : 1.25);
   }
 }
 const wx = $("wx"), wg = wx.getContext("2d");
-const BOLTS = [22.6, 24.15].map((at,k)=>{ const r = rng(900 + k*77), pts = [];
+function drawRain(ctx, t, k, n){ ctx.fillStyle = `rgba(0,8,40,${.32*k})`; ctx.fillRect(0,0,W(),H()); ctx.lineCap = "round";
+  for(let i=0;i<n;i++){ const r = rng(i*7+3), spd = 1500 + r()*900, ang = (24 + (r()-.5)*10)*Math.PI/180, len = 26 + r()*30, al = (.22 + r()*.25)*k;
+    const vx = Math.sin(ang)*spd, vy = Math.cos(ang)*spd, span = H() + 200, tt = t + r()*5;
+    const y = ((r()*span + vy*tt) % span) - 100, x = ((r()*(W()+400) + vx*tt) % (W()+400)) - 200;
+    ctx.strokeStyle = `rgba(190,180,255,${al})`; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x - vx/vy*len, y - len); ctx.stroke(); } }
+function drawBolt(ctx, t, b){ const d = t - b.at; if(d < 0 || d > .9) return;
+  let al = 0, lw = 2.8; if(d < .055){ al = .95; } else if(d < .1){ al = 0; } else if(d < .16){ al = .65; lw = 1.8; } else if(d < .21){ al = 0; } else { al = .28*(1 - (d-.21)/.69); lw = 1.2; }
+  if(d < .055 || (d > .1 && d < .16)){ ctx.fillStyle = `rgba(210,200,255,${d < .055 ? .22 : .12})`; ctx.fillRect(0,0,W(),H()); }
+  if(al > 0){ ctx.save(); ctx.strokeStyle = `rgba(225,215,255,${al})`; ctx.shadowColor = `rgba(160,110,255,${al})`; ctx.shadowBlur = 30; ctx.lineWidth = lw*2; ctx.lineJoin = "round";
+    ctx.beginPath(); b.pts.forEach(([x,y],i)=> i ? ctx.lineTo(x*W(), y*H()) : ctx.moveTo(x*W(), y*H())); ctx.stroke(); ctx.restore(); } }
+let SURF = null, SURFKEY = null;
+const BOLTS = [4.3, 22.6, 24.15].map((at,k)=>{ const r = rng(900 + k*77), pts = [];
   const build = (x1,y1,x2,y2,sp,d)=>{ pts.push([x1,y1]); if(!d){ pts.push([x2,y2]); return; } const mx = (x1+x2)/2 + (r()-.5)*sp, my = (y1+y2)/2 + (r()-.5)*sp*.25; build(x1,y1,mx,my,sp/2,d-1); build(mx,my,x2,y2,sp/2,d-1); };
-  k ? build(.30, 0, .96, .66, .08, 6) : build(.06, 0, .74, .74, .09, 6); return {at, pts}; });
+  k % 2 ? build(.30, 0, .96, .66, .08, 6) : build(.06, 0, .74, .74, .09, 6); return {at, pts}; });
 function drawWeather(t){
   if(wx.width !== W() || wx.height !== H()){ wx.width = W(); wx.height = H(); }
   wg.clearRect(0,0,W(),H());
-  if(t < 19 || t > 25.6) return;
-  // aire/humo que SMAA "respira": partículas en espiral hacia la toma
-  const sm = seg(t,19.4,20.4)*(1 - seg(t,24.6,25.4));
-  if(sm > 0 && TW && TW.inlet){ const [u,v] = TW.inlet(), off = FMT === "v" ? [0,-130] : [230,0], ix = u*W() + off[0], iy = v*H() + off[1];
-    for(let i=0;i<90;i++){ const r = rng(i*13+5), a0 = r()*Math.PI*2, R0 = 220 + r()*260, sp = .22 + r()*.18, p = ((t - 19.4)*sp + r()) % 1, e = ease(p);
-      const ang = a0 + e*2.4, rad = R0*(1-e), x = ix + Math.cos(ang)*rad*1.25, y = iy + Math.sin(ang)*rad*.7 + 30*(1-e);
-      const s0 = 38*(1-e) + 6, al = .4*Math.sin(Math.PI*p)*sm;
-      const gr = wg.createRadialGradient(x,y,0,x,y,s0); gr.addColorStop(0,`rgba(205,210,230,${al})`); gr.addColorStop(1,"rgba(205,210,230,0)");
-      wg.fillStyle = gr; wg.beginPath(); wg.arc(x,y,s0,0,7); wg.fill(); } }
-  // lluvia intensa
+  if(t < 19 || t > 25.6 || !TW) return;
+  const off = FMT === "v" ? [0,-130] : [230,0], S = (u,v)=> [u*W() + off[0], v*H() + off[1]];
+  // aire que SMAA "respira": corrientes que entran a las cavidades de abajo (ritmo de respiración)
+  const sm = seg(t,19.2,20.0)*(1 - seg(t,24.6,25.4));
+  if(sm > 0 && TW.sinlet){ const [ix,iy] = S(...TW.sinlet()), br = .75 + .25*Math.sin(t*2.4);
+    for(let i=0;i<110;i++){ const r = rng(i*13+5), a0 = Math.PI*(.15 + r()*.7), R0 = 160 + r()*230, sp = (.38 + r()*.22)*br, p = ((t - 19.2)*sp + r()) % 1, e = p*p*(3-2*p);
+      const ang = a0 + (r() < .5 ? 1 : -1)*e*1.1, rad = R0*Math.pow(1-e, 1.35), x = ix + Math.cos(ang)*rad*1.3, y = iy + Math.sin(ang)*rad*.95;
+      const s0 = 26*(1-e) + 3, al = .5*Math.sin(Math.PI*Math.min(1, p*1.15))*sm;
+      // estela hacia la toma
+      const tx = ix - x, ty = iy - y, L = Math.hypot(tx,ty) || 1;
+      wg.strokeStyle = `rgba(215,222,240,${al*.28})`; wg.lineWidth = Math.max(1.5, s0*.5); wg.lineCap = "round";
+      wg.beginPath(); wg.moveTo(x - tx/L*s0*1.6, y - ty/L*s0*1.6); wg.lineTo(x, y); wg.stroke();
+      const gr = wg.createRadialGradient(x,y,0,x,y,s0); gr.addColorStop(0,`rgba(215,222,240,${al})`); gr.addColorStop(1,"rgba(215,222,240,0)");
+      wg.fillStyle = gr; wg.beginPath(); wg.arc(x,y,s0,0,7); wg.fill(); }
+    const gl = wg.createRadialGradient(ix,iy,0,ix,iy,40); gl.addColorStop(0,`rgba(159,232,255,${.45*sm*br})`); gl.addColorStop(1,"rgba(159,232,255,0)"); wg.fillStyle = gl; wg.beginPath(); wg.arc(ix,iy,40,0,7); wg.fill(); }
+  // lluvia intensa con salpicaduras sobre los equipos
   const rn = seg(t,21.6,22.4)*(1 - seg(t,25,25.5));
-  if(rn > 0){ wg.fillStyle = `rgba(0,8,40,${.32*rn})`; wg.fillRect(0,0,W(),H());
-    wg.lineCap = "round";
-    for(let i=0;i<300;i++){ const r = rng(i*7+3), spd = 1500 + r()*900, ang = (24 + (r()-.5)*10)*Math.PI/180, len = 26 + r()*30, al = (.22 + r()*.25)*rn;
-      const vx = Math.sin(ang)*spd, vy = Math.cos(ang)*spd, span = H() + 200, tt = t*1 + r()*5;
-      const y = ((r()*span + vy*tt) % span) - 100, x = ((r()*(W()+400) + vx*tt) % (W()+400)) - 200;
-      wg.strokeStyle = `rgba(190,180,255,${al})`; wg.lineWidth = 1.6; wg.beginPath(); wg.moveTo(x,y); wg.lineTo(x - vx/vy*len, y - len); wg.stroke(); } }
-  // rayos: destello, parpadeo y rastro (como en airegpt.ai)
-  for(const b of BOLTS){ const d = t - b.at; if(d < 0 || d > .9) continue;
-    let al = 0, lw = 2.8; if(d < .055){ al = .95; } else if(d < .1){ al = 0; } else if(d < .16){ al = .65; lw = 1.8; } else if(d < .21){ al = 0; } else { al = .28*(1 - (d-.21)/.69); lw = 1.2; }
-    if(d < .055 || (d > .1 && d < .16)){ wg.fillStyle = `rgba(210,200,255,${d < .055 ? .22 : .12})`; wg.fillRect(0,0,W(),H()); }
-    if(al > 0){ wg.save(); wg.strokeStyle = `rgba(225,215,255,${al})`; wg.shadowColor = `rgba(160,110,255,${al})`; wg.shadowBlur = 30; wg.lineWidth = lw*2; wg.lineJoin = "round";
-      wg.beginPath(); b.pts.forEach(([x,y],i)=> i ? wg.lineTo(x*W(), y*H()) : wg.moveTo(x*W(), y*H())); wg.stroke(); wg.restore(); } }
+  if(rn > 0){ drawRain(wg, t, rn, 300);
+    if(TW.surfaces){ if(SURFKEY !== twinMode){ SURF = TW.surfaces(16); SURFKEY = twinMode; }
+      const pts = TW.project(SURF);
+      pts.forEach(([u,v,z],i)=>{ if(z > 1) return; const [px,py] = S(u,v), r = rng(i*31+11), rate = 1.6 + r()*1.4, ph = r();
+        for(let k = Math.floor(t*rate + ph) - 1; k <= Math.floor(t*rate + ph); k++){ const t0 = (k - ph)/rate, age = t - t0; if(age < 0 || age > .42) continue;
+          const rk = rng(i*977 + k*13), a = (1 - age/.42)*rn;
+          if(age < .07){ wg.strokeStyle = `rgba(230,235,255,${a*.9})`; wg.lineWidth = 2; wg.beginPath(); wg.ellipse(px, py, 4 + age*120, 1.5 + age*30, 0, 0, 7); wg.stroke(); }
+          for(let d=0; d<4; d++){ const ang = Math.PI*(.15 + .7*rk()), v0 = 140 + rk()*170, vx = Math.cos(ang)*v0*(rk() < .5 ? -1 : 1), vy = -Math.sin(ang)*v0;
+            const x = px + vx*age, y = py + vy*age + 1500*age*age/2; wg.fillStyle = `rgba(225,232,255,${a})`; wg.beginPath(); wg.arc(x, y, 2.2, 0, 7); wg.fill(); } } }); } }
+  for(const b of BOLTS.slice(1)) drawBolt(wg, t, b);
 }
 function twinFrameShift(t){
   // en 16:9 el equipo se recorre a la derecha (S3) o a la izquierda (S8) para dejar lugar al texto
   const f = $("twinWrap").style;
-  if(FMT === "v"){ f.transform = t > 60 ? "translateY(-470px)" : "translateY(-130px)"; return; }
+  if(FMT === "v"){ f.transform = t > 60 ? "translateY(-360px)" : "translateY(-130px)"; return; }
   f.transform = t > 60 ? "translateX(-380px)" : "translateX(230px)";
 }
 
@@ -687,16 +729,20 @@ const vis = (t,a,b,fi=.5,fo=.5)=> seg(t,a,a+fi)*(1-seg(t,b-fo,b));
 function show(el, o){ el.style.opacity = o; }
 function rise(el, t, a, b=99){ const x = ease(seg(t,a,a+.6))*(1-seg(t,b-.4,b)); el.style.opacity = x; el.style.transform = `translateY(${(1-ease(seg(t,a,a+.6)))*24}px)`; }
 let lastSub = null;
-function render(t){
-  // cámara del mapa
+function camAt(t){
   const C0 = {center:[CITY.lon, CITY.lat], zoom:15.6, pitch:64, bearing:-30}, C1 = {center:[CITY.lon, CITY.lat], zoom:15.1, pitch:58, bearing:6};
   const LA = FMT === "v" ? {center:[-74,-40], zoom:2.75, pitch:0, bearing:0} : {center:[-97.5,-12], zoom:2.85, pitch:0, bearing:0}, LA2 = {...LA, zoom:LA.zoom+.12};
   const KC = FMT === "v" ? [CITY.lon, CITY.lat - (NET_CITY ? .04 : -.05)] : [CITY.lon - (NET_CITY ? .10 : .08), CITY.lat + (NET_CITY ? .04 : 0)], zk = NET_CITY ? (NET_CITY.rLat > .15 ? (FMT === "v" ? -.85 : -.6) : 0) : 0;
   const K0 = {center:KC, zoom:(FMT === "v" ? 9.7 : 10.1) + zk, pitch:28, bearing:-8}, K1 = {center:KC, zoom:(FMT === "v" ? 10.0 : 10.5) + zk, pitch:38, bearing:6};
-  if(t < 6) setCam(camLerp(C0, C1, seg(t,0,6)));
-  else if(t < 13.6) setCam(t < 10 ? camLerp(C1, LA, eio(seg(t,6,10))) : camLerp(LA, LA2, seg(t,10,13.6)));
-  else if(t > 24.4 && t < 36.6) setCam(camLerp(K0, K1, seg(t,24.4,36.6)));
-  else if(t > 60.7 && t < 69.2){ const V0 = FMT === "v" ? {center:[-94.8,4.9], zoom:4.3, pitch:0, bearing:0} : {center:[-90,8.7], zoom:4.0, pitch:0, bearing:0}; setCam(camLerp(V0, {...V0, zoom:V0.zoom+.1, pitch:12}, seg(t,60.7,69.2))); }
+  if(t < 6) return camLerp(C0, C1, seg(t,0,6));
+  if(t < 13.6) return t < 10 ? camLerp(C1, LA, eio(seg(t,6,10))) : camLerp(LA, LA2, seg(t,10,13.6));
+  if(t > 24.4 && t < 36.6) return camLerp(K0, K1, seg(t,24.4,36.6));
+  if(t > 60.7 && t < 69.2){ const V0 = FMT === "v" ? {center:[-94.8,4.9], zoom:4.3, pitch:0, bearing:0} : {center:[-90,8.7], zoom:4.0, pitch:0, bearing:0}; return camLerp(V0, {...V0, zoom:V0.zoom+.1, pitch:12}, seg(t,60.7,69.2)); }
+  return null;
+}
+function render(t){
+  // cámara del mapa
+  const cam = camAt(t); if(cam) setCam(cam);
   show($("Lmap"), Math.max(seg(t,0,1)*(1-seg(t,13,13.6)), vis(t,24.6,36.6,.6,.6), vis(t,60.9,69.0,.6,.4)));
   $("smog").style.opacity = .9*(1 - seg(t,6,8.5));
   show($("Lblue"), vis(t,12.8,25.2,.6,.4) || (t > 68.4 ? seg(t,68.4,69) : 0));
@@ -758,6 +804,7 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 function setPlaying(p){
+  if(p && map && !preDone){ $("playLbl").textContent = (LANG === "en" ? "LOADING MAPS…" : "CARGANDO MAPAS…"); const iv = setInterval(()=>{ if(preDone){ clearInterval(iv); setPlaying(true); } }, 300); setTimeout(()=>{ preDone = true; }, 25000); return; }
   playing = p; last = performance.now();
   if(p && t >= CONFIG.duration) t = 0;
   $("bPlay").textContent = p ? "❚❚" : "▶"; $("bPlay").setAttribute("aria-label", p ? "Pausa" : "Reproducir");
