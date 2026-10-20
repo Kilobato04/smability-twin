@@ -238,3 +238,8 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 ### v1.1 · escena 1 más ligera
 - La ciudad se ve en una "lente" circular: el lienzo de Mapbox se reduce al círculo (≈940 px) mientras dura la escena 1 y se abre a pantalla completa al empezar el vuelo al continente.
 - Inclinación menor (54°→48°), niebla con `range` para no pedir mosaicos del horizonte y sin relieve (terrain) en todo el reel.
+
+### Energía SMAA (20 oct, medido)
+- Consumo nominal medido: **0.745 W** con muestreo cada minuto (17.9 Wh/día) → escenario «Típico». «Bajo» 0.47 W y «Alto» 0.95 W quedan como estimados. Reparto por componente escalado al nominal (estimado).
+- Regla del panel sin cambio: peor mes ≥ 1.25× el consumo (los días nublados seguidos son el reto). Entre 1.0× y 1.25× el gemelo marca «Margen justo» y la autonomía sin sol (3.8 días).
+- Batería interna sola: ~10 h.

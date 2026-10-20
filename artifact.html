@@ -623,11 +623,11 @@ async function refineCity(key){
 // eta: temperatura, suciedad y conversión 6 V → 5 V del cargador (sin MPPT declarado).
 const PV = {W:10, tilt:37, battWh:72, intWh:7.4, usable:.85, eta:.70, window:60, step:5};   // Voltaic V75 externa + LiPo interna 2000 mAh de respaldo
 const LOADS = {
-  bajo:  {label:"Bajo",   w:.38, desc:"envío cada 5 min, PM por ciclos"},
-  tipico:{label:"Típico", w:.60, desc:"promedio medido · 3 W solo en picos de transmisión"},
-  alto:  {label:"Alto",   w:.85, desc:"1 min, GPS continuo, señal celular débil"},
+  bajo:  {label:"Bajo",   w:.47, desc:"envío cada 5 min, PM por ciclos (estimado)"},
+  tipico:{label:"Típico", w:.745, desc:"nominal medido, muestreo cada minuto · 3 W solo en picos de transmisión"},
+  alto:  {label:"Alto",   w:.95, desc:"señal celular débil, GPS continuo (estimado)"},
 };
-const LOAD_PARTS = [["Sensor PM (ventilador y láser)", .30], ["Microcontrolador, T/HR, 2 gases y ruido", .10], ["Módem 2G/4G: reposo y picos de 3 W", .13], ["GPS por ciclos", .02], ["Conversión a 5 V", .05]];
+const LOAD_PARTS = [["Sensor PM (ventilador y láser)", .37], ["Microcontrolador, T/HR, 2 gases y ruido", .12], ["Módem 2G/4G: reposo y picos de 3 W", .16], ["GPS por ciclos", .03], ["Conversión a 5 V", .065]];   // reparto estimado del nominal medido (0.745 W)
 /* Gases de SMAA: 2 ranuras intercambiables (una 3.ª si se necesita) */
 const GASES = {
   co: {label:"Monóxido de carbono (CO)", u:"ppm", d:2}, o3:{label:"Ozono (O₃)", u:"ppb", d:0}, no2:{label:"Dióxido de nitrógeno (NO₂)", u:"ppb", d:0},
@@ -840,7 +840,7 @@ const INFO = {
   screws_head:{title:"Tornillos del sensor", sub:"3 × M3 radiales a 120° · fijan la estación compacta al cabezal roscado", metric:null},
   screws:    {title:"Tornillos de la carcasa", sub:"2 × M3 · atraviesan el tubo y fijan las abrazaderas", metric:null},
   // SMAA real (models/smaa.glb)
-  smaa_case: {title:"Carcasa SMAA · tapa superior", sub:"Fija a la pestaña de la placa soporte con 2 tornillos · electrónica, módem 2G/4G (SIM Hologram), GPS y batería interna LiPo 7.4 Wh de respaldo (10–15 h)", metric:"rssi"},
+  smaa_case: {title:"Carcasa SMAA · tapa superior", sub:"Fija a la pestaña de la placa soporte con 2 tornillos · electrónica, módem 2G/4G (SIM Hologram), GPS y batería interna LiPo 7.4 Wh de respaldo (~10 h)", metric:"rssi"},
   smaa_sens: {title:"Módulo de sensores SMAA", sub:"PM2.5 y PM10 (cálculo) · 2 gases intercambiables · temperatura y humedad · ruido · GPS · resolución de 1 a 5 min", metric:"pm25",
               note:"Tomas de aire en la parte baja de la carcasa: el panel y la pestaña las cubren de la lluvia directa sin cerrar el paso del aire. Gases disponibles: CO, O₃, NO₂, SO₂, H₂S, CH₄, NH₃ y TRS (una 3.ª ranura si se necesita). Calibración remota por SMS; O₃ publicado: R² 0.72 → 0.91 contra la red oficial (CCA)."},
   screws_smaa:{title:"Tornillos mango ↔ pestaña", sub:"2 × M5 · atraviesan la barra del mango de SMAA y las ranuras de la pestaña del soporte; rondana y tuerca por debajo", metric:null},
@@ -1343,6 +1343,7 @@ function renderEnergy(EP, pick){
   let msg = hasChaak ? `Montaje: ${MODE_LBL[MP.mode]} (barrenos ${MP.holes}), tapa de CHAAK al ${cardinal(MP.lid)}; SMAA ${smaaUp() ? "arriba, bajo el cople" : "al mismo nivel que CHAAK"} (tomas a ${INLET.smaa} m). ` : "";
   if(pick.dev) msg += `SMAA girada ${Math.abs(pick.dev)}° hacia el ${cardinal(pick.az)} desde la espalda a la lluvia (${EP.lee}° → ${pick.az}°)${pick.ratio > EP.base.ratio + .02 ? `: el peor mes sube de ${EP.base.ratio.toFixed(2)}× a ${pick.ratio.toFixed(2)}×` : ", para respetar la separación con CHAAK"}. Las tomas siguen protegidas.`;
   else msg += EP.base.ratio >= ENERGY_OK ? `SMAA de espaldas a la lluvia: el panel ya alcanza.` : `SMAA de espaldas a la lluvia.`;
+  if(pick.ratio >= 1 && pick.ratio < ENERGY_OK) msg += ` <b>Margen justo en ${MON3[pick.worstM]}:</b> alcanza en promedio, pero con 3 o 4 días nublados seguidos depende de la batería (${EP.autonomy.toFixed(1)} días sin sol).`;
   if(pick.ratio < 1) msg += ` <b>No alcanza en ${MON3[pick.worstM]}:</b> envía cada 5 min o mide PM por ciclos; la batería cubre ${EP.autonomy.toFixed(1)} días de déficit.`;
   const hot = (c().tBase ?? 0) >= 26 ? ` En calor fuerte la batería deja de cargar arriba de 45 °C: que quede a la sombra del panel.` : "";
   el.innerHTML = `<h4>Energía SMAA · panel ${PV.W} W · batería ${PV.battWh} Wh</h4>
@@ -1355,7 +1356,7 @@ function renderEnergy(EP, pick){
     </div>
     <p class="enote"><span class="pill ${cls(pick.ratio)}">Peor mes ${pick.ratio.toFixed(2)}×</span> ${energyLine(EP, pick)}</p>
     <p class="enote">${msg}${hot}</p>
-    <p class="esrc">Consumo supuesto ${LOADS[state.load].w} W (${LOADS[state.load].desc}); falta medirlo en sitio. Sol: ${EP.src}.</p>`;
+    <p class="esrc">Consumo ${LOADS[state.load].w} W (${LOADS[state.load].desc}). Sol: ${EP.src}.</p>`;
 }
 function updateSun(){
   const city = c(), s = sunPosition(cityDate(city,state.month,state.hour), city.lat, city.lon);
