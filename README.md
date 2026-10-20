@@ -243,3 +243,8 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 - Consumo nominal medido: **0.745 W** con muestreo cada minuto (17.9 Wh/día) → escenario «Típico». «Bajo» 0.47 W y «Alto» 0.95 W quedan como estimados. Reparto por componente escalado al nominal (estimado).
 - Regla del panel sin cambio: peor mes ≥ 1.25× el consumo (los días nublados seguidos son el reto). Entre 1.0× y 1.25× el gemelo marca «Margen justo» y la autonomía sin sol (3.8 días).
 - Batería interna sola: ~10 h.
+
+## Reel v1.2 · Voz en inglés (20 oct)
+- `reel/audio/mezcla-en.mp3` (77.1 s): voz ElevenLabs "Hope" + música, con la música bajada ~11 dB mientras habla la voz. Cada frase de la locución (56 s) se colocó en el tiempo de su escena.
+- En inglés (`?lang=en` o botón EN) suena la mezcla; en español sigue solo la música (`musica.mp3`) hasta tener la voz en español.
+- Subtítulos retemporizados para coincidir con la voz (aplica a ambos idiomas).
