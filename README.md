@@ -207,3 +207,8 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 - Escena 3: aire que entra a las cavidades de SMAA (`TWIN.sinlet()`), salpicaduras de lluvia sobre los equipos (`TWIN.surfaces()` + `TWIN.project()`).
 - Cierre con la orientación de Guadalajara (`TWIN.city("gdl","arriba")`), arreglo completo SMAA-CHAAK; con `?city=` usa la orientación de esa ciudad.
 - Precarga de mosaicos de Mapbox de todas las tomas antes de reproducir (el botón muestra «Cargando mapas n/9»).
+
+### v0.6
+- Escena 1 sin lluvia ni rayo; escena 3 sin rayos (solo lluvia con salpicaduras).
+- Escena 3 en tres capas con barrido: rayos X → componentes en color (como las fichas) → sólido con SMAA/CHAAK en azul, justo antes de la lluvia.
+- Modo embebido del gemelo con resolución reducida (más fluido en celulares).

@@ -2208,6 +2208,7 @@ if(URLQ.has("embed")){
   document.documentElement.classList.add("embed");
   if(URLQ.get("theme")) document.documentElement.dataset.theme = URLQ.get("theme");
   controls.enabled = false; controls.enableDamping = false; controls.autoRotate = false;
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25)); resize();   // más ligero dentro del reel (en celulares sobre todo)
   const tintNow = {};
   const SUP = ["cabezal","cople_sup","tubo","cople_base"];
   window.TWIN = {
