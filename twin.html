@@ -2151,7 +2151,7 @@ function frame(){
   }
   if(!state.plan){ stepFocus(); controls.update(); if(persp.position.y < .06) persp.position.y = .06; }
   if(CUT) updateCutPlane();
-  renderer.render(scene, camera);
+  if(!(window.TWIN && window.TWIN.paused)) renderer.render(scene, camera);
   placePanel();
   requestAnimationFrame(frame);
 }
@@ -2227,6 +2227,8 @@ if(URLQ.has("embed")){
         if(hex == null){ if(m.userData.tintMat){ m.userData.tintMat.dispose(); m.userData.tintMat = null; } m.material = materialFor(m, false); return; }
         const base = m.userData.origMat || m.material; const mm = m.userData.tintMat || (m.userData.tintMat = base.clone());
         if(mm.color) mm.color.setHex(SUP.includes(k) ? 0x9AA3B5 : hex); if(mm.emissive) mm.emissive.setHex(0x000000); m.material = mm; }); },
+    paused:false,
+    pause(on){ this.paused = !!on; },
     explode(v){ state.explodeTarget = v ? 1 : 0; },
     render(m){ if(RENDER_MODES.includes(m) && RENDER.mode !== m){ RENDER.mode = m; applyRender(); for(const k in tintNow) delete tintNow[k]; } },
     rain(on){ if(!!state.rain !== !!on) toggleRain(); },

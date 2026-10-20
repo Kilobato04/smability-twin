@@ -217,3 +217,9 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 - Escena 3: callouts numerados sobre el modelo en color (1 sensor meteorológico CHAAK, 2 tubo de ensamble, 3 panel solar, 4 dispositivo CHAAK, 5 dispositivo SMAA) con `TWIN.centers()`; la cámara se detiene en un ángulo donde se ven todos.
 - Cierre más cerrado sobre SMAA-CHAAK con paneo vertical; QR sin URL (son clicables).
 - Celulares: resolución de Mapbox y del gemelo ajustada al tamaño real en pantalla (`pixelRatio`, `?pr=`), sin terreno 3D ni antialias en móvil, caché de mosaicos acotada.
+
+### v0.8 (memoria y carga de mapas)
+- El gemelo deja de dibujar cuando no está en pantalla (`TWIN.pause()`); en celular se carga después de los mapas.
+- Ciudad → continente con corte (fundido) en lugar de vuelo continuo: evita cientos de mosaicos intermedios.
+- Mapbox en Mercator, sin terreno ni edificios 3D en celular, caché de mosaicos acotada (60 en celular, 400 en escritorio), precarga de 3 tomas en celular y 8 en escritorio.
+- En celular: sin captura de pantalla para el barrido de capas, menos partículas y mapas de calor a menor resolución.
