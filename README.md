@@ -234,3 +234,7 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 ### v1.0 · música
 - `reel/audio/musica.mp3` (77 s): "Tech House" de Jonas Blakewood (Pixabay, licencia Pixabay: uso comercial dentro del video, sin atribución obligatoria). Pista original de 41.5 s extendida en el compás de cierre del drop: intro · drop · intro · drop · cierre, para que la energía siga al guion (tormenta y SMAA OS en el primer drop; autocalibración en la intro; chat, ciclo y cobertura en el segundo drop; cierre en el final natural). Normalizada a −16 LUFS.
 - Sincronizada con la línea de tiempo (play, pausa, adelantar); botón ♪ para silenciar; `?mute=1` la arranca en silencio.
+
+### v1.1 · escena 1 más ligera
+- La ciudad se ve en una "lente" circular: el lienzo de Mapbox se reduce al círculo (≈940 px) mientras dura la escena 1 y se abre a pantalla completa al empezar el vuelo al continente.
+- Inclinación menor (54°→48°), niebla con `range` para no pedir mosaicos del horizonte y sin relieve (terrain) en todo el reel.
