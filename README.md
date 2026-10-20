@@ -199,5 +199,11 @@ Edita `twin.html` y luego ejecuta `python3 build.py`, que regenera `index.html`.
 Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjeta SMAA OS, los íconos, las redes y los QR (gemelo y bot) están dibujados en SVG/HTML dentro de la página.
 - Escena 3: órbita cercana alrededor de la estación con SMAA y CHAAK al mismo nivel (`TWIN.align()`); arranca en rayos X y cambia a sólido con un barrido de capas (`TWIN.snap()`).
 - En CDMX los mapas se centran en Paseo de la Reforma 510 (Torre BBVA).
-- Red real (`NET` en `reel/index.html`): 61 nodos (en pantalla «60+») — Valle de México 36 (2 CHAAK), Ciudad de Guatemala 18 (3 + 15 EPIC), Monterrey 2, Guadalajara 2 (1 CHAAK), Durango 1, Cancún 1, Medellín 1 (CHAAK). Ubicaciones aproximadas dentro de cada zona metropolitana; la escena 4 usa los 36 nodos del Valle de México y la escena 7 muestra la cobertura por ciudad.
+- Red real (`NET` en `reel/index.html`): 62 nodos (en pantalla «60+») — Valle de México 36 (2 CHAAK), Ciudad de Guatemala 18 (3 + 15 EPIC), Monterrey 2, Guadalajara 2 (1 CHAAK), Durango 1, Cancún 1, Medellín 2 (1 CHAAK). Ubicaciones aproximadas dentro de cada zona metropolitana; la escena 4 usa los 36 nodos del Valle de México y la escena 7 muestra la cobertura por ciudad.
 - Escena 3: aire "respirado" por SMAA (partículas hacia la toma, `TWIN.inlet()`), lluvia intensa y dos rayos (estilo airegpt.ai). Escena 8: se muestra el mástil para que la estación no flote; redes, gemelo y QR son ligas clicables al final.
+
+### v0.5
+- Narrativa aire + lluvia al mismo nivel: tormenta sobre la ciudad en la escena 1, CHAAK «lluvia y tormentas», «tormenta detectada» en el modelo de lluvia.
+- Escena 3: aire que entra a las cavidades de SMAA (`TWIN.sinlet()`), salpicaduras de lluvia sobre los equipos (`TWIN.surfaces()` + `TWIN.project()`).
+- Cierre con la orientación de Guadalajara (`TWIN.city("gdl","arriba")`), arreglo completo SMAA-CHAAK; con `?city=` usa la orientación de esa ciudad.
+- Precarga de mosaicos de Mapbox de todas las tomas antes de reproducir (el botón muestra «Cargando mapas n/9»).
