@@ -523,8 +523,6 @@ function field(alpha, valueAt, colorOf){
 function drawFX(t){
   g.clearRect(0,0,W(),H());
   if(t < 13.6 || (t > 24.4 && t < 36.6) || (t > 60.7 && t < 69.2)) drawGrid();
-  // S1 · tormenta sobre la ciudad
-  if(t > 3.2 && t < 7.4){ const k = seg(t,3.2,4)*(1 - seg(t,6.4,7.4)); drawRain(g, t, k*.85, 220); drawBolt(g, t, BOLTS[0]); }
   // S1 · el primer nodo se enciende
   if(t > 2 && t < 9){ const [x,y] = project(CITY.lon, CITY.lat), a = seg(t,2,2.6)*(1-seg(t,7.4,9));
     for(let k=0;k<3;k++){ const p = ((t*0.7 + k/3) % 1); g.beginPath(); g.arc(x,y, 14 + p*160, 0, 7); g.strokeStyle = `rgba(159,178,255,${a*(1-p)*.9})`; g.lineWidth = 3; g.stroke(); }
@@ -638,7 +636,7 @@ let TW = null;
 twin.src = `${CONFIG.twinUrl}?embed=reel&view=both&theme=dark&city=${CITY.key || "cdmx"}`;
 const twinPoll = setInterval(()=>{ try{ const w = twin.contentWindow; if(w && w.TWIN && w.TWIN.loaded()){ TW = w.TWIN; TW.shadows(false); clearInterval(twinPoll); lastT = -1; } }catch(_){} }, 300);
 let twinMode = null, snapOK = false;
-const WIPE = [16.4, 17.4];
+const WIPES = [{at:16.4, dur:1, from:"xray"}, {at:20.6, dur:.9, from:"parts"}];
 function drawTwin(t){
   if(TW && t > 62 && t < 68.6 && twinMode !== "s8" + FMT){ twinMode = "s8" + FMT; TW.city(personalized && CITY.key ? CITY.key : "gdl", "arriba"); TW.tint("smaa", null); TW.tint("chaak", null); TW.render("real"); }
   const on = (t > 12.6 && t < 25.4) || t > 68.6;
@@ -652,17 +650,17 @@ function drawTwin(t){
     // órbita cercana alrededor de la estación (casi una vuelta completa)
     const x = seg(t, 12.6, 25.4), pull = ease(seg(t, 18.5, 25.4));
     const cam = [lerp(150, 480, eio(x)), lerp(4, 14, x), lerp(v ? 3.0 : 1.6, v ? 3.5 : 2.05, pull), lerp(1.58, 1.52, pull)];
-    if(t < WIPE[0]){ snapOK = false; TW.render("xray"); }
-    else {
-      if(!snapOK && t < WIPE[1]){ TW.render("xray"); TW.orbit(...cam); xs.src = TW.snap(); snapOK = true; }
-      TW.render("real");
-    }
-    TW.tint("smaa", t >= 18.0 ? 0x2046F2 : null); TW.tint("chaak", t >= 19.2 ? 0x7C9BFF : null);
+    // capas: rayos X → componentes en color (como en las fichas) → sólido con SMAA y CHAAK en azul
+    const mode = t < WIPES[0].at ? "xray" : t < WIPES[1].at ? "parts" : "real";
+    const wp = WIPES.find(q=> t >= q.at && t < q.at + q.dur);
+    if(wp && snapOK !== wp.at){ TW.render(wp.from); TW.tint("smaa", null); TW.tint("chaak", null); TW.orbit(...cam); xs.src = TW.snap(); snapOK = wp.at; }
+    if(!wp) snapOK = false;
+    TW.render(mode);
+    TW.tint("smaa", mode === "real" ? 0x2046F2 : null); TW.tint("chaak", mode === "real" ? 0x7C9BFF : null);
     TW.orbit(...cam);
-    // barrido de capas: la capa de rayos X se levanta y deja ver el sólido
-    const w = seg(t, WIPE[0], WIPE[1]), inWipe = t >= WIPE[0] && t < WIPE[1] && snapOK;
-    xs.style.display = sc.style.display = inWipe ? "block" : "none";
-    if(inWipe){ const e = eio(w); xs.style.clipPath = `inset(0 0 ${e*100}% 0)`; sc.style.top = `calc(${(1-e)*100}% - 2px)`; sc.style.opacity = 1 - seg(t, WIPE[1]-.15, WIPE[1]); }
+    // barrido de capas: la capa anterior se levanta y deja ver la siguiente
+    xs.style.display = sc.style.display = wp ? "block" : "none";
+    if(wp){ const e = eio(seg(t, wp.at, wp.at + wp.dur)); xs.style.clipPath = `inset(0 0 ${e*100}% 0)`; sc.style.top = `calc(${(1-e)*100}% - 2px)`; sc.style.opacity = 1 - seg(t, wp.at + wp.dur - .15, wp.at + wp.dur); }
   } else {
     xs.style.display = sc.style.display = "none";
     if(twinMode !== "s8" + FMT){ twinMode = "s8" + FMT; TW.city(personalized && CITY.key ? CITY.key : "gdl", "arriba"); TW.tint("smaa", null); TW.tint("chaak", null); TW.explode(false); TW.render("real"); }
@@ -715,7 +713,6 @@ function drawWeather(t){
           if(age < .07){ wg.strokeStyle = `rgba(230,235,255,${a*.9})`; wg.lineWidth = 2; wg.beginPath(); wg.ellipse(px, py, 4 + age*120, 1.5 + age*30, 0, 0, 7); wg.stroke(); }
           for(let d=0; d<4; d++){ const ang = Math.PI*(.15 + .7*rk()), v0 = 140 + rk()*170, vx = Math.cos(ang)*v0*(rk() < .5 ? -1 : 1), vy = -Math.sin(ang)*v0;
             const x = px + vx*age, y = py + vy*age + 1500*age*age/2; wg.fillStyle = `rgba(225,232,255,${a})`; wg.beginPath(); wg.arc(x, y, 2.2, 0, 7); wg.fill(); } } }); } }
-  for(const b of BOLTS.slice(1)) drawBolt(wg, t, b);
 }
 function twinFrameShift(t){
   // en 16:9 el equipo se recorre a la derecha (S3) o a la izquierda (S8) para dejar lugar al texto
