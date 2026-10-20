@@ -230,3 +230,7 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 
 ### Gemelo · acceso al reel
 - Ícono de video en la barra de redes del gemelo (junto a LinkedIn): abre `/reel/` en otra pestaña con la ciudad elegida en el gemelo (`?city=`).
+
+### v1.0 · música
+- `reel/audio/musica.mp3` (77 s): "Tech House" de Jonas Blakewood (Pixabay, licencia Pixabay: uso comercial dentro del video, sin atribución obligatoria). Pista original de 41.5 s extendida en el compás de cierre del drop: intro · drop · intro · drop · cierre, para que la energía siga al guion (tormenta y SMAA OS en el primer drop; autocalibración en la intro; chat, ciclo y cobertura en el segundo drop; cierre en el final natural). Normalizada a −16 LUFS.
+- Sincronizada con la línea de tiempo (play, pausa, adelantar); botón ♪ para silenciar; `?mute=1` la arranca en silencio.
