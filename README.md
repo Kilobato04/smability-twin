@@ -227,3 +227,6 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 ### v0.9
 - Escritorio: mapa tipo globo (Mapbox GL, proyección globe) con vuelo ciudad → continente; precarga de 10 tomas.
 - Celular (o `?lite=1` / `?static`): sin Mapbox GL. Cada escena de mapa usa una imagen estática (Mapbox Static Images, vista plana; la primera es el Valle de México) y las capas se dibujan encima. Sin rayos X en el 3D (sus aristas consumen mucha memoria): color → sólido.
+
+### Gemelo · acceso al reel
+- Ícono de video en la barra de redes del gemelo (junto a LinkedIn): abre `/reel/` en otra pestaña con la ciudad elegida en el gemelo (`?city=`).
