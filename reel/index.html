@@ -955,7 +955,7 @@ const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")
 
 /* ---------- reproducción ---------- */
 let t = clamp(+Q.get("t") || 0, 0, CONFIG.duration), playing = false, last = 0, lastT = -1, scrubbing = false;
-/* ---------- música (tech house, 77 s: intro · drop · intro · drop · cierre) ---------- */
+/* ---------- música ("Technology Music Promo", Maksym Malko · Pixabay, recortada a 77.6 s: build 0–13 s · drop 13.5 s · pausa 40–52 s · drop 64.5 s · desvanecido final) ---------- */
 // Solo música en ambos idiomas hasta grabar las voces del guion v4 (mezcla-en.mp3 es del guion anterior y ya no se usa).
 const AUDIO_SRC = { es:"audio/musica.mp3", en:"audio/musica.mp3" };
 const music = new Audio(AUDIO_SRC[LANG] || AUDIO_SRC.es); music.preload = "auto";
@@ -966,7 +966,7 @@ function syncAudio(){
   const ok = playing && !muted && !Q.has("capture") && t < (music.duration || 77) - .05;
   if(ok){ if(music.paused){ try{ music.currentTime = t; }catch(_){} music.play().catch(()=>{}); } else if(Math.abs(music.currentTime - t) > .25){ try{ music.currentTime = t; }catch(_){} } }
   else if(!music.paused) music.pause();
-  music.volume = .85*(1 - seg(t, 75.8, 77.1));
+  music.volume = .85;   // el desvanecimiento final ya viene en el archivo (75.4–77.6 s)
 }
 function setMute(m){ muted = m; $("bSnd").setAttribute("aria-pressed", m ? "true" : "false"); $("bSnd").textContent = m ? "♪̸" : "♪"; $("bSnd").setAttribute("aria-label", m ? "Activar música" : "Silenciar música"); }
 $("bSnd").onclick = ()=>{ primeAudio(); setMute(!muted); };
