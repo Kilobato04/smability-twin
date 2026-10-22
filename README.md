@@ -248,3 +248,12 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 - `reel/audio/mezcla-en.mp3` (77.1 s): voz ElevenLabs "Hope" + música, con la música bajada ~11 dB mientras habla la voz. Cada frase de la locución (56 s) se colocó en el tiempo de su escena.
 - En inglés (`?lang=en` o botón EN) suena la mezcla; en español sigue solo la música (`musica.mp3`) hasta tener la voz en español.
 - Subtítulos retemporizados para coincidir con la voz (aplica a ambos idiomas).
+
+## Reel v1.3 · Nueva estructura (22 oct)
+- Orden según el guion v4: Problema → Dispositivos → **Calibración (02)** → **SMAA OS / modelos (03)** → **AIreGPT (04)** → Red → Cierre. Las escenas se reordenaron con `SH4 = +10 s` (SMAA OS) y `SH5 = −11.4 s` (calibración).
+- Dispositivos: sello "+ RUIDO · casi ninguna red lo mide en la región".
+- Calibración: O₃ con R² 0.72 → 0.91 "validado una vez contra referencia ICAyCC-UNAM"; esquema O₃ · PM2.5; "Mínimo mantenimiento en campo" (ya no "hasta 24 meses sin visitas").
+- SMAA OS: "Nuestro sistema operativo".
+- AIreGPT: configuración en lenguaje natural (casa y trabajo) y alerta masiva: una celda del modelo se activa y la alerta llega a todos los usuarios dentro de ella.
+- Anillo en el nuevo orden; cobertura: Valle de México 36 (1 CHAAK), Monterrey 4, Durango 2, Guadalajara 2, Cancún 1, Guatemala 18 (15 EPIC en instalación), Medellín 2 (1 CHAAK); leyenda aire · clima · agua · calor; cifras 9 años · 60+ nodos vendidos · 3 países · 1 patente en trámite.
+- Subtítulos ES/EN del guion v4. Audio: solo música en ambos idiomas; `audio/mezcla-en.mp3` (guion anterior) ya no se usa.
