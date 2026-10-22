@@ -2203,24 +2203,24 @@ if(URLQ.has("embed")){
   window.TWIN = {
     loaded: () => !!(ST.chaak.parts.head && ST.smaa.parts && Object.keys(ST.smaa.parts).length),
     orbit(az, el, dist, ty){ const a = az*RAD, e = el*RAD; controls.target.set(0, ty, 0);
-      persp.position.set(Math.sin(a)*Math.cos(e)*dist, ty + Math.sin(e)*dist, Math.cos(a)*Math.cos(e)*dist); persp.lookAt(controls.target); },
+      persp.position.set(Math.sin(a)*Math.cos(e)*dist, ty + Math.sin(e)*dist, Math.cos(a)*Math.cos(e)*dist); persp.lookAt(controls.target); persp.updateMatrixWorld(true); },
     clean(on){ for(const o of [floor, ground, landmark, sunMarker, frontMark, inletZone]) if(o) o.visible = !on; if(on) rainLines.visible = false; },
     rig(on){ Object.values(RIG.parts).forEach(p=> p.group.visible = !!on); },
     floor(on){ floor.visible = !!on; },
     zone(on){ inletZone.visible = !!on; sunMarker.visible = !!on; },
     inlet(){ const v = new THREE.Vector3(); inletZone.getWorldPosition(v); v.project(camera); return [(v.x+1)/2, (1-v.y)/2]; },
     city(k, h){ if(h === "arriba" || h === "nivel") state.smaaH = h; if(CITIES[k]){ state.city = k; } applyCity(); },
-    sinlet(){ const g = ST.smaa.parts.smaa_sens && ST.smaa.parts.smaa_sens.group; if(!g) return this.inlet();
+    sinlet(){ camera.updateMatrixWorld(true); const g = ST.smaa.parts.smaa_sens && ST.smaa.parts.smaa_sens.group; if(!g) return this.inlet();
       const b = new THREE.Box3().setFromObject(g), v = new THREE.Vector3((b.min.x+b.max.x)/2, b.min.y, (b.min.z+b.max.z)/2); v.project(camera); return [(v.x+1)/2, (1-v.y)/2]; },
     surfaces(n){ const groups = [smaaG, caseG, fixedG], b = new THREE.Box3(); groups.forEach(gr=> b.expandByObject(gr));
       const meshes = []; groups.forEach(gr=> gr.traverse(m=>{ if(m.isMesh && !m.userData.isEdge && !m.userData.helper && !m.userData.isCap && shown(m)) meshes.push(m); }));
       const rc = new THREE.Raycaster(), out = []; n = n || 14;
       for(let i=0;i<n;i++) for(let j=0;j<n;j++){ const x = b.min.x + (i+.5)/n*(b.max.x-b.min.x), z = b.min.z + (j+.5)/n*(b.max.z-b.min.z);
         rc.set(new THREE.Vector3(x, b.max.y + 1, z), new THREE.Vector3(0,-1,0)); const h = rc.intersectObjects(meshes, false)[0];
-        if(h && h.point.y > b.min.y + .25) out.push(h.point.clone()); }
+        if(h && h.point.y > b.min.y + .25) out.push({obj:h.object, local:h.object.worldToLocal(h.point.clone())}); }
       return out; },
-    project(pts){ return pts.map(p=>{ const v = p.clone().project(camera); return [(v.x+1)/2, (1-v.y)/2, v.z]; }); },
-    centers(list){ return list.map(([st, keys, fy])=>{ const own = st === "rig" ? RIG : ST[st]; const k = keys.find(q=> own && own.parts[q]); if(!k) return null;
+    project(pts){ scene.updateMatrixWorld(); camera.updateMatrixWorld(true); return pts.map(p=>{ const v = (p.obj ? p.obj.localToWorld(p.local.clone()) : p.clone()).project(camera); return [(v.x+1)/2, (1-v.y)/2, v.z]; }); },
+    centers(list){ camera.updateMatrixWorld(true); return list.map(([st, keys, fy])=>{ const own = st === "rig" ? RIG : ST[st]; const k = keys.find(q=> own && own.parts[q]); if(!k) return null;
       const b = new THREE.Box3().setFromObject(own.parts[k].group); if(b.isEmpty()) return null; const v = b.getCenter(new THREE.Vector3()); if(fy != null) v.y = b.min.y + (b.max.y - b.min.y)*fy; v.project(camera); return [(v.x+1)/2, (1-v.y)/2, v.z]; }); },
     align(){ state.smaaH = "nivel"; applyCity(); },
     snap(){ renderer.render(scene, camera); return renderer.domElement.toDataURL("image/png"); },

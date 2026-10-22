@@ -257,3 +257,8 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 - AIreGPT: configuración en lenguaje natural (casa y trabajo) y alerta masiva: una celda del modelo se activa y la alerta llega a todos los usuarios dentro de ella.
 - Anillo en el nuevo orden; cobertura: Valle de México 36 (1 CHAAK), Monterrey 4, Durango 2, Guadalajara 2, Cancún 1, Guatemala 18 (15 EPIC en instalación), Medellín 2 (1 CHAAK); leyenda aire · clima · agua · calor; cifras 9 años · 60+ nodos vendidos · 3 países · 1 patente en trámite.
 - Subtítulos ES/EN del guion v4. Audio: solo música en ambos idiomas; `audio/mezcla-en.mp3` (guion anterior) ya no se usa.
+
+## Reel v1.4 (22 oct)
+- AIreGPT: después de la alerta de lluvia por celda llega una **contingencia ambiental en toda la ciudad** (onda naranja sobre la retícula, todos los usuarios la reciben); el chat suma la tarjeta de contingencia y la notificación cambia a "CONTINGENCIA FASE I".
+- Cifras finales sin encimarse (leyenda de cobertura más arriba y separación entre número y etiqueta).
+- Gemelo (`twin.html`): las salpicaduras de lluvia ahora siguen la geometría del equipo mientras gira (puntos guardados en coordenadas locales y matrices de cámara actualizadas antes de proyectar).
