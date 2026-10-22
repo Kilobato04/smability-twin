@@ -47,8 +47,8 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
 .soc svg{width:28px;height:28px}
 .soc a:hover{background:rgba(159,178,255,.18)}
 #s8.live{pointer-events:auto}
-#covSup{top:auto;bottom:330px}
-.v #covSup{bottom:790px}
+#covSup{top:auto;bottom:395px}
+.v #covSup{bottom:800px}
 .qr svg{width:190px;height:190px;border-radius:12px;background:#fff;padding:8px;display:block}
 .bgblue{position:absolute;inset:0;background:radial-gradient(70% 80% at 50% 45%,#12339A 0%,#001766 70%,#000B3D 100%)}
 .smog{position:absolute;inset:-10%;background:radial-gradient(40% 30% at 30% 70%,rgba(160,150,190,.30),transparent 70%),radial-gradient(50% 35% at 75% 60%,rgba(140,130,170,.26),transparent 70%),linear-gradient(180deg,rgba(0,10,40,.55),rgba(70,60,90,.25) 60%,rgba(0,8,30,.7))}
@@ -166,7 +166,7 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
 .v #stats{bottom:440px;gap:24px 70px;flex-wrap:wrap;padding:0 60px}
 .v #stats .stat b{font-size:80px}
 #stats{gap:90px}
-.stat{text-align:center;opacity:0}.stat b{display:block;font-family:var(--f-disp);font-weight:700;font-size:110px;line-height:.95}.stat span{font-size:28px;color:var(--mist)}
+.stat{text-align:center;opacity:0}.stat span{display:block;margin-top:10px}.stat b{display:block;font-family:var(--f-disp);font-weight:700;font-size:110px;line-height:.95}.stat span{font-size:28px;color:var(--mist)}
 .v .stat b{font-size:96px}
 /* S8 */
 #end{position:absolute;right:0;top:0;bottom:0;width:820px;background:linear-gradient(90deg,rgba(0,23,102,0),rgba(0,23,102,.92) 18%,#001766);display:flex;flex-direction:column;justify-content:center;gap:40px;padding:0 96px 120px 180px}
@@ -354,7 +354,7 @@ const T = {
     s4kick:"03 · SMAA OS", s4title:"Cada minuto", osSub:"Nuestro sistema operativo", os1:"IoT en tiempo real", os2:"Modelos de aire y lluvia", os3:"APIs abiertas", storm:"TORMENTA DETECTADA", call1:"Sensor meteorológico CHAAK", call2:"Tubo de ensamble", call3:"Panel solar", call4:"Dispositivo CHAAK", call5:"Dispositivo SMAA", loading:"CARGANDO GEMELO 3D…", s4aq:"CALIDAD DEL AIRE · EN VIVO", s4rain:"LLUVIA Y TORMENTAS · EN VIVO", sim:"SIMULACIÓN ILUSTRATIVA",
     s5kick:"02 · AUTOCALIBRACIÓN", s5title:"Se corrige sola", r2lbl:"O₃ VS. REFERENCIA ICAyCC-UNAM (R²) · VALIDADO UNA VEZ", months:"MANTENIMIENTO EN CAMPO", minimal:"Mínimo", axisT:"TIEMPO", noise:"+ RUIDO · CASI NINGUNA RED LO MIDE EN LA REGIÓN",
     ref:"Referencia", raw:"Sensor sin corregir", cal:"Autocalibrado", concept:"ESQUEMA ILUSTRATIVO · O₃ · PM2.5",
-    s6kick:"04 · AIreGPT", s6title:"Alertas hiperlocales", bc1:"1 alerta → todos en la celda", bcCell:"LLUVIA INTENSA · CELDA ACTIVA", home:"Casa", work:"Trabajo", s6tag:"TELEGRAM HOY · WHATSAPP 2027", online:"● EN LÍNEA · Aire + Lluvia",
+    s6kick:"04 · AIreGPT", s6title:"Alertas hiperlocales", bc1:"1 alerta → todos en la celda", bc2:"🚨 Contingencia · 1 alerta → toda la ciudad", bcCell:"LLUVIA INTENSA · CELDA ACTIVA", bcCity:"CONTINGENCIA AMBIENTAL · TODA LA CIUDAD", pushT2:"🚨 CONTINGENCIA FASE I · ZMVM", pushM2:"Ozono muy alto · evita actividad al aire libre", home:"Casa", work:"Trabajo", s6tag:"TELEGRAM HOY · WHATSAPP 2027", online:"● EN LÍNEA · Aire + Lluvia",
     pushT:"⛈️ LLUVIA INTENSA · TRABAJO", pushM:"Torrencial en 10–15 min · evita encharcamientos",
     n1:"Dispositivos", n3:"Autocalibración", loop:"Un solo<br>ciclo", st1:"9 años", st1s:"operando", st2s:"nodos vendidos", st4s:"patente en trámite", st3:"3 países", st3s:"México · Guatemala · Colombia", covKick:"COBERTURA SMABILITY", covLeg:'<span><b style="background:#fff;box-shadow:0 0 10px #9FB2FF"></b>aire · clima · agua · calor</span><span><b style="background:#7FE7FF;border-radius:3px"></b>CHAAK</span><span style="opacity:.7">ubicaciones aproximadas</span>', netNote:"NODOS SMABILITY · VALORES ILUSTRATIVOS",
     s8kick:"GEMELO DIGITAL", qr1:"GEMELO DIGITAL", qr2:"HABLA CON AIreGPT" },
@@ -363,7 +363,7 @@ const T = {
     s4kick:"03 · SMAA OS", s4title:"Every minute", osSub:"Our operating system", os1:"Real-time IoT", os2:"Air and rain models", os3:"Open APIs", storm:"STORM DETECTED", call1:"CHAAK weather sensor", call2:"Mounting tube", call3:"Solar panel", call4:"CHAAK unit", call5:"SMAA unit", loading:"LOADING 3D TWIN…", s4aq:"AIR QUALITY · LIVE", s4rain:"RAIN AND STORMS · LIVE", sim:"ILLUSTRATIVE SIMULATION",
     s5kick:"02 · SELF-CALIBRATION", s5title:"It fixes itself", r2lbl:"O₃ VS. ICAyCC-UNAM REFERENCE (R²) · VALIDATED ONCE", months:"FIELD MAINTENANCE", minimal:"Minimal", axisT:"TIME", noise:"+ NOISE · RARELY MEASURED IN THE REGION",
     ref:"Reference", raw:"Uncorrected sensor", cal:"Self-calibrated", concept:"ILLUSTRATIVE DIAGRAM · O₃ · PM2.5",
-    s6kick:"04 · AIreGPT", s6title:"Hyperlocal alerts", bc1:"1 alert → everyone in the cell", bcCell:"HEAVY RAIN · ACTIVE CELL", home:"Home", work:"Work", s6tag:"TELEGRAM TODAY · WHATSAPP 2027", online:"● ONLINE · Air + Rain",
+    s6kick:"04 · AIreGPT", s6title:"Hyperlocal alerts", bc1:"1 alert → everyone in the cell", bc2:"🚨 Contingency · 1 alert → the whole city", bcCell:"HEAVY RAIN · ACTIVE CELL", bcCity:"AIR-QUALITY CONTINGENCY · CITYWIDE", pushT2:"🚨 PHASE I CONTINGENCY · MEXICO CITY", pushM2:"Very high ozone · avoid outdoor activity", home:"Home", work:"Work", s6tag:"TELEGRAM TODAY · WHATSAPP 2027", online:"● ONLINE · Air + Rain",
     pushT:"⛈️ HEAVY RAIN · WORK", pushM:"Torrential in 10–15 min · avoid flooded streets",
     n1:"Devices", n3:"Self-calibration", loop:"One closed<br>loop", st1:"9 years", st1s:"in operation", st2s:"nodes sold", st4s:"patent pending", st3:"3 countries", st3s:"Mexico · Guatemala · Colombia", covKick:"SMABILITY COVERAGE", covLeg:'<span><b style="background:#fff;box-shadow:0 0 10px #9FB2FF"></b>air · weather · water · heat</span><span><b style="background:#7FE7FF;border-radius:3px"></b>CHAAK</span><span style="opacity:.7">approximate locations</span>', netNote:"SMABILITY NODES · ILLUSTRATIVE VALUES",
     s8kick:"DIGITAL TWIN", qr1:"DIGITAL TWIN", qr2:"TALK TO AIreGPT" }
@@ -400,7 +400,7 @@ function applyLang(){
   if(NET_CITY) $("s4note").textContent = `${NET_CITY.n} ${T[LANG].netNote}`;
   $("endTitle").textContent = endLine();
   $("bLang").textContent = LANG.toUpperCase();
-  buildChat(); buildChart(); lastSub = null;
+  buildChat(); buildChart(); lastSub = null; pushB = null;
   try{ audioLang(); }catch(_){}
 }
 
@@ -674,20 +674,22 @@ function buildChat(){
   const user = txt => `<div class="msg user"><div class="bubble">${txt}</div><span class="paloma">✓✓ 08:10</span></div>`;
   const ok = `<div class="msg bot"><div class="bname" style="color:#00f2fe">✅ ${es?"ALERTAS ACTIVAS":"ALERTS ON"}</div><div class="aq-card"><div class="aq-body"><div class="aq-row"><span class="aq-lbl">🏠 ${es?"CASA":"HOME"}</span><span style="font-size:10px;font-weight:700;color:#fff">Col. Doctores</span></div><div class="aq-row"><span class="aq-lbl">🏢 ${es?"TRABAJO":"WORK"}</span><span style="font-size:10px;font-weight:700;color:#fff">Polanco</span></div><div class="aq-row"><span class="aq-lbl">${es?"AVISOS":"ALERTS"}</span><span style="font-size:10px;font-weight:700;color:#7eb8ff">${es?"Lluvia fuerte · aire malo":"Heavy rain · bad air"}</span></div></div></div><span class="mtime">08:10</span></div>`;
   const rain = `<div class="msg bot"><div class="bname" style="color:#7eb8ff">🌧️ ${es?"ALERTA DE LLUVIA · TRABAJO":"RAIN ALERT · WORK"}</div><div class="cont-card" style="border-color:#1a6fff;box-shadow:0 0 16px rgba(26,111,255,.3)"><div class="cont-header" style="background:linear-gradient(135deg,#0a1a40,#0d2a80)"><span style="font-size:16px">⛈️</span><div><div class="cont-title" style="color:#7eb8ff">${es?"LLUVIA INTENSA EN CAMINO":"HEAVY RAIN ON ITS WAY"}</div><div class="cont-sub">${es?"Polanco · en 10–15 min":"Polanco · in 10–15 min"}</div></div></div><div class="cont-body" style="background:#080d1e"><div class="cont-row"><span class="cont-lbl" style="color:rgba(126,184,255,.7)">${es?"INTENSIDAD":"INTENSITY"}</span><span class="cont-val" style="color:#7eb8ff">${es?"Torrencial (&gt;20 mm/h)":"Torrential (&gt;20 mm/h)"}</span></div><div class="cont-block" style="background:#0a1030;border:1px solid rgba(26,111,255,.3);color:#aac8ff"><strong style="color:#7eb8ff;display:block">⚠️ ${es?"Evita zonas de encharcamiento":"Avoid flood-prone streets"}</strong>${es?"Lleva paraguas o espera 20 min antes de salir.":"Take an umbrella or wait 20 min before leaving."}</div></div></div><span class="mtime">17:42</span></div>`;
-  box.innerHTML = user(es ? "Avísame si llueve fuerte o si el aire se pone malo cerca de mi casa y de mi trabajo 🏠🏢" : "Let me know if heavy rain or bad air hits near my home or my work 🏠🏢") + ok + rain;
-  CHAT = [...box.children].map((el,i)=> ({el, at:[47.2, 49.4, 53.6][i]}));
+  const cont = `<div class="msg bot"><div class="bname" style="color:#ff6060">🚨 ${es?"CONTINGENCIA AMBIENTAL · FASE I":"AIR-QUALITY CONTINGENCY · PHASE I"}</div><div class="cont-card"><div class="cont-header"><span style="font-size:16px">🚨</span><div><div class="cont-title">${es?"TODA LA CIUDAD · OZONO":"CITYWIDE · OZONE"}</div><div class="cont-sub">${es?"Declarada hace 2 min":"Declared 2 min ago"}</div></div></div><div class="cont-body"><div class="cont-row"><span class="cont-lbl">${es?"IAS MÁXIMO":"PEAK AQI"}</span><span class="cont-val big">172</span></div><div class="cont-block health"><strong>🫁 ${es?"Recomendaciones":"Advice"}</strong>${es?"· Evita ejercicio al aire libre<br>· Cierra ventanas":"· Avoid outdoor exercise<br>· Keep windows closed"}</div></div></div><span class="mtime">17:55</span></div>`;
+  box.innerHTML = user(es ? "Avísame si llueve fuerte o si el aire se pone malo cerca de mi casa y de mi trabajo 🏠🏢" : "Let me know if heavy rain or bad air hits near my home or my work 🏠🏢") + ok + rain + cont;
+  CHAT = [...box.children].map((el,i)=> ({el, at:[47.2, 49.4, 53.6, 55.5][i]}));
 }
 const TYPING = [[48.2,49.4]];
 function drawChat(t){
   CHAT.forEach(m=> m.el.classList.toggle("on", t >= m.at));
   $("typing").classList.toggle("on", TYPING.some(([a,b])=> t>=a && t<b));
-  $("push").classList.toggle("on", t >= 52.9 && t < 55.2);
-  const sh = t >= 52.9 && t < 53.5; if(sh !== shaking){ shaking = sh; $("phone").classList.toggle("shake", sh); }
+  const p2 = t >= 54.9; $("push").classList.toggle("on", (t >= 52.9 && t < 54.6) || (t >= 54.9 && t < 57.2));
+  if(p2 !== pushB){ pushB = p2; const L = T[LANG]; $("push").querySelector(".push-title").textContent = p2 ? L.pushT2 : L.pushT; $("push").querySelector(".push-msg").textContent = p2 ? L.pushM2 : L.pushM; }
+  const sh = (t >= 52.9 && t < 53.5) || (t >= 54.9 && t < 55.5); if(sh !== shaking){ shaking = sh; $("phone").classList.toggle("shake", sh); }
 }
 /* S6 · alerta masiva: una celda del modelo se activa y la alerta llega a todos los usuarios dentro de ella */
 const bc = $("bc"), bg2 = bc.getContext("2d");
 const BC_USERS = (()=>{ const r = rng(2026), out = []; for(let i=0;i<170;i++) out.push({u:r(), v:r(), work:r() < .45, ph:r()}); return out; })();
-function bcBox(){ return FMT === "v" ? {x:72, y:1180, w:936, h:300, c:50} : {x:96, y:470, w:1080, h:390, c:56}; }
+function bcBox(){ return FMT === "v" ? {x:72, y:1180, w:936, h:250, c:50} : {x:96, y:470, w:1080, h:390, c:56}; }
 function drawBroadcast(t){
   if(bc.width !== W() || bc.height !== H()){ bc.width = W(); bc.height = H(); }
   bg2.clearRect(0,0,W(),H());
@@ -705,25 +707,35 @@ function drawBroadcast(t){
   if(on > 0){ bg2.fillStyle = `rgba(139,92,246,${.42*on})`; bg2.fillRect(ox + ac*B.c, oy + ar*B.c, 3*B.c, 2*B.c);
     bg2.strokeStyle = `rgba(230,70,240,${.9*on})`; bg2.lineWidth = 3; bg2.strokeRect(ox + ac*B.c, oy + ar*B.c, 3*B.c, 2*B.c);
     for(let k=0;k<3;k++){ const p = ((t - 52.5)*.7 + k/3) % 1; if(t < 52.5) break; bg2.beginPath(); bg2.arc(ccx, ccy, 20 + p*B.c*3.2, 0, 7); bg2.strokeStyle = `rgba(230,70,240,${(1-p)*.55*on})`; bg2.lineWidth = 3; bg2.stroke(); }
-    bg2.font = "600 20px 'JetBrains Mono', monospace"; bg2.textAlign = "left"; bg2.textBaseline = "middle"; const lab = T[LANG].bcCell, tw = bg2.measureText(lab).width;
-    const lx = Math.min(ox + ac*B.c, ox + cols*B.c - tw - 24), ly = oy + (ar+2)*B.c + 24;
-    bg2.fillStyle = `rgba(0,14,60,${.9*on})`; bg2.fillRect(lx, ly - 18, tw + 24, 36); bg2.fillStyle = `rgba(240,200,255,${on})`; bg2.fillText(lab, lx + 12, ly + 1); }
+  }
+  // contingencia: la alerta se extiende a toda la ciudad (onda desde el centro)
+  const cityOn = seg(t,54.8,55.4), cx0 = ox + cols*B.c/2, cy0 = oy + rows*B.c/2, wave = d => seg(t, 54.8 + d/1100, 55.2 + d/1100);
+  if(cityOn > 0){ for(let i=0;i<cols;i++) for(let j=0;j<rows;j++){ const x = ox + i*B.c, y = oy + j*B.c, w = wave(Math.hypot(x + B.c/2 - cx0, y + B.c/2 - cy0));
+      if(w > 0){ bg2.fillStyle = `rgba(255,126,0,${.26*w})`; bg2.fillRect(x + 1, y + 1, B.c - 2, B.c - 2); } }
+    const p = (t - 54.8)*.9 % 1; bg2.beginPath(); bg2.arc(cx0, cy0, 30 + p*Math.hypot(cols*B.c, rows*B.c)*.6, 0, 7); bg2.strokeStyle = `rgba(255,170,60,${(1-p)*.6*cityOn})`; bg2.lineWidth = 4; bg2.stroke();
+  }
   // usuarios: 🏠 casa · 🏢 trabajo; los que están en la celda reciben la alerta
   BC_USERS.forEach((q,i)=>{ const x = ox + q.u*cols*B.c, y = oy + q.v*rows*B.c, cx = Math.floor(q.u*cols), cy = Math.floor(q.v*rows), hit = inCell(cx,cy);
-    const ap = seg(t, 51.4 + q.ph*.6, 51.8 + q.ph*.6), d = Math.hypot(x-ccx, y-ccy), lit = hit ? seg(t, 52.9 + d/600, 53.2 + d/600) : 0;
+    const ap = seg(t, 51.4 + q.ph*.6, 51.8 + q.ph*.6), d = Math.hypot(x-ccx, y-ccy), litR = hit ? seg(t, 52.9 + d/600, 53.2 + d/600) : 0, litC = wave(Math.hypot(x-cx0, y-cy0)), lit = Math.max(litR, litC);
     const s = 9, col = lit > 0 ? `rgba(255,255,255,${ap})` : `rgba(159,178,255,${.55*ap})`;
     bg2.fillStyle = col; bg2.strokeStyle = col; bg2.lineWidth = 2;
     if(q.work){ bg2.fillRect(x - s*.8, y - s*.55, s*1.6, s*1.15); bg2.strokeRect(x - s*.35, y - s*.85, s*.7, s*.35); }
     else { bg2.beginPath(); bg2.moveTo(x, y - s); bg2.lineTo(x + s, y - s*.1); bg2.lineTo(x + s*.75, y - s*.1); bg2.lineTo(x + s*.75, y + s*.75); bg2.lineTo(x - s*.75, y + s*.75); bg2.lineTo(x - s*.75, y - s*.1); bg2.lineTo(x - s, y - s*.1); bg2.closePath(); bg2.fill(); }
-    if(lit > 0){ const pul = .7 + .3*Math.sin(t*8 + i); bg2.beginPath(); bg2.arc(x + s, y - s, 6.5, 0, 7); bg2.fillStyle = `rgba(255,59,48,${lit*pul})`; bg2.fill();
+    if(lit > 0){ const pul = .7 + .3*Math.sin(t*8 + i); bg2.beginPath(); bg2.arc(x + s, y - s, 6.5, 0, 7); bg2.fillStyle = litC > litR ? `rgba(255,140,0,${lit*pul})` : `rgba(230,70,240,${lit*pul})`; bg2.fill();
       bg2.beginPath(); bg2.arc(x, y, 16 + 10*(1 - lit), 0, 7); bg2.strokeStyle = `rgba(255,255,255,${.5*lit})`; bg2.lineWidth = 2; bg2.stroke(); } });
+  // etiqueta de la celda (encima de los usuarios)
+  if(on > 0){
+    bg2.font = "600 20px 'JetBrains Mono', monospace"; bg2.textAlign = "left"; bg2.textBaseline = "middle"; const lab = T[LANG].bcCell, tw = bg2.measureText(lab).width;
+    const lx = Math.min(ox + ac*B.c, ox + cols*B.c - tw - 24), ly = oy + (ar+2)*B.c + 24;
+    bg2.fillStyle = `rgba(0,14,60,${.9*on})`; bg2.fillRect(lx, ly - 18, tw + 24, 36); bg2.fillStyle = `rgba(240,200,255,${on})`; bg2.fillText(lab, lx + 12, ly + 1); }
   // leyenda y mensaje
   const ly = oy - 28; bg2.textBaseline = "middle"; bg2.textAlign = "left"; bg2.font = "500 22px 'JetBrains Mono', monospace";
   bg2.fillStyle = "rgba(199,210,255,.85)"; bg2.fillText(`⌂ ${T[LANG].home}   ▣ ${T[LANG].work}`, ox, ly);
-  const m = seg(t,53.8,54.4); if(m > 0){ bg2.font = "700 34px 'Barlow Condensed', 'Arial Narrow', sans-serif"; bg2.textAlign = "right"; bg2.fillStyle = `rgba(255,255,255,${m})`; bg2.fillText(T[LANG].bc1, ox + cols*B.c, ly); }
+  const m = seg(t,53.4,53.9); if(m > 0){ const sw = seg(t,54.8,55.2); bg2.font = "700 34px 'Barlow Condensed', 'Arial Narrow', sans-serif"; bg2.textAlign = "right";
+    const my = FMT === "v" ? ly - 44 : ly; bg2.fillStyle = `rgba(255,255,255,${m*(1-sw)})`; bg2.fillText(T[LANG].bc1, ox + cols*B.c, my); bg2.fillStyle = `rgba(255,200,140,${sw})`; bg2.fillText(T[LANG].bc2, ox + cols*B.c, my); }
   bg2.restore();
 }
-let shaking = false;
+let shaking = false, pushB = null;
 
 /* ---------- gemelo digital (iframe) ---------- */
 const twin = $("twin");
