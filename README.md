@@ -262,3 +262,9 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 - AIreGPT: después de la alerta de lluvia por celda llega una **contingencia ambiental en toda la ciudad** (onda naranja sobre la retícula, todos los usuarios la reciben); el chat suma la tarjeta de contingencia y la notificación cambia a "CONTINGENCIA FASE I".
 - Cifras finales sin encimarse (leyenda de cobertura más arriba y separación entre número y etiqueta).
 - Gemelo (`twin.html`): las salpicaduras de lluvia ahora siguen la geometría del equipo mientras gira (puntos guardados en coordenadas locales y matrices de cámara actualizadas antes de proyectar).
+
+## Reel v1.5 (22 oct)
+- Alerta masiva: íconos vectoriales (casa, trabajo y triángulo de contingencia) en lugar de emojis.
+- 9:16: lista de dispositivos en un panel compacto que no choca con la estación; cajas de calibración lado a lado; teléfono de AIreGPT más arriba.
+- Sello de ruido ajustado a su texto.
+- Badge "Powered by Netlify" oculto en el reel y en el gemelo (CSS + observador que lo esconde si Netlify lo inyecta).

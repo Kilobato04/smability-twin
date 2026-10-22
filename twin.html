@@ -352,6 +352,9 @@ html.embed .bar,html.embed .dock,html.embed .tabbar,html.embed #sheet{display:no
 html.embed #stage>:not(canvas){display:none!important}
 html.embed #stage{background:transparent!important}
 html.embed #stage canvas{pointer-events:none}
+
+/* sin badge de Netlify */
+[id*="netlify" i],[class*="netlify" i],a[href*="netlify.com"]{display:none!important}
 </style>
 
 <div id="app">
@@ -2241,4 +2244,7 @@ if(URLQ.has("embed")){
 
 $("reelLink").addEventListener("click", e=>{ e.currentTarget.href = `reel/?city=${encodeURIComponent(state.city)}`; });
 frame();
+(function(){ const hide = ()=>{ for(const el of document.body.children){ if(el.dataset && el.dataset.nh) continue; const tx = (el.innerText || "") + (el.shadowRoot ? el.shadowRoot.textContent : "");
+  if(/netlify/i.test(el.tagName) || /powered by\s*netlify/i.test(tx)){ el.style.setProperty("display","none","important"); el.dataset.nh = 1; } } };
+  new MutationObserver(hide).observe(document.body, {childList:true}); setInterval(hide, 1500); hide(); })();
 </script>
