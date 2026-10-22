@@ -76,12 +76,12 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
 .legend b{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:10px;vertical-align:-1px}
 /* S3 */
 #s3 .list{position:absolute;left:96px;top:360px;display:flex;flex-direction:column;gap:34px;width:640px}
-.v #s3 .list{left:72px;right:72px;top:auto;bottom:450px;width:auto;gap:22px}
+.v #s3 .list{left:48px;right:48px;top:auto;bottom:455px;width:auto;gap:12px;background:rgba(0,23,102,.78);border:1.5px solid rgba(159,178,255,.25);border-radius:22px;padding:26px 28px}
 .item{display:grid;grid-template-columns:22px 1fr;column-gap:20px;row-gap:6px;align-items:baseline;opacity:0}
 .item i{width:22px;height:22px;border-radius:6px;grid-row:span 2;align-self:start;margin-top:8px}
 .item b{font-family:var(--f-disp);font-weight:700;font-size:54px;line-height:1}
 .item span{font-size:28px;color:var(--ice);line-height:1.3}
-.v .item b{font-size:48px}.v .item span{font-size:28px}
+.v .item b{font-size:40px}.v .item span{font-size:24px}
 /* S4 */
 #oscard{position:absolute;right:96px;top:90px;width:390px;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.5);opacity:0;transform-origin:top right}
 .v #oscard{right:50%;top:330px;width:400px;transform-origin:top center}
@@ -93,7 +93,8 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
 #s5 .chart{position:absolute;left:96px;top:300px;width:1100px;height:560px}
 .v #s5 .chart{left:60px;top:640px;width:960px;height:520px}
 #s5 .r2{position:absolute;right:110px;top:330px;width:520px;display:flex;flex-direction:column;gap:22px}
-.v #s5 .r2{right:auto;left:72px;top:330px;width:936px;flex-direction:row;flex-wrap:wrap;gap:14px 40px}
+.v #s5 .r2{right:auto;left:72px;top:330px;width:936px;flex-direction:row;flex-wrap:nowrap;gap:24px;align-items:stretch}
+.v #s5 .r2box{flex:1 1 0;min-width:0;padding:18px 22px}.v #s5 .r2num{font-size:110px}.v #s5 .months{font-size:64px}.v #s5 .r2lbl{font-size:17px}
 .r2box{border:1.5px solid rgba(159,178,255,.5);border-radius:16px;padding:24px 28px;background:rgba(0,23,102,.5)}
 .r2num{font-family:var(--f-disp);font-weight:700;font-size:150px;line-height:.9}
 .r2lbl{font-family:var(--f-mono);font-size:20px;letter-spacing:.1em;color:var(--sky)}
@@ -102,7 +103,7 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
 #s6 .sup{max-width:640px}
 #phoneWrap{position:absolute;left:62%;top:45%;transform:translate(-50%,-50%) scale(1.4)}
 #bc{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-#noiseTag{margin-left:42px;font-size:20px;padding:8px 18px;opacity:0}
+#noiseTag{margin-left:42px;font-size:20px;padding:8px 18px;opacity:0;align-self:flex-start;width:max-content;max-width:100%}
 .v #noiseTag{margin-left:0}
 .v #phoneWrap{left:50%;top:47%;transform:translate(-50%,-50%) scale(1.95)}
 .phone{width:300px;height:560px;background:linear-gradient(160deg,#1c1c1e,#2c2c2e);border:3px solid #00f2fe;border-radius:35px;position:relative;font-family:'Poppins',sans-serif;box-shadow:0 0 0 1px #3a3a3c,0 30px 80px rgba(0,0,0,.8),0 0 10px 3px #00f2fe,0 0 28px 8px rgba(0,242,254,.6),0 0 60px 15px rgba(0,242,254,.3)}
@@ -190,6 +191,8 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
 #play svg{width:96px;height:96px}
 #play[hidden]{display:none}
 @media (max-width:560px){#ctl{gap:6px;padding-left:8px;padding-right:8px}#ctl button{padding:6px 8px}#ctl .t{min-width:0}#ctl .fs{display:none}}
+/* sin badge de Netlify en el video */
+[id*="netlify" i],[class*="netlify" i],a[href*="netlify.com"]{display:none!important}
 </style>
 </head>
 <body>
@@ -346,6 +349,11 @@ if(Q.get("lat") && Q.get("lon") && isFinite(+Q.get("lat")) && isFinite(+Q.get("l
 if(CITY.key === "cdmx"){ CITY.lat = 19.4236; CITY.lon = -99.1750; }   // Paseo de la Reforma 510 · Torre BBVA
 const personalized = Q.has("city") || Q.has("lat");
 
+/* ---------- sin badge de Netlify ---------- */
+(function(){ const hide = ()=>{ for(const el of document.body ? document.body.children : []){ if(el.dataset && el.dataset.nh) continue;
+    const tx = (el.innerText || "") + (el.shadowRoot ? el.shadowRoot.textContent : ""), tag = el.tagName || "";
+    if(/netlify/i.test(tag) || /powered by\s*netlify/i.test(tx)){ el.style.setProperty("display","none","important"); el.dataset.nh = 1; } } };
+  new MutationObserver(hide).observe(document.documentElement, {childList:true, subtree:false}); addEventListener("DOMContentLoaded", ()=>{ hide(); new MutationObserver(hide).observe(document.body, {childList:true}); }); setInterval(hide, 1500); })();
 /* ---------- textos ---------- */
 let LANG = (Q.get("lang") || (navigator.language||"es")).toLowerCase().startsWith("en") ? "en" : "es";
 const T = {
@@ -354,7 +362,7 @@ const T = {
     s4kick:"03 · SMAA OS", s4title:"Cada minuto", osSub:"Nuestro sistema operativo", os1:"IoT en tiempo real", os2:"Modelos de aire y lluvia", os3:"APIs abiertas", storm:"TORMENTA DETECTADA", call1:"Sensor meteorológico CHAAK", call2:"Tubo de ensamble", call3:"Panel solar", call4:"Dispositivo CHAAK", call5:"Dispositivo SMAA", loading:"CARGANDO GEMELO 3D…", s4aq:"CALIDAD DEL AIRE · EN VIVO", s4rain:"LLUVIA Y TORMENTAS · EN VIVO", sim:"SIMULACIÓN ILUSTRATIVA",
     s5kick:"02 · AUTOCALIBRACIÓN", s5title:"Se corrige sola", r2lbl:"O₃ VS. REFERENCIA ICAyCC-UNAM (R²) · VALIDADO UNA VEZ", months:"MANTENIMIENTO EN CAMPO", minimal:"Mínimo", axisT:"TIEMPO", noise:"+ RUIDO · CASI NINGUNA RED LO MIDE EN LA REGIÓN",
     ref:"Referencia", raw:"Sensor sin corregir", cal:"Autocalibrado", concept:"ESQUEMA ILUSTRATIVO · O₃ · PM2.5",
-    s6kick:"04 · AIreGPT", s6title:"Alertas hiperlocales", bc1:"1 alerta → todos en la celda", bc2:"🚨 Contingencia · 1 alerta → toda la ciudad", bcCell:"LLUVIA INTENSA · CELDA ACTIVA", bcCity:"CONTINGENCIA AMBIENTAL · TODA LA CIUDAD", pushT2:"🚨 CONTINGENCIA FASE I · ZMVM", pushM2:"Ozono muy alto · evita actividad al aire libre", home:"Casa", work:"Trabajo", s6tag:"TELEGRAM HOY · WHATSAPP 2027", online:"● EN LÍNEA · Aire + Lluvia",
+    s6kick:"04 · AIreGPT", s6title:"Alertas hiperlocales", bc1:"1 alerta → todos en la celda", bc2:"Contingencia · 1 alerta → toda la ciudad", bcCell:"LLUVIA INTENSA · CELDA ACTIVA", bcCity:"CONTINGENCIA AMBIENTAL · TODA LA CIUDAD", pushT2:"🚨 CONTINGENCIA FASE I · ZMVM", pushM2:"Ozono muy alto · evita actividad al aire libre", home:"Casa", work:"Trabajo", s6tag:"TELEGRAM HOY · WHATSAPP 2027", online:"● EN LÍNEA · Aire + Lluvia",
     pushT:"⛈️ LLUVIA INTENSA · TRABAJO", pushM:"Torrencial en 10–15 min · evita encharcamientos",
     n1:"Dispositivos", n3:"Autocalibración", loop:"Un solo<br>ciclo", st1:"9 años", st1s:"operando", st2s:"nodos vendidos", st4s:"patente en trámite", st3:"3 países", st3s:"México · Guatemala · Colombia", covKick:"COBERTURA SMABILITY", covLeg:'<span><b style="background:#fff;box-shadow:0 0 10px #9FB2FF"></b>aire · clima · agua · calor</span><span><b style="background:#7FE7FF;border-radius:3px"></b>CHAAK</span><span style="opacity:.7">ubicaciones aproximadas</span>', netNote:"NODOS SMABILITY · VALORES ILUSTRATIVOS",
     s8kick:"GEMELO DIGITAL", qr1:"GEMELO DIGITAL", qr2:"HABLA CON AIreGPT" },
@@ -363,7 +371,7 @@ const T = {
     s4kick:"03 · SMAA OS", s4title:"Every minute", osSub:"Our operating system", os1:"Real-time IoT", os2:"Air and rain models", os3:"Open APIs", storm:"STORM DETECTED", call1:"CHAAK weather sensor", call2:"Mounting tube", call3:"Solar panel", call4:"CHAAK unit", call5:"SMAA unit", loading:"LOADING 3D TWIN…", s4aq:"AIR QUALITY · LIVE", s4rain:"RAIN AND STORMS · LIVE", sim:"ILLUSTRATIVE SIMULATION",
     s5kick:"02 · SELF-CALIBRATION", s5title:"It fixes itself", r2lbl:"O₃ VS. ICAyCC-UNAM REFERENCE (R²) · VALIDATED ONCE", months:"FIELD MAINTENANCE", minimal:"Minimal", axisT:"TIME", noise:"+ NOISE · RARELY MEASURED IN THE REGION",
     ref:"Reference", raw:"Uncorrected sensor", cal:"Self-calibrated", concept:"ILLUSTRATIVE DIAGRAM · O₃ · PM2.5",
-    s6kick:"04 · AIreGPT", s6title:"Hyperlocal alerts", bc1:"1 alert → everyone in the cell", bc2:"🚨 Contingency · 1 alert → the whole city", bcCell:"HEAVY RAIN · ACTIVE CELL", bcCity:"AIR-QUALITY CONTINGENCY · CITYWIDE", pushT2:"🚨 PHASE I CONTINGENCY · MEXICO CITY", pushM2:"Very high ozone · avoid outdoor activity", home:"Home", work:"Work", s6tag:"TELEGRAM TODAY · WHATSAPP 2027", online:"● ONLINE · Air + Rain",
+    s6kick:"04 · AIreGPT", s6title:"Hyperlocal alerts", bc1:"1 alert → everyone in the cell", bc2:"Contingency · 1 alert → the whole city", bcCell:"HEAVY RAIN · ACTIVE CELL", bcCity:"AIR-QUALITY CONTINGENCY · CITYWIDE", pushT2:"🚨 PHASE I CONTINGENCY · MEXICO CITY", pushM2:"Very high ozone · avoid outdoor activity", home:"Home", work:"Work", s6tag:"TELEGRAM TODAY · WHATSAPP 2027", online:"● ONLINE · Air + Rain",
     pushT:"⛈️ HEAVY RAIN · WORK", pushM:"Torrential in 10–15 min · avoid flooded streets",
     n1:"Devices", n3:"Self-calibration", loop:"One closed<br>loop", st1:"9 years", st1s:"in operation", st2s:"nodes sold", st4s:"patent pending", st3:"3 countries", st3s:"Mexico · Guatemala · Colombia", covKick:"SMABILITY COVERAGE", covLeg:'<span><b style="background:#fff;box-shadow:0 0 10px #9FB2FF"></b>air · weather · water · heat</span><span><b style="background:#7FE7FF;border-radius:3px"></b>CHAAK</span><span style="opacity:.7">approximate locations</span>', netNote:"SMABILITY NODES · ILLUSTRATIVE VALUES",
     s8kick:"DIGITAL TWIN", qr1:"DIGITAL TWIN", qr2:"TALK TO AIreGPT" }
@@ -730,9 +738,15 @@ function drawBroadcast(t){
     bg2.fillStyle = `rgba(0,14,60,${.9*on})`; bg2.fillRect(lx, ly - 18, tw + 24, 36); bg2.fillStyle = `rgba(240,200,255,${on})`; bg2.fillText(lab, lx + 12, ly + 1); }
   // leyenda y mensaje
   const ly = oy - 28; bg2.textBaseline = "middle"; bg2.textAlign = "left"; bg2.font = "500 22px 'JetBrains Mono', monospace";
-  bg2.fillStyle = "rgba(199,210,255,.85)"; bg2.fillText(`⌂ ${T[LANG].home}   ▣ ${T[LANG].work}`, ox, ly);
+  const icoH = (x,y,k,c)=>{ bg2.fillStyle = c; bg2.beginPath(); bg2.moveTo(x, y - k); bg2.lineTo(x + k, y - k*.1); bg2.lineTo(x + k*.75, y - k*.1); bg2.lineTo(x + k*.75, y + k*.75); bg2.lineTo(x - k*.75, y + k*.75); bg2.lineTo(x - k*.75, y - k*.1); bg2.lineTo(x - k, y - k*.1); bg2.closePath(); bg2.fill(); };
+  const icoW = (x,y,k,c)=>{ bg2.fillStyle = c; bg2.strokeStyle = c; bg2.lineWidth = 2; bg2.fillRect(x - k*.8, y - k*.55, k*1.6, k*1.15); bg2.strokeRect(x - k*.35, y - k*.85, k*.7, k*.35); };
+  const icoA = (x,y,k,c)=>{ bg2.fillStyle = c; bg2.beginPath(); bg2.moveTo(x, y - k); bg2.lineTo(x + k*1.1, y + k*.85); bg2.lineTo(x - k*1.1, y + k*.85); bg2.closePath(); bg2.fill();
+    bg2.fillStyle = "#3A1400"; bg2.fillRect(x - k*.11, y - k*.4, k*.22, k*.72); bg2.beginPath(); bg2.arc(x, y + k*.55, k*.13, 0, 7); bg2.fill(); };
+  const lc = "rgba(199,210,255,.85)"; icoH(ox + 9, ly, 9, lc); bg2.fillStyle = lc; bg2.fillText(T[LANG].home, ox + 26, ly);
+  const hw = bg2.measureText(T[LANG].home).width; icoW(ox + 26 + hw + 34, ly, 9, lc); bg2.fillStyle = lc; bg2.fillText(T[LANG].work, ox + 26 + hw + 52, ly);
   const m = seg(t,53.4,53.9); if(m > 0){ const sw = seg(t,54.8,55.2); bg2.font = "700 34px 'Barlow Condensed', 'Arial Narrow', sans-serif"; bg2.textAlign = "right";
-    const my = FMT === "v" ? ly - 44 : ly; bg2.fillStyle = `rgba(255,255,255,${m*(1-sw)})`; bg2.fillText(T[LANG].bc1, ox + cols*B.c, my); bg2.fillStyle = `rgba(255,200,140,${sw})`; bg2.fillText(T[LANG].bc2, ox + cols*B.c, my); }
+    const my = FMT === "v" ? ly - 46 : ly, rx = ox + cols*B.c; bg2.fillStyle = `rgba(255,255,255,${m*(1-sw)})`; bg2.fillText(T[LANG].bc1, rx, my); bg2.fillStyle = `rgba(255,200,140,${sw})`; bg2.fillText(T[LANG].bc2, rx, my);
+    if(sw > 0){ const w2 = bg2.measureText(T[LANG].bc2).width; bg2.globalAlpha = A*sw; icoA(rx - w2 - 22, my - 2, 13, "#FF9F40"); bg2.globalAlpha = A; } }
   bg2.restore();
 }
 let shaking = false, pushB = null;
@@ -896,6 +910,7 @@ function render(t){
   // S3
   show($("s3"), vis(t,13.2,25.2));
   const s3 = $("s3").querySelectorAll(".sup .rise"); rise(s3[0], t, 13.6); rise(s3[1], t, 13.9);
+  $("s3").querySelector(".list").style.opacity = FMT === "v" ? seg(t,16.3,16.8) : 1;
   rise($("it1"), t, 16.6); rise($("noiseTag"), t, 17.0); rise($("it2"), t, 18.2); rise($("it3"), t, 20.8);
   // S4
   { const u = t - SH4;
@@ -912,7 +927,7 @@ function render(t){
   show($("s6"), vis(t,46,58.2));
   const s6 = $("s6").querySelectorAll(".sup .rise"); rise(s6[0], t, 46.4); rise(s6[1], t, 46.7); rise(s6[2], t, 47.2);
   const pw = $("phoneWrap"), pin = ease(seg(t,46.2,47.2)), mv = eio(seg(t,50.6,51.8)), base = FMT === "v" ? lerp(1.75, 1.05, mv) : lerp(1.4, 1.12, mv);
-  if(FMT === "v"){ pw.style.left = "50%"; pw.style.top = `${lerp(52.5, 39, mv)}%`; } else { pw.style.left = `${lerp(62, 81, mv)}%`; pw.style.top = "45%"; }
+  if(FMT === "v"){ pw.style.left = "50%"; pw.style.top = `${lerp(52.5, 40, mv)}%`; } else { pw.style.left = `${lerp(62, 81, mv)}%`; pw.style.top = "45%"; }
   pw.style.transform = `translate(-50%,${-50 + (1-pin)*30}%) scale(${base}) rotateZ(${(1-pin)*-4}deg)`; pw.style.opacity = pin;
   drawChat(t); drawBroadcast(t);
   // S7
