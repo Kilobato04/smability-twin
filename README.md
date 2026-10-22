@@ -268,3 +268,6 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 - 9:16: lista de dispositivos en un panel compacto que no choca con la estación; cajas de calibración lado a lado; teléfono de AIreGPT más arriba.
 - Sello de ruido ajustado a su texto.
 - Badge "Powered by Netlify" oculto en el reel y en el gemelo (CSS + observador que lo esconde si Netlify lo inyecta).
+
+## Música v2 (22 oct)
+- `reel/audio/musica.mp3` ahora es "Technology Music Promo" (Maksym Malko, Pixabay), recortada a 77.6 s sin empalmes: build 0–13 s, drop a los 13.5 s (entra el gemelo), pausa 40–52 s, segundo drop a los 64.5 s (mapa de cobertura) y desvanecido final 75.4–77.6 s. Normalizada a −16 LUFS.
