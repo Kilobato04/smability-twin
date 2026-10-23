@@ -271,3 +271,7 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 
 ## Música v2 (22 oct)
 - `reel/audio/musica.mp3` ahora es "Technology Music Promo" (Maksym Malko, Pixabay), recortada a 77.6 s sin empalmes: build 0–13 s, drop a los 13.5 s (entra el gemelo), pausa 40–52 s, segundo drop a los 64.5 s (mapa de cobertura) y desvanecido final 75.4–77.6 s. Normalizada a −16 LUFS.
+
+## Voz en inglés v4 (22 oct)
+- `reel/audio/mezcla-en.mp3` (77.6 s): voz ElevenLabs "Hope" del guion v4 + la pista nueva, con la música ~11 dB abajo mientras habla. Cada frase se colocó en su escena (la grabación de 58 s se extendió a la duración del reel sin acelerar ni estirar la voz). Subtítulos retemporizados a la voz.
+- Reparto final (según la transcripción): Problema 0:00–0:14 · Dispositivos 0:14–0:23 · Calibración 0:25–0:33 · Modelos 0:35–0:43 · AIreGPT 0:46–0:57 (lluvia por celda y contingencia) · Red 0:58–1:06 · Cierre "Smability… See how it would look on your street!" 1:10–1:14.
