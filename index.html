@@ -366,6 +366,8 @@ html.embed #stage canvas{pointer-events:none}
 
 /* sin badge de Netlify */
 [id*="netlify" i],[class*="netlify" i],a[href*="netlify.com"]{display:none!important}
+/* el badge de Netlify se dibuja en un iframe inyectado: se oculta cualquier iframe que no sea del propio video */
+iframe{display:none!important}
 </style>
 <style>html,body{margin:0}html{box-sizing:border-box;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
 </head>
@@ -2258,7 +2260,7 @@ if(URLQ.has("embed")){
 $("reelLink").addEventListener("click", e=>{ e.currentTarget.href = `reel/?city=${encodeURIComponent(state.city)}`; });
 frame();
 (function(){ const hide = ()=>{ for(const el of document.body.children){ if(el.dataset && el.dataset.nh) continue; const tx = (el.innerText || "") + (el.shadowRoot ? el.shadowRoot.textContent : "");
-  if(/netlify/i.test(el.tagName) || /powered by\s*netlify/i.test(tx)){ el.style.setProperty("display","none","important"); el.dataset.nh = 1; } } };
+  if(/netlify/i.test(el.tagName) || /powered by\s*netlify/i.test(tx) || (el.tagName === "IFRAME" && el.id !== "twin") || (el.shadowRoot && el.shadowRoot.querySelector("iframe"))){ el.style.setProperty("display","none","important"); el.dataset.nh = 1; } } };
   new MutationObserver(hide).observe(document.body, {childList:true}); setInterval(hide, 1500); hide(); })();
 </script>
 

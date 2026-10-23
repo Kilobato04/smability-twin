@@ -275,3 +275,7 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 ## Voz en inglés v4 (22 oct)
 - `reel/audio/mezcla-en.mp3` (77.6 s): voz ElevenLabs "Hope" del guion v4 + la pista nueva, con la música ~11 dB abajo mientras habla. Cada frase se colocó en su escena (la grabación de 58 s se extendió a la duración del reel sin acelerar ni estirar la voz). Subtítulos retemporizados a la voz.
 - Reparto final (según la transcripción): Problema 0:00–0:14 · Dispositivos 0:14–0:23 · Calibración 0:25–0:33 · Modelos 0:35–0:43 · AIreGPT 0:46–0:57 (lluvia por celda y contingencia) · Red 0:58–1:06 · Cierre "Smability… See how it would look on your street!" 1:10–1:14.
+
+## Badge de Netlify (22 oct)
+- Netlify lo inyecta desde su servidor dentro de un iframe aislado (proyectos del plan gratuito creados desde el 19 ago 2026). La forma definitiva de quitarlo: Netlify → Project configuration → General → Powered by Netlify badge → desactivar y guardar (sin redeploy).
+- Respaldo en el código: el reel y el gemelo ocultan cualquier iframe que no sea el del propio video (también si viene dentro de un shadow DOM).
