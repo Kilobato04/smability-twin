@@ -279,3 +279,7 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 ## Badge de Netlify (22 oct)
 - Netlify lo inyecta desde su servidor dentro de un iframe aislado (proyectos del plan gratuito creados desde el 19 ago 2026). La forma definitiva de quitarlo: Netlify → Project configuration → General → Powered by Netlify badge → desactivar y guardar (sin redeploy).
 - Respaldo en el código: el reel y el gemelo ocultan cualquier iframe que no sea el del propio video (también si viene dentro de un shadow DOM).
+
+## Ajustes para exportar MP4 (23 oct)
+- Gemelo: `TWIN.loaded()` ahora espera a los modelos 3D reales (.glb de SMAA y CHAAK; máximo 30 s), para que la captura no arranque con la estación a medio cargar.
+- 9:16: cifras finales más compactas y leyenda de cobertura en dos líneas si no cabe.

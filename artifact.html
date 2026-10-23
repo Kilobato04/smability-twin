@@ -1056,6 +1056,7 @@ async function tryLoadGLB(owner, url, fallbackKey){
   const loader = new THREE.GLTFLoader();
   if(THREE.DRACOLoader){ const dl = new THREE.DRACOLoader(); dl.setDecoderPath("https://www.gstatic.com/draco/versioned/decoders/1.5.6/"); loader.setDRACOLoader(dl); }
   loader.load(url, gltf=>{
+    owner.glbDone = true;   // el reel espera a los modelos reales antes de grabar
     Object.values(owner.parts).forEach(p=>p.group.parent.remove(p.group));
     owner.parts = {}; if(owner.cups!==undefined){ owner.cups = owner.vane = null; }
     const root = gltf.scene; root.updateMatrixWorld(true);
@@ -2219,7 +2220,7 @@ if(URLQ.has("embed")){
   const tintNow = {};
   const SUP = ["cabezal","cople_sup","tubo","cople_base"];
   window.TWIN = {
-    loaded: () => !!(ST.chaak.parts.head && ST.smaa.parts && Object.keys(ST.smaa.parts).length),
+    loaded: () => !!(ST.chaak.parts.head && ST.smaa.parts && Object.keys(ST.smaa.parts).length) && ((ST.smaa.glbDone && ST.chaak.glbDone) || performance.now() > 30000),
     orbit(az, el, dist, ty){ const a = az*RAD, e = el*RAD; controls.target.set(0, ty, 0);
       persp.position.set(Math.sin(a)*Math.cos(e)*dist, ty + Math.sin(e)*dist, Math.cos(a)*Math.cos(e)*dist); persp.lookAt(controls.target); persp.updateMatrixWorld(true); },
     clean(on){ for(const o of [floor, ground, landmark, sunMarker, frontMark, inletZone]) if(o) o.visible = !on; if(on) rainLines.visible = false; },
