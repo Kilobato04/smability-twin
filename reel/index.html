@@ -193,6 +193,8 @@ html,body{margin:0;height:100%;background:#000510;color:#fff;font-family:var(--f
 @media (max-width:560px){#ctl{gap:6px;padding-left:8px;padding-right:8px}#ctl button{padding:6px 8px}#ctl .t{min-width:0}#ctl .fs{display:none}}
 /* sin badge de Netlify en el video */
 [id*="netlify" i],[class*="netlify" i],a[href*="netlify.com"]{display:none!important}
+/* el badge de Netlify se dibuja en un iframe inyectado: se oculta cualquier iframe que no sea del propio video */
+iframe:not(#twin){display:none!important}
 </style>
 </head>
 <body>
@@ -352,7 +354,7 @@ const personalized = Q.has("city") || Q.has("lat");
 /* ---------- sin badge de Netlify ---------- */
 (function(){ const hide = ()=>{ for(const el of document.body ? document.body.children : []){ if(el.dataset && el.dataset.nh) continue;
     const tx = (el.innerText || "") + (el.shadowRoot ? el.shadowRoot.textContent : ""), tag = el.tagName || "";
-    if(/netlify/i.test(tag) || /powered by\s*netlify/i.test(tx)){ el.style.setProperty("display","none","important"); el.dataset.nh = 1; } } };
+    if(/netlify/i.test(tag) || /powered by\s*netlify/i.test(tx) || (el.tagName === "IFRAME" && el.id !== "twin") || (el.shadowRoot && el.shadowRoot.querySelector("iframe"))){ el.style.setProperty("display","none","important"); el.dataset.nh = 1; } } };
   new MutationObserver(hide).observe(document.documentElement, {childList:true, subtree:false}); addEventListener("DOMContentLoaded", ()=>{ hide(); new MutationObserver(hide).observe(document.body, {childList:true}); }); setInterval(hide, 1500); })();
 /* ---------- textos ---------- */
 let LANG = (Q.get("lang") || (navigator.language||"es")).toLowerCase().startsWith("en") ? "en" : "es";
