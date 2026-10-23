@@ -378,24 +378,26 @@ const T = {
 };
 const cityName = () => LANG === "en" ? CITY.en : CITY.es;
 const SUBS = [
-  [0.6, 3.6, "Cada día, millones respiran un aire que no ven…", "Every day, millions breathe air they can't see…"],
-  [3.8, 6.2, "…y las tormentas llegan sin aviso.", "…and storms strike without warning."],
-  [6.5, 10.0, "Las estaciones de monitoreo son caras y escasas:", "Air and rain monitoring stations are expensive and scarce:"],
-  [10.1, 12.9, "muchas ciudades de Latinoamérica tienen pocas, o ninguna.", "many cities in Latin America have few, or none."],
-  [13.4, 15.6, "Por eso hicimos las nuestras.", "So we built our own."],
-  [16.3, 20.2, "SMAA mide el aire; CHAAK, el viento y la lluvia.", "SMAA reads the air. CHAAK reads wind and rain."],
-  [20.6, 24.4, "Una sola solución, en vivo las 24 horas.", "One pole, live 24/7."],
-  [25.2, 28.6, "Pero un sensor solo vale si sus datos son confiables.", "But a sensor is only as good as its data."],
-  [28.8, 31.4, "Los nuestros se calibran solos con aprendizaje automático:", "Ours calibrate themselves with machine learning:"],
-  [31.5, 34.5, "sin estación de referencia y con mínimo mantenimiento en campo.", "no reference station, and minimal field maintenance."],
-  [35.4, 39.6, "Con esos datos, SMAA OS, nuestro sistema operativo,", "With that data, SMAA OS, our operating system,"],
-  [39.8, 45.8, "corre cada minuto modelos en vivo de calidad del aire y lluvia para toda la ciudad.", "runs live air quality and rain models every minute, for the whole city."],
-  [46.6, 49.8, "Y esos modelos alimentan a AIreGPT,", "Those models power AIreGPT,"],
-  [50.0, 53.6, "que envía alertas masivas según tu ubicación, en casa o en el trabajo,", "which sends mass alerts by location, at home or at work,"],
-  [53.8, 57.6, "antes de que el aire empeore o llegue la tormenta.", "before the air turns bad or the storm hits."],
-  [58.4, 61.0, "Del sensor a tu celular, en un solo ciclo.", "From the sensor to your phone: one closed loop."],
-  [62.0, 66.8, "Nueve años operando: más de 60 nodos en tres países.", "Nine years running: more than 60 nodes, in three countries."],
-  [70.2, 77.8, null, null]   // cierre: firma (el titular en pantalla depende de la ciudad)
+  [0.6, 4.3, "Cada día, millones respiran un aire que no ven…", "Every day, millions breathe air they can't see…"],
+  [4.5, 7.3, "…y las tormentas llegan sin aviso.", "…and storms strike without warning."],
+  [7.5, 11.0, "Las estaciones de monitoreo son caras y escasas:", "Air and rain monitoring stations are expensive and scarce:"],
+  [11.1, 13.95, "muchas ciudades de Latinoamérica tienen pocas, o ninguna.", "many cities in Latin America have few, or none."],
+  [14.0, 15.7, "Por eso hicimos las nuestras.", "So we built our own."],
+  [16.3, 19.9, "SMAA mide el aire; CHAAK, el viento y la lluvia.", "SMAA reads the air. CHAAK reads wind and rain."],
+  [20.6, 23.0, "Una sola solución, en vivo las 24 horas.", "One pole, live 24/7."],
+  [25.2, 27.85, "Pero un sensor solo vale si sus datos son confiables.", "But a sensor is only as good as its data."],
+  [28.0, 30.4, "Los nuestros se calibran solos con aprendizaje automático:", "Ours calibrate themselves with machine learning:"],
+  [30.5, 33.5, "sin estación de referencia y con mínimo mantenimiento en campo.", "no reference station, and minimal field maintenance."],
+  [35.4, 38.95, "Con esos datos, SMAA OS, nuestro sistema operativo,", "With that data, SMAA OS, our operating system,"],
+  [39.2, 43.6, "corre cada minuto modelos en vivo de calidad del aire y lluvia para toda la ciudad.", "runs live air quality and rain models every minute, for the whole city."],
+  [46.6, 48.55, "Y esos modelos alimentan a AIreGPT,", "Those models power AIreGPT,"],
+  [48.55, 52.4, "que envía alertas masivas según tu ubicación, en casa o en el trabajo,", "which sends mass alerts by location, at home or at work,"],
+  [54.6, 57.3, "antes de que el aire empeore o llegue la tormenta.", "before the air turns bad or the storm hits."],
+  [58.4, 61.6, "Del sensor a tu celular, en un solo ciclo.", "From the sensor to your phone: one closed loop."],
+  [62.0, 66.0, "Nueve años operando: más de 60 nodos en tres países.", "Nine years running: more than 60 nodes, in three countries."],
+  [70.6, 71.9, "Smability.", "Smability."],
+  [72.4, 74.6, "Mira cómo quedaría en tu calle.", "See how it would look on your street."],
+  [74.8, 77.8, null, null]   // cierre: firma (el titular en pantalla depende de la ciudad)
 ];
 function endLine(){
   if(personalized && CITY.key !== "cdmx") return LANG==="en" ? `See how it would look in ${CITY.en}.` : `Mira cómo quedaría en ${CITY.es}.`;
@@ -956,8 +958,8 @@ const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")
 /* ---------- reproducción ---------- */
 let t = clamp(+Q.get("t") || 0, 0, CONFIG.duration), playing = false, last = 0, lastT = -1, scrubbing = false;
 /* ---------- música ("Technology Music Promo", Maksym Malko · Pixabay, recortada a 77.6 s: build 0–13 s · drop 13.5 s · pausa 40–52 s · drop 64.5 s · desvanecido final) ---------- */
-// Solo música en ambos idiomas hasta grabar las voces del guion v4 (mezcla-en.mp3 es del guion anterior y ya no se usa).
-const AUDIO_SRC = { es:"audio/musica.mp3", en:"audio/musica.mp3" };
+// EN: voz del guion v4 (ElevenLabs "Hope") + música, con la música bajada ~11 dB bajo la voz. ES: solo música hasta tener la voz en español.
+const AUDIO_SRC = { es:"audio/musica.mp3", en:"audio/mezcla-en.mp3" };
 const music = new Audio(AUDIO_SRC[LANG] || AUDIO_SRC.es); music.preload = "auto";
 function audioLang(){ const src = AUDIO_SRC[LANG] || AUDIO_SRC.es; if(!music.src.endsWith(src)){ const was = !music.paused; music.pause(); music.src = src; music.load(); if(was) syncAudio(); } }
 let muted = Q.get("mute") === "1", primed = false;
