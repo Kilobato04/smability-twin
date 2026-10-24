@@ -283,3 +283,11 @@ Archivo único: `reel/index.html`. No usa imágenes PNG/JPEG: el logo, la tarjet
 ## Ajustes para exportar MP4 (23 oct)
 - Gemelo: `TWIN.loaded()` ahora espera a los modelos 3D reales (.glb de SMAA y CHAAK; máximo 30 s), para que la captura no arranque con la estación a medio cargar.
 - 9:16: cifras finales más compactas y leyenda de cobertura en dos líneas si no cabe.
+
+## Gemelo · interfaz corporativa (23 oct)
+- Paleta Smability (azul #002BAD / #2046F2, marino #001766 en oscuro, negro, grises) y Arial en toda la interfaz; monoespaciada solo para datos chicos. Logo cuadrado.
+- Escritorio: barra inferior en tres zonas (Tour · grupo de vistas + Simular lluvia · Modo campo y Ficha de instalación). Redes y video pasan al encabezado. La leyenda es un recuadro flotante en la escena. El aviso de carga se oculta solo a los 6 s.
+- Entre 761 y 1360 px de ancho se ocultan las etiquetas del encabezado (Estación, Ciudad, Mes, Hora) para que todo quepa en una fila.
+- Móvil: pestaña activa marcada en azul, aviso de carga arriba y discreto, redes y video al final de la Ficha.
+- Colores de significado: cara principal amarilla y barras de energía verde/naranja/rojo se conservan; viento → #7C9BFF, lluvia → #2046F2; pieza seleccionada en #2046F2.
+- El modo `embed` del reel no cambia.
