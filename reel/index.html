@@ -445,7 +445,7 @@ function initMap(){
       interactive:false, attributionControl:true, fadeDuration:0, preserveDrawingBuffer:Q.has("capture"), antialias:true, pixelRatio:STAGE_PR(), maxTileCacheSize:400, projection:"globe", refreshExpiredTiles:false, trackResize:false});
     map.on("style.load", ()=>{
       try{
-        map.setFog({range:[0.6, 3.2], color:"rgb(18,28,70)", "high-color":"#12339A", "horizon-blend":.12, "space-color":"#000814", "star-intensity":.25});   // la niebla corta los mosaicos lejanos
+        map.setFog({range:[0.6, 3.2], color:"rgb(18,28,70)", "high-color":"#12339A", "horizon-blend":.12, "space-color":"#000814", "star-intensity": Q.has("capture") ? 0 : .25});   // en captura sin estrellas: parpadean cuadro a cuadro   // la niebla corta los mosaicos lejanos
         if(CONFIG.terrain){ map.addSource("dem",{type:"raster-dem", url:"mapbox://mapbox.mapbox-terrain-dem-v1", tileSize:512, maxzoom:14}); map.setTerrain({source:"dem", exaggeration:1.25}); }
         if(CONFIG.buildings3D && map.getSource("composite")){
           map.addLayer({id:"b3d", source:"composite", "source-layer":"building", filter:["==","extrude","true"], type:"fill-extrusion", minzoom:13,
