@@ -26,3 +26,6 @@ y lecturas → los datos suben a AIreGPT → cierre.
 - v6 (27 nov): logo con la onda cortada al borde del cuadro, SMABILITY al pie y ©; por defecto en limbo (sin ciudad simulada);
   Mapbox solo con `?map=1`; armado pieza por pieza con lista de componentes y giro de cámara; vista explotada; cifras
   «12 variables · 2 equipos · 1 min» y lecturas PM2.5 38 µg/m³ · ozono 21 ppb · lluvia 4.2 mm/h; duración 75 s.
+- v7 (27 nov): panel solar y su batería en la lista de componentes (se resaltan antes del interior); CHAAK con su cabezal de estado
+  sólido y 3 variables críticas (viento, lluvia, radiación solar); lluvia desde el acercamiento al combo, más tenue dentro de SMAA,
+  y se retira por completo al alejarse hacia el cierre.

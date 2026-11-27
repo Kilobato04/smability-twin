@@ -95,7 +95,8 @@ const T = {
        chaak:"CHAAK · EN LÍNEA", chaakSub:"VIENTO · LLUVIA · PRESIÓN · RADIACIÓN", ask:"Pregunta a AIreGPT", place:"CIUDAD DE MÉXICO",
        lPM:"SENSOR DE PARTÍCULAS · LÁSER", lGas:"SENSORES ELECTROQUÍMICOS · CO · O₃", lPcb:"TARJETA · MÓDEM 2G/4G",
        comp:"COMPONENTES", aTar:"Tarjeta principal · módem 2G/4G", aGas:"2 sensores electroquímicos", aPM:"Partículas PM2.5 / PM10", aTH:"Temperatura y humedad", aNoise:"Sensor de ruido",
-       aGPS:"GPS", aLipo:"Batería LiPo de respaldo", aSw:"Interruptores", aSil:"Sílica gel",
+       aGPS:"GPS", aLipo:"Batería LiPo de respaldo", aSw:"Interruptores", aSil:"Sílica gel", aSol:"Panel solar", aBat:"Batería del panel · autonomía",
+       chH:"CHAAK · CABEZAL DE ESTADO SÓLIDO", chS:"SIN PARTES MÓVILES", chW:"Viento", chWv:"3.1 m/s · NE", chR:"Lluvia", chRv:"4.2 mm/h", chQ:"Radiación solar", chQv:"180 W/m²",
        c1:"VARIABLES", c1l:"AIRE · CLIMA · RUIDO", c2:"EQUIPOS", c3:"RESOLUCIÓN", c3l:"EN TIEMPO REAL", r1:"PM2.5", r2:"OZONO", r3:"LLUVIA" },
   en:{ physics:"PHYSICS", chem:"CHEMISTRY", data:"DATA", pd:"PHOTODIODE · LASER SCATTERING", pdSub:"every peak is a particle", el1:"ELECTRODE · CO", el2:"ELECTRODE · O₃", elSub:"reaction current, in nanoamps",
        meas:"LIVE MEASUREMENT", sim:"SIMULATED DATA", api:"OPEN API", online:"● online", q:"How's the air in my neighborhood?",
@@ -104,7 +105,8 @@ const T = {
        chaak:"CHAAK · ONLINE", chaakSub:"WIND · RAIN · PRESSURE · RADIATION", ask:"Ask AIreGPT", place:"MEXICO CITY",
        lPM:"PARTICLE SENSOR · LASER", lGas:"ELECTROCHEMICAL SENSORS · CO · O₃", lPcb:"MAIN BOARD · 2G/4G MODEM",
        comp:"COMPONENTS", aTar:"Main board · 2G/4G modem", aGas:"2 electrochemical sensors", aPM:"PM2.5 / PM10 particles", aTH:"Temperature & humidity", aNoise:"Noise sensor",
-       aGPS:"GPS", aLipo:"Backup LiPo battery", aSw:"Switches", aSil:"Silica gel",
+       aGPS:"GPS", aLipo:"Backup LiPo battery", aSw:"Switches", aSil:"Silica gel", aSol:"Solar panel", aBat:"Panel battery · autonomy",
+       chH:"CHAAK · SOLID-STATE HEAD", chS:"NO MOVING PARTS", chW:"Wind", chWv:"3.1 m/s · NE", chR:"Rain", chRv:"4.2 mm/h", chQ:"Solar radiation", chQv:"180 W/m²",
        c1:"VARIABLES", c1l:"AIR · WEATHER · NOISE", c2:"DEVICES", c3:"RESOLUTION", c3l:"REAL TIME", r1:"PM2.5", r2:"OZONE", r3:"RAIN" }
 };
 const SUBS = [
@@ -241,9 +243,11 @@ function modelsLoaded(){
   modelReady = true; ready();
 }
 /* ensamble: las piezas internas aparecen una por una; vista explosionada: se separan y vuelven a cerrar */
-const ASSEMBLY = [["smaa_in_tarjeta",24.0,"aTar"],["smaa_in_gases",24.7,"aGas"],["smaa_in_pm25",25.4,"aPM"],["smaa_in_temphum",26.1,"aTH"],["smaa_in_ruido",26.7,"aNoise"],
-  ["smaa_in_gps",27.3,"aGPS"],["smaa_in_lipo",27.9,"aLipo"],["smaa_in_switches",28.5,"aSw"],["smaa_in_silica",29.0,"aSil"]];
-const APPEAR = Object.fromEntries(ASSEMBLY.map(([k,t0])=>[k,t0])); APPEAR.smaa_in_switches_led = APPEAR.smaa_in_switches_metal = APPEAR.smaa_in_switches;
+const ASSEMBLY = [["panel_solar_smaa",23.8,"aSol"],["bateria_smaa",24.45,"aBat"],
+  ["smaa_in_tarjeta",25.1,"aTar"],["smaa_in_gases",25.65,"aGas"],["smaa_in_pm25",26.2,"aPM"],["smaa_in_temphum",26.75,"aTH"],["smaa_in_ruido",27.3,"aNoise"],
+  ["smaa_in_gps",27.85,"aGPS"],["smaa_in_lipo",28.4,"aLipo"],["smaa_in_switches",28.95,"aSw"],["smaa_in_silica",29.45,"aSil"]];
+const EXT = {panel_solar_smaa:[23.8,25.0], bateria_smaa:[24.45,25.6]};     // piezas exteriores: no aparecen, se resaltan
+const APPEAR = Object.fromEntries(ASSEMBLY.filter(([k])=>!EXT[k]).map(([k,t0])=>[k,t0])); APPEAR.smaa_in_switches_led = APPEAR.smaa_in_switches_metal = APPEAR.smaa_in_switches;
 const EXPLODE = { smaa_top:[0,.15,0], smaa_bottom:[0,-.11,0], smaa_in_tarjeta:[0,.07,0], smaa_in_gases:[0,.02,0], smaa_in_pm25:[-.1,-.02,-.03],
   smaa_in_temphum:[0,-.17,0], smaa_in_gps:[0,.23,0], smaa_in_ruido:[0,-.07,.05], smaa_in_switches:[0,-.2,0], smaa_in_switches_led:[0,-.2,0],
   smaa_in_switches_metal:[0,-.2,0], smaa_in_lipo:[-.13,0,.06], smaa_in_silica:[0,0,-.13] };
@@ -262,8 +266,8 @@ const KEYS = [   // t, posición, mira a      (el frente de SMAA mira a −X; el
   [7,   [-6, 6.8, -24],      [0, 3.2, 0]],
   [10,  [-4.2, 4.8, -10.5],  [0, 3.2, 0]],
   [12.6,[-2.7, 3.95, -4.6],  [0, 3.25, 0]],
-  [14.8,[-1.7, 3.95, -2.1],  [0, 3.55, 0]],
-  [16.4,[-2.5, 4.55, -.25],  [0, 3.45, 0]],
+  [14.8,[-1.05, 3.95, -1.25], [.15, 3.6, 0]],
+  [16.4,[-1.35, 4.1, -.2],   [.1, 3.58, 0]],
   [18.0,[-2.1, 3.9, 1.6],    [-.05, 3.3, .03]],
   [19.6,[-1.5, 3.45, 1.0],   [-.08, 3.18, 0]],
   [21.4,[-1.15, 3.05, .75],  [-.08, 3.15, 0]],
@@ -343,6 +347,7 @@ function updateScene(t){
   const out = 1 - sm(seg(t, 50.6, 53.4));                // se vuelve sólida al salir la cámara
   const accF = sm(seg(t, 22.4, 26.4)) * out;
   const inside = sm(seg(t, 23.2, 27.8)) * out;
+  const chHead = win(t, 13.6, 18.2, .6);
   const ex = sm(seg(t, 44.8, 46.8)) * (1 - eio(seg(t, 48.8, 49.7)));   // vista explosionada; se cierra con un «clic»
   const pmF = sm(seg(u, 22.8, 25.4)) * (1 - sm(seg(u, 27.4, 29.8)));
   const fPM = win(u, 22.0, 27.6, 1.0), fGas = win(u, 27.2, 32.6, 1.0), fPcb = win(u, 31.8, 36.4, 1.0), anyF = Math.max(fPM, fGas, fPcb);
@@ -351,6 +356,11 @@ function updateScene(t){
     if(k === "smaa_top" || k === "smaa_bottom") o = 1 - .88*inside*(1 - .45*ex);
     else if(k === "smaa_in_pm25") o = 1 - .72*pmF;
     else if(isChaak(k) || isSmaaOuter(k)) o = 1 - .96*accF;
+    let hl = 0;
+    if(EXT[k]) hl = win(t, EXT[k][0], EXT[k][1] + .6, .4);
+    if(/sensorsolido|cabezal_superior/.test(k)) hl = chHead;
+    if(hl > 0){ o = Math.max(o, .25 + .7*hl); if(m.emissive) m.emissive.setRGB(.05*hl, .14*hl, .5*hl*(.75 + .25*Math.sin(t*6))); }
+    else if((EXT[k] || /sensorsolido|cabezal_superior/.test(k)) && m.emissive) m.emissive.setRGB(0, 0, 0);
     let ap = 1;
     if(APPEAR[k] !== undefined){ ap = sm(seg(t, APPEAR[k], APPEAR[k] + .9)); o *= ap; }          // la pieza se materializa
     if(k.startsWith("smaa_in_") && k !== "smaa_in_switches_led"){
@@ -394,7 +404,7 @@ function updateScene(t){
   WAVE.done();
 
   /* lluvia y rebotes: solo cuando aparece la ciudad */
-  const rain = sm(seg(t, 55.0, 58.0)) * (1 - ease(seg(t, 70, 72.5))), farRain = sm(seg(t, 56.0, 60.0));
+  const rain = sm(seg(t, 9.5, 12.5)) * (1 - .7*win(t, 22.5, 52.5, 1.5)) * (1 - ease(seg(t, 61.5, 64.0))), farRain = sm(seg(t, 10.0, 14.0));
   const rp = RAIN.geometry.attributes.position.array, rc = RAIN.geometry.attributes.color.array;
   let sp = 0;
   for(let i=0;i<RAIN_N;i++){
@@ -608,11 +618,11 @@ function leader(t, a, b, p3, text, V9, w, h){       // etiqueta con línea guía
   rr(lx - 12, ly, tw + 24, V9 ? 42 : 38, 8); g.fillStyle = "rgba(3,10,36,.78)"; g.fill(); g.fillStyle = "#fff"; g.fillText(text, lx, ly + 8); g.restore();
 }
 function components(t, V9, w, h){        // ensamble: lista de piezas que se van materializando; línea guía a la pieza actual
-  const k = win(t, 23.8, 30.6, .6); if(k <= 0) return;
-  const pw = V9 ? w*.86 : w*.34, px = V9 ? (w - pw)/2 : w*.62, py = V9 ? h*.6 : h*.16, lh = V9 ? 44 : 44, ph = 80 + ASSEMBLY.length*lh;
+  const k = win(t, 23.6, 30.9, .6); if(k <= 0) return;
+  const pw = V9 ? w*.86 : w*.34, px = V9 ? (w - pw)/2 : w*.62, py = V9 ? h*.6 : h*.16, lh = V9 ? 42 : 40, ph = 80 + ASSEMBLY.length*lh;
   panel(px, py, pw, ph, k, tx("comp"), null);
   g.save(); let curI = -1;
-  ASSEMBLY.forEach(([key, t0, lab], i)=>{ const a = sm(seg(t, t0, t0 + .5)), on = t >= t0 && t < (ASSEMBLY[i+1] ? ASSEMBLY[i+1][1] : t0 + 1.6); if(on) curI = i;
+  ASSEMBLY.forEach(([key, t0, lab], i)=>{ const a = sm(seg(t, t0, t0 + .5)), on = t >= t0 && t < (ASSEMBLY[i+1] ? ASSEMBLY[i+1][1] : t0 + 1.4); if(on) curI = i;
     const y = py + 62 + i*lh; g.globalAlpha = k*a; g.fillStyle = on ? "#fff" : "rgba(199,210,255,.6)"; g.font = F(on ? 700 : 500, V9 ? 26 : 23);
     g.textAlign = "left"; g.textBaseline = "top"; g.fillText(tx(lab), px + 52, y); g.fillStyle = on ? "#5cf2b0" : "rgba(159,178,255,.5)"; g.beginPath(); g.arc(px + 32, y + 13, on ? 7 : 5, 0, 7); g.fill(); });
   if(curI >= 0){ const n = NODE[ASSEMBLY[curI][0]];
@@ -631,6 +641,22 @@ function bigTrio(t, a, b, items, yTop, V9, w, h){   // tres cifras grandes en co
     if(i){ g.fillStyle = "rgba(159,178,255,.25)"; g.fillRect(x0 + cw*i, yTop + 10, 1.5, 160); } });
   g.restore();
 }
+function chaakHead(t, V9, w, h){        // CHAAK: cabezal de estado sólido y sus 3 variables críticas
+  const k = win(t, 13.8, 18.2, .5); if(k <= 0) return;
+  const rows = [["chW","chWv",14.5],["chR","chRv",15.1],["chQ","chQv",15.7]];
+  const pw = V9 ? w*.84 : w*.3, ph = 108 + rows.length*(V9 ? 60 : 56), px = V9 ? (w - pw)/2 : w*.06, py = V9 ? h*.6 : h*.1;
+  panel(px, py, pw, ph, k, tx("chH"), tx("chS"));
+  g.save();
+  rows.forEach(([a, b, t0], i)=>{ const s = sm(seg(t, t0, t0 + .5)), y = py + 100 + i*(V9 ? 60 : 56); g.globalAlpha = k*s;
+    g.fillStyle = "#5cf2b0"; g.beginPath(); g.arc(px + 32, y + 15, 6, 0, 7); g.fill();
+    g.fillStyle = "#fff"; g.font = F(700, V9 ? 30 : 26); g.textAlign = "left"; g.textBaseline = "top"; g.fillText(tx(a), px + 52, y);
+    g.font = F(600, V9 ? 28 : 24, "mono"); g.textAlign = "right"; g.fillStyle = "#C7D2FF"; g.fillText(tx(b), px + pw - 24, y + 2); });
+  const q = V(0, CHAAK_Y + .9, 0).project(cam);
+  if(q.z < 1){ const x = (q.x + 1)/2*w, y = (1 - q.y)/2*h, sx = V9 ? w/2 : px + pw, sy = V9 ? py : py + 34;
+    g.globalAlpha = k*.9; g.strokeStyle = "rgba(92,242,176,.85)"; g.lineWidth = 2; g.beginPath(); g.moveTo(sx, sy); g.lineTo(x, y); g.stroke();
+    g.fillStyle = "#5cf2b0"; g.beginPath(); g.arc(x, y, 7, 0, 7); g.fill(); g.strokeStyle = "rgba(92,242,176,.5)"; g.beginPath(); g.arc(x, y, 14 + 6*Math.sin(t*5), 0, 7); g.stroke(); }
+  g.restore();
+}
 function label(t, a, b, title, sub, V9, w, h){
   const k = win(t, a, b, .4); if(k <= 0) return;
   g.save(); g.globalAlpha = k; g.font = F(700, V9 ? 28 : 24, "mono"); g.textAlign = "left"; g.textBaseline = "top";
@@ -643,7 +669,7 @@ function drawHUD(t){
   const vg = g.createRadialGradient(w/2, h/2, Math.min(w,h)*.35, w/2, h/2, Math.max(w,h)*.75); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,2,10,.55)"); g.fillStyle = vg; g.fillRect(0, 0, w, h);
 
   if(USE_MAP) label(t, 56.0, 61.0, tx("place"), "19.4149 N · 99.1672 W", V9, w, h);
-  label(t, 13.8, 18.0, tx("chaak"), tx("chaakSub"), V9, w, h);
+  chaakHead(t, V9, w, h);
   label(t, 18.6, 23.4, tx("wake"), tx("wakeSub"), V9, w, h);
   components(t, V9, w, h);
   bigTrio(t, 49.9, 53.2, [["12", tx("c1"), tx("c1l")], ["2", tx("c2"), "SMAA + CHAAK"], ["1 min", tx("c3"), tx("c3l")]], V9 ? h*.6 : h*.6, V9, w, h);
