@@ -57,14 +57,18 @@ body.render #ctl,body.render #play,body.render #load{display:none!important}
    4. Dentro de SMAA: láser (física), electrodos (química), pulsos → mediciones → API → AIreGPT. Cierre.
    Todo se dibuja en función de t (render(t) es determinista): se puede adelantar, pausar y exportar cuadro a cuadro.
    Parámetros: ?lang=es|en  ?format=h|v  ?t=20  ?autoplay=1  ?render=1 (sin controles; expone window.REEL)
-               ?map=reforma  versión con Mapbox: el combo en Paseo de la Reforma (19.423845, -99.175402), edificios reales
+               ?map=reforma  versión con Mapbox: el combo en su trípode, en la azotea del antiguo edificio de la Secretaría de Salud
+                             (Reforma y Lieja · 19.422432, -99.175614), con los edificios reales alrededor
    Datos simulados, sin ciudad ni hora en el texto.
    ===================================================================== */
 const CONFIG = {
   duration: 60, smaa: "../models/smaa.glb", chaak: "../models/chaak.glb", logo: "../images/logo_smability.png",
   // Mismo token público de Mapbox que el reel (/reel). En el dashboard de Mapbox restríngelo al dominio de Netlify.
   mapboxToken: 'pk.eyJ1Ijoia2lsb2JhdG8iLCJhIjoiY21jd2g2b3RzMDJiNDJxcTA0cTFhZmE4OCJ9.u5zPxYCxqEaF2jnj32l4ng',
-  reforma: {lat:19.423844834743353, lon:-99.17540194279846, bearing:58}   // bearing: rumbo de la avenida (grados desde el norte)
+  // Versión Mapbox: el combo en su trípode, en la azotea del antiguo edificio de la Secretaría de Salud (Reforma y Lieja).
+  // roofH: altura de la azotea sobre la calle (m, estimada: 4 niveles altos + basamento). Si el trípode flota o se hunde en el
+  // edificio de Mapbox, se ajusta aquí. bearing: hacia dónde mira el eje +Z local (grados desde el norte; 58° = a lo largo de Reforma).
+  reforma: {lat:19.422432228118673, lon:-99.17561381529838, bearing:58, roofH:19}
 };
 const Q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -86,12 +90,12 @@ const T = {
        meas:"MEDICIÓN · EN VIVO", sim:"DATOS SIMULADOS", api:"API ABIERTA", online:"● en línea", q:"¿Cómo está el aire en mi colonia?",
        a1:"Calidad del aire: <b>regular</b>. PM2.5 en 38 µg/m³.", a2:"Está lloviendo (4 mm/h): la lluvia lava el aire y el PM2.5 va a bajar en la próxima hora.", a3:"Si sales, lleva paraguas. Para correr, mejor mañana temprano.",
        tag1:"De la física y la química…", tag2:"…a tu mano.", tag3:"Entendemos el aire para ponerlo en tu mano.", wake:"SMAA · EN LÍNEA", wakeSub:"PM2.5 · PM10 · GASES · T/HR · RUIDO",
-       chaak:"CHAAK · EN LÍNEA", chaakSub:"VIENTO · LLUVIA · PRESIÓN · RADIACIÓN", ask:"Pregunta a AIreGPT", place:"PASEO DE LA REFORMA · CIUDAD DE MÉXICO" },
+       chaak:"CHAAK · EN LÍNEA", chaakSub:"VIENTO · LLUVIA · PRESIÓN · RADIACIÓN", ask:"Pregunta a AIreGPT", place:"PASEO DE LA REFORMA · AZOTEA" },
   en:{ physics:"PHYSICS", chem:"CHEMISTRY", data:"DATA", pd:"PHOTODIODE · LASER SCATTERING", pdSub:"every peak is a particle", el1:"ELECTRODE · CO", el2:"ELECTRODE · O₃", elSub:"reaction current, in nanoamps",
        meas:"LIVE MEASUREMENT", sim:"SIMULATED DATA", api:"OPEN API", online:"● online", q:"How's the air in my neighborhood?",
        a1:"Air quality: <b>moderate</b>. PM2.5 at 38 µg/m³.", a2:"It's raining (4 mm/h): rain washes the air, so PM2.5 should drop within the hour.", a3:"Take an umbrella if you head out. For a run, wait until tomorrow morning.",
        tag1:"From physics and chemistry…", tag2:"…to your hand.", tag3:"We understand the air to put it in your hand.", wake:"SMAA · ONLINE", wakeSub:"PM2.5 · PM10 · GASES · T/RH · NOISE",
-       chaak:"CHAAK · ONLINE", chaakSub:"WIND · RAIN · PRESSURE · RADIATION", ask:"Ask AIreGPT", place:"PASEO DE LA REFORMA · MEXICO CITY" }
+       chaak:"CHAAK · ONLINE", chaakSub:"WIND · RAIN · PRESSURE · RADIATION", ask:"Ask AIreGPT", place:"PASEO DE LA REFORMA · ROOFTOP" }
 };
 const SUBS = [
   [1.2, 6.5, "La naturaleza habla en ondas. Nosotros la traducimos.", "Nature speaks in waves. We translate it."],
@@ -240,6 +244,10 @@ const COMBO = new THREE.Group(); scene.add(COMBO);
 const mastMat = new THREE.MeshStandardMaterial({color:0x7f8792, metalness:.6, roughness:.45, transparent:true});
 const mast = new THREE.Mesh(new THREE.CylinderGeometry(.021,.03,MAST_TOP - STREET.curb,20), mastMat); mast.position.set(0, STREET.curb + (MAST_TOP - STREET.curb)/2, 0); COMBO.add(mast);
 const base = new THREE.Mesh(new THREE.CylinderGeometry(.09,.11,.04,24), mastMat); base.position.set(0, STREET.curb + .02, 0); COMBO.add(base);
+/* versión Mapbox: el mismo combo sobre su trípode (models/montaje.glb, mástil de 1.12 m) en una azotea */
+const TRIPOD_TOP = 1.12, ROOF_Y = CHAAK_Y - TRIPOD_TOP;                 // azotea en coordenadas locales (las del reel)
+const tripod = new THREE.Group(); tripod.position.set(0, ROOF_Y, 0); COMBO.add(tripod);
+mast.visible = base.visible = !MAP_MODE; tripod.visible = MAP_MODE;
 
 /* ---------- partículas (un solo sombreador para la onda, el aire, la ciudad y los datos) ---------- */
 const PT_VS = `#include <common>
@@ -296,7 +304,7 @@ const RAIN_DROP = Array.from({length:RAIN_N}, (_,i)=>{ const R = rng(20000+i), n
 const WIND = V(.55, 0, .25);                                  // deriva de la lluvia (m/s)
 const headTop = r => CHAAK_Y + (r < .034 ? .927 : r < .0587 ? lerp(.927, .920, (r-.034)/.0247) : lerp(.920, .910, (r-.0587)/.0106));
 const panelTop = x => SMAA_Y + (.1245 + .731*(x*1000 + 46)/1000) + .005;   // +5 mm: el vidrio sobre el marco     // cara superior del panel (inclinado 37°, baja hacia el frente)
-function surfaceAt(d){ return d.kind === 1 ? headTop(Math.hypot(d.x, d.z)) : d.kind === 2 ? panelTop(d.x) : (d.x > STREET.roadX1 && d.x < STREET.walkA[1]) || (d.x < STREET.roadX0 && d.x > STREET.walkB[0]) ? STREET.curb : .005; }
+function surfaceAt(d){ if(MAP_MODE && mapOK && d.kind === 0) return d.near ? ROOF_Y : ROOF_Y - 40; return d.kind === 1 ? headTop(Math.hypot(d.x, d.z)) : d.kind === 2 ? panelTop(d.x) : (d.x > STREET.roadX1 && d.x < STREET.walkA[1]) || (d.x < STREET.roadX0 && d.x > STREET.walkB[0]) ? STREET.curb : .005; }
 
 /* ---------- datos SMAA (coordenadas del modelo, en metros; el modelo cuelga del tubo de CHAAK) ---------- */
 const P = {                                   // puntos de interés (mundo)
@@ -311,14 +319,14 @@ const P = {                                   // puntos de interés (mundo)
 const smaa = new THREE.Group(); smaa.position.set(0, SMAA_Y, 0); COMBO.add(smaa);
 const chaak = new THREE.Group(); chaak.position.set(0, CHAAK_Y, 0); COMBO.add(chaak);
 const NODE = {};
-let pending = 2;
+let pending = MAP_MODE ? 3 : 2;
 function loadModel(url, parent){
   new THREE.GLTFLoader().load(url, gltf=>{
-    gltf.scene.traverse(o=>{ if(!o.isMesh) return; o.material = o.material.clone(); o.material.transparent = true; NODE[o.name] = o; });
+    gltf.scene.traverse(o=>{ if(!o.isMesh) return; o.material = o.material.clone(); NODE[o.name] = o; });
     parent.add(gltf.scene); if(--pending === 0) modelsLoaded();
   }, undefined, e=>{ console.warn("modelo", url, e); if(--pending === 0) modelsLoaded(); });
 }
-loadModel(CONFIG.smaa, smaa); loadModel(CONFIG.chaak, chaak);
+loadModel(CONFIG.smaa, smaa); loadModel(CONFIG.chaak, chaak); if(MAP_MODE) loadModel("../models/montaje.glb", tripod);
 let modelReady = false;
 function modelsLoaded(){
   for(const k of ["smaa_top","smaa_bottom"]) if(NODE[k]){ const m = NODE[k].material; m.color.set(0xe9ecf2); m.roughness = .38; }
@@ -355,6 +363,18 @@ const KEYS = [   // t, posición, mira a      (la calle corre a lo largo de Z; e
   [55,  [-7.4, 13, 7],       [-1.3, 18, 0]],
   [60,  [-8.2, 14.2, 8],     [-1.4, 19.6, 0]],
 ].map(([t,p,q])=>({t, p:V(...p), q:V(...q)}));
+/* Mapbox: llegada desde el suroeste (Chapultepec) mirando Reforma; en la azotea la cámara rodea el combo y la ciudad gira detrás */
+const KEYS_MAP = [
+  [0,   [-40, 120, -340],    [0, 18, 0]],
+  [7,   [-26, 72, -205],     [0, 8, 0]],
+  [10,  [-12, 24, -62],      [0, 4, 0]],
+  [12.6,[-6.4, 5.6, -9],     [0, 3.4, 0]],
+  [14.8,[-1.7, 3.95, -2.1],  [0, 3.6, 0]],
+  [16.4,[-2.5, 4.65, -.25],  [0, 3.58, 0]],
+  [18.0,[-2.0, 4.2, 1.55],   [-.05, 3.45, .03]],
+  [19.4,[-1.3, 3.8, .8],     [-.1, 3.36, .05]],
+].map(([t,p,q])=>({t, p:V(...p), q:V(...q)}));
+if(MAP_MODE){ const rest = KEYS.filter(k=> k.t > 19.4); KEYS.length = 0; KEYS.push(...KEYS_MAP, ...rest); }
 function cr(p0,p1,p2,p3,u){ const u2=u*u, u3=u2*u; return p1.clone().multiplyScalar(2).add(p2.clone().sub(p0).multiplyScalar(u)).add(p0.clone().multiplyScalar(2).sub(p1.clone().multiplyScalar(5)).add(p2.clone().multiplyScalar(4)).sub(p3).multiplyScalar(u2)).add(p1.clone().multiplyScalar(3).sub(p0).sub(p2.clone().multiplyScalar(3)).add(p3).multiplyScalar(u3)).multiplyScalar(.5); }
 function logLerp(k, i, u){       // posiciones en escala logarítmica respecto a SMAA: la cámara se acerca de forma pareja de 150 m a 15 cm
   const c = V(-.09, SMAA_Y-.09, 0), at = j=> KEYS[clamp(j,0,KEYS.length-1)][k].clone().sub(c);
@@ -401,17 +421,21 @@ function updateScene(t){
   const u = t - D;                                        // reloj de la v1 para todo lo de SMAA
   const wake = ease(seg(t, 18.4, 19.4));                 // SMAA despierta
   const breathe = seg(u, 15.6, 18.5);
-  const inside = ease(seg(u, 20.6, 23.4)) * (1 - ease(seg(u, 39.5, 42.5)));
+  const sm = x => x*x*x*(x*(x*6 - 15) + 10);                     // smootherstep: entra y sale sin golpe
+  const out = 1 - sm(seg(u, 38.6, 43.2));
+  const accF = sm(seg(u, 19.0, 23.6)) * out;                      // primero se desvanecen CHAAK, panel, batería y poste
+  const inside = sm(seg(u, 20.0, 25.0)) * out;                    // luego la carcasa de SMAA
+  const pmF = sm(seg(u, 22.8, 25.4)) * (1 - sm(seg(u, 27.4, 29.8)));
 
   /* carcasas y accesorios translúcidos al entrar */
   for(const k in NODE){
     const m = NODE[k].material; let o = 1;
     if(k === "smaa_top" || k === "smaa_bottom") o = 1 - .9*inside;
-    else if(k === "smaa_in_pm25") o = 1 - .72*ease(seg(u,22.4,24))*(1-ease(seg(u,27.5,29)));
-    else if(isChaak(k) || isSmaaOuter(k)) o = 1 - .96*inside;
-    m.opacity = o; m.depthWrite = o > .99; NODE[k].visible = o > .02;
+    else if(k === "smaa_in_pm25") o = 1 - .72*pmF;
+    else if(isChaak(k) || isSmaaOuter(k)) o = 1 - .96*accF;
+    m.opacity = o; m.transparent = o < .999; m.depthWrite = o > .85; NODE[k].visible = o > .02;
   }
-  { const o = 1 - .93*inside; mastMat.opacity = o; mastMat.depthWrite = o > .99; }
+  { const o = 1 - .93*accF; mastMat.opacity = o; mastMat.depthWrite = o > .85; }
   const flick = t < 18.4 ? 0 : (t < 19.2 ? (hash(Math.floor(t*22)) > .4 ? 1 : .15) : 1);
   if(NODE.smaa_in_switches_led) NODE.smaa_in_switches_led.material.emissiveIntensity = 3.5*flick*wake;
   ledLight.intensity = .35*flick*wake;
@@ -437,7 +461,7 @@ function updateScene(t){
   CARS.done();
 
   /* la onda: de la «S» del logo a la cabeza de CHAAK */
-  const S0 = V(-4.4, 33.5, -150), tgt = P.head.clone().add(V(0,.02,0)), dirv = tgt.clone().sub(S0), Lw = dirv.length(); dirv.normalize();
+  const c7 = camAt(7), S0 = c7.p.clone().lerp(c7.q, .12), tgt = P.head.clone().add(V(0,.02,0)), dirv = tgt.clone().sub(S0), Lw = dirv.length(); dirv.normalize();
   const side = V(0,1,0).cross(dirv).normalize(), upv = dirv.clone().cross(side).normalize();
   const head = eio(seg(t, 7, 13.5)), waveOn = seg(t, 6.6, 7.6) * (1 - seg(t, 15.0, 16.6));
   for(let i=0;i<WAVE.n;i++){
@@ -655,7 +679,7 @@ function drawHUD(t){
   g.clearRect(0, 0, w, h);
   const vg = g.createRadialGradient(w/2, h/2, Math.min(w,h)*.35, w/2, h/2, Math.max(w,h)*.75); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,2,10,.55)"); g.fillStyle = vg; g.fillRect(0, 0, w, h);
 
-  if(MAP_MODE) label(t, 9.4, 13.2, tx("place"), "19.4238 N · 99.1754 W", V9, w, h);
+  if(MAP_MODE) label(t, 9.4, 13.2, tx("place"), "19.4224 N · 99.1756 W", V9, w, h);
   label(t, 13.8, 18.0, tx("chaak"), tx("chaakSub"), V9, w, h);
   label(t, 18.6, 24.0, tx("wake"), tx("wakeSub"), V9, w, h);
 
@@ -734,7 +758,7 @@ function syncMap(){
     const b = CONFIG.reforma.bearing*Math.PI/180, dE = d.x*Math.cos(b) + d.z*Math.sin(b), dN = -d.x*Math.sin(b) + d.z*Math.cos(b);
     const bearing = Math.atan2(dE, dN)*180/Math.PI, pitch = clamp(90 + Math.atan2(d.y, Math.hypot(dE, dN))*180/Math.PI, 0, 89);
     const o = map.getFreeCameraOptions();
-    o.position = mapboxgl.MercatorCoordinate.fromLngLat(localToLngLat(p.x, p.z), Math.max(1.2, p.y));
+    o.position = mapboxgl.MercatorCoordinate.fromLngLat(localToLngLat(p.x, p.z), Math.max(1.2, p.y - ROOF_Y + CONFIG.reforma.roofH));
     o.setPitchBearing(pitch, bearing); map.setFreeCameraOptions(o);
   }catch(e){ console.warn(e); }
 }
@@ -753,7 +777,7 @@ let mapReady = !MAP_MODE;
 if(MAP_MODE){
   const css = document.createElement("link"); css.rel = "stylesheet"; css.href = "https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css"; document.head.appendChild(css);
   const sc = document.createElement("script"); sc.src = "https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"; sc.onload = initMap;
-  sc.onerror = ()=>{ console.warn("Mapbox no cargó: se usa la ciudad estilizada"); CITY.visible = true; scene.fog = new THREE.FogExp2(FOG, FOGD); renderer.setClearColor(0x000510, 1); mapReady = true; ready(); };
+  sc.onerror = ()=>{ console.warn("Mapbox no cargó: se usa la ciudad estilizada"); CITY.visible = true; mast.visible = base.visible = true; tripod.visible = false; scene.fog = new THREE.FogExp2(FOG, FOGD); renderer.setClearColor(0x000510, 1); mapReady = true; ready(); };
   document.head.appendChild(sc);
 }
 
