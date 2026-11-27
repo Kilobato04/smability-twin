@@ -1,6 +1,6 @@
 """Exporta reelintro/ a MP4 cuadro a cuadro (render(t) es determinista).
 Uso: python3 tools/reelintro_render.py <url_base> <h|v> <es|en> <fps> <salida.mp4> [audio.mp3]
-  audio.mp3 (opcional): p. ej. reelintro/audio/musica.mp3; se agrega como pista de audio (AAC 192k)
+  audio.mp3 (opcional): p. ej. reelintro/audio/neon-drive.mp3 o reelintro/audio/synthwave.mp3; se agrega como pista de audio (AAC 192k)
   url_base: p. ej. http://localhost:8765/reelintro/index.html (servir el repo con cualquier servidor estático)
 Requiere: playwright (chromium) y ffmpeg."""
 import asyncio, subprocess, sys
