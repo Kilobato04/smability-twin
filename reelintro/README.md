@@ -42,3 +42,6 @@ y lecturas → los datos suben a AIreGPT → cierre.
   dura ~11 s; duración 78 s.
 - v10 (27 nov): música de fondo («Neon Drive», editada al ritmo del reel), botón ♪ y exportación con audio.
 - v11 (27 nov): dos pistas (Neon Drive y Synthwave) con botón para cambiar entre ellas.
+- v12 (27 nov): la música es el reloj del reel (si la pantalla se traba, el audio sigue y la imagen lo alcanza); con `?map=1` el mapa
+  precarga todo el tramo final y no se mueve ni se redibuja antes de 52.5 s; la cámara final con mapa mira siempre un poco hacia
+  abajo (Mapbox no pasa de ~85°), así el combo queda anclado a la azotea.

@@ -297,6 +297,10 @@ const KEYS = [   // t, posición, mira a      (el frente de SMAA mira a −X; el
   [65.4,[-10.5, 10.5, 8.6],  [-1.1, 12, 0]],
   [78,  [-10.9, 14.2, 9.1],  [-1.45, 18, 0]],
 ].map(([t,p,q])=>({t, p:V(...p), q:V(...q)}));
+if(MAP_MODE){   // con Mapbox la cámara final no mira al cielo: el mapa no puede inclinarse más de ~85° y el combo parecería volar
+  const MK = {61:[[-11.5, 8.0, 9.5], [8, 4.5, -7]], 65.4:[[-12.5, 9.2, 10.4], [6, 5.2, -6]], 78:[[-14.5, 10.6, 12.0], [4, 6.4, -4.5]]};
+  for(const k of KEYS){ const m = MK[k.t]; if(m){ k.p = V(...m[0]); k.q = V(...m[1]); } }
+}
 function cr(p0,p1,p2,p3,u){ const u2=u*u, u3=u2*u; return p1.clone().multiplyScalar(2).add(p2.clone().sub(p0).multiplyScalar(u)).add(p0.clone().multiplyScalar(2).sub(p1.clone().multiplyScalar(5)).add(p2.clone().multiplyScalar(4)).sub(p3).multiplyScalar(u2)).add(p1.clone().multiplyScalar(3).sub(p0).sub(p2.clone().multiplyScalar(3)).add(p3).multiplyScalar(u3)).multiplyScalar(.5); }
 function logLerp(k, i, u){       // posiciones en escala logarítmica respecto a SMAA: la cámara se acerca de forma pareja de 150 m a 15 cm
   const c = V(-.09, SMAA_Y-.09, 0), at = j=> KEYS[clamp(j,0,KEYS.length-1)][k].clone().sub(c);
@@ -806,7 +810,8 @@ function drawHUD(t){
    Mapbox aparece solo en la revelación final (detrás del lienzo transparente de three.js), con la misma cámara.
    El combo está en la azotea de la oficina: altura sobre la calle = CONFIG.site.roofH. Ejes locales: +Z hacia el rumbo
    CONFIG.site.bearing, Y arriba; la azotea es y = ROOF_Y en coordenadas del reel. */
-let map = null, mapOK = false;
+let map = null, mapOK = false, mapParked = false;
+const MAP_T0 = 52.5;          // antes de esto el mapa no se ve: no se mueve ni se vuelve a dibujar
 function localToLngLat(x, z){
   const b = CONFIG.site.bearing*Math.PI/180, E = x*Math.cos(b) + z*Math.sin(b), N = -x*Math.sin(b) + z*Math.cos(b);
   const lat0 = CONFIG.site.lat, lon0 = CONFIG.site.lon;
@@ -817,7 +822,7 @@ function syncMap(p, q){
   try{
     p = p || cam.position; const d = q ? q.clone().sub(p).normalize() : (()=>{ const v = new THREE.Vector3(); cam.getWorldDirection(v); return v; })();
     const b = CONFIG.site.bearing*Math.PI/180, dE = d.x*Math.cos(b) + d.z*Math.sin(b), dN = -d.x*Math.sin(b) + d.z*Math.cos(b);
-    const bearing = Math.atan2(dE, dN)*180/Math.PI, pitch = clamp(90 + Math.atan2(d.y, Math.hypot(dE, dN))*180/Math.PI, 0, 89);
+    const bearing = Math.atan2(dE, dN)*180/Math.PI, pitch = clamp(90 + Math.atan2(d.y, Math.hypot(dE, dN))*180/Math.PI, 0, 84);
     const o = map.getFreeCameraOptions();
     o.position = mapboxgl.MercatorCoordinate.fromLngLat(localToLngLat(p.x, p.z), Math.max(1.2, p.y - ROOF_Y + CONFIG.site.roofH));
     o.setPitchBearing(pitch, bearing); map.setFreeCameraOptions(o);
@@ -828,13 +833,16 @@ function initMap(){
   $("map").hidden = false; $("map").style.opacity = 0;
   mapboxgl.accessToken = CONFIG.mapboxToken;
   map = new mapboxgl.Map({container:"map", style:"mapbox://styles/mapbox/standard", center:[CONFIG.site.lon, CONFIG.site.lat], zoom:17, pitch:60, bearing:CONFIG.site.bearing,
-    interactive:false, attributionControl:true, fadeDuration:0, antialias:true, preserveDrawingBuffer:RENDER_MODE, pixelRatio:1, trackResize:false,
+    interactive:false, attributionControl:true, fadeDuration:0, antialias:false, preserveDrawingBuffer:RENDER_MODE, pixelRatio:1, trackResize:false,
+    maxPitch:85, renderWorldCopies:false, maxTileCacheSize:600, refreshExpiredTiles:false, collectResourceTiming:false,
     config:{basemap:{lightPreset:"night", showPointOfInterestLabels:false, showTransitLabels:false, showPlaceLabels:false, showRoadLabels:false}}});
   map.on("style.load", ()=>{
     try{ map.setFog({range:[.6, 6], color:"rgb(14,22,56)", "high-color":"#0b1d5e", "horizon-blend":.1, "space-color":"#000814", "star-intensity":0}); }catch(_){}
     mapOK = true; mapFov();
-    const k = camAt(46); syncMap(k.p, k.q);                  // precarga la vista de la revelación
-    map.once("idle", ()=>{ mapReady = true; ready(); });
+    // precarga los mosaicos de todo el tramo final (53–78 s) antes de reproducir; luego el mapa se queda quieto en 52.5 s
+    const views = [78, 70, 64, 60, 57, 54.5, MAP_T0];
+    const next = ()=>{ if(!views.length){ mapReady = true; ready(); return; } const k = camAt(views.shift()); syncMap(k.p, k.q); map.once("idle", next); };
+    next();
   });
   map.on("error", e=> console.warn("Mapbox:", e && e.error && e.error.message));
   setTimeout(()=>{ if(!mapReady){ mapReady = true; ready(); } }, 15000);
@@ -851,7 +859,8 @@ if(MAP_MODE){
 function render(t){
   t = clamp(t, 0, CONFIG.duration);
   const c = camAt(t); cam.position.copy(c.p); cam.lookAt(c.q); cam.updateMatrixWorld();
-  if(USE_MAP) syncMap();
+  if(USE_MAP){ if(t >= MAP_T0){ syncMap(); mapParked = false; } else if(!mapParked && mapOK){ const k = camAt(MAP_T0); syncMap(k.p, k.q); mapParked = true; } }
+  $("map").style.visibility = USE_MAP && t >= MAP_T0 ? "visible" : "hidden";
   updateScene(t);
   renderer.render(scene, cam);
   drawHUD(t);
@@ -887,7 +896,7 @@ function syncAudio(){
   const ok = playing && !muted && !RENDER_MODE && cur < CONFIG.duration - .05;
   for(const k in MUSIC){ const m = MUSIC[k];
     if(ok && k === track){ if(m.paused){ try{ m.currentTime = cur; }catch(_){} m.play().catch(()=>{}); }
-      else if(Math.abs(m.currentTime - cur) > .25){ try{ m.currentTime = cur; }catch(_){} } }
+      else if(Math.abs(m.currentTime - cur) > .5){ try{ m.currentTime = cur; }catch(_){} } }   // solo al adelantar o atrasar
     else if(!m.paused) m.pause(); }
 }
 function setTrack(k){ track = k; const b = $("bTrk"); b.textContent = TRACKS[k].label; b.title = `${TRACKS[k].name} · ${LANG === "en" ? "change track" : "cambiar pista"}`; }
@@ -897,7 +906,10 @@ function setPlaying(on){
   if(on){ $("play").hidden = true; poke(); } else document.body.classList.remove("idle");
 }
 function loop(now){
-  if(playing){ cur += Math.min(.1, (now - last)/1000); if(cur >= CONFIG.duration){ cur = CONFIG.duration; setPlaying(false); } }
+  if(playing){ const m = MUSIC[track];
+    if(!muted && m && !m.paused && !m.seeking && m.readyState >= 3 && Math.abs(m.currentTime - cur) < 1) cur = m.currentTime;   // la música manda
+    else cur += Math.min(.1, (now - last)/1000);
+    if(cur >= CONFIG.duration){ cur = CONFIG.duration; setPlaying(false); } }
   last = now; syncAudio(); render(cur);
   $("scrub").value = cur; $("tOut").textContent = `${fmtT(cur)} / ${fmtT(CONFIG.duration)}`;
   if(!RENDER_MODE) requestAnimationFrame(loop);
