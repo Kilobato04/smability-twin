@@ -14,10 +14,13 @@ y lecturas → los datos suben a AIreGPT → cierre.
 - Teclas: espacio (pausa), L (idioma), M (música), F (pantalla completa), ← → (±2 s). Los controles se esconden solos mientras corre el reel.
 - Subtítulos: botón ES/EN en la página; para video, `subtitulos_es.srt` y `subtitulos_en.srt`.
 - Datos simulados, sin ciudad ni hora en el texto.
-- Música: `audio/musica.mp3` — «Neon Drive» de Artur Aravidi (Pixabay, licencia de contenido de Pixabay), editada a 78 s sobre el ritmo
-  (100 BPM): intro 0–8 s, entra el ritmo con la onda, pausa ambiental dentro de SMAA (≈26–47 s), vuelve al cerrar la vista
-  explosionada (≈48.6 s) y termina con el logo. Botón ♪ para silenciar; `?mute=1` la apaga.
-- Exportar a MP4 (con música): `python3 tools/reelintro_render.py http://localhost:8000/reelintro/index.html h es 30 salida.mp4 reelintro/audio/musica.mp3`
+- Música: dos pistas editadas a 78 s sobre el ritmo y con el mismo volumen (−16 LUFS); botón NEON/SYNTH (o tecla T) para cambiar,
+  `?track=neon|synth` para elegirla desde el enlace, botón ♪ (o M) para silenciar, `?mute=1` para apagarla.
+  - `audio/neon-drive.mp3` — «Neon Drive», Artur Aravidi (Pixabay). 100 BPM: intro suave, entra el ritmo con la onda (≈8 s),
+    pausa ambiental dentro de SMAA (≈26–47 s), vuelve al cerrar la vista explosionada (≈48.6 s), final natural con el logo.
+  - `audio/synthwave.mp3` — «Synthwave», AtlasAudio (Pixabay). 95 BPM: arranca filtrada, como sintonía, y se abre a los 8 s;
+    pausa ambiental (≈29–48 s), vuelve en ≈48.6 s y cierra con un golpe final cuando aparece el logo (≈73.9 s).
+- Exportar a MP4 (con música): `python3 tools/reelintro_render.py http://localhost:8000/reelintro/index.html h es 30 salida.mp4 reelintro/audio/neon-drive.mp3`
 
 ## Versiones
 - v1 (26 nov): primera versión completa, sin música.
@@ -38,3 +41,4 @@ y lecturas → los datos suben a AIreGPT → cierre.
   (IAS regular 62, PM2.5 38 µg/m³, ozono 21 ppb, clima), notificación «Regresa la lluvia · trabajo» y alerta de lluvia; el teléfono
   dura ~11 s; duración 78 s.
 - v10 (27 nov): música de fondo («Neon Drive», editada al ritmo del reel), botón ♪ y exportación con audio.
+- v11 (27 nov): dos pistas (Neon Drive y Synthwave) con botón para cambiar entre ellas.
