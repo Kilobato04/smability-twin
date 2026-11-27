@@ -1,14 +1,15 @@
 # Reel intro · «De la física y la química… a tu mano»
 
-Apertura de 64 s para el keynote, en una sola toma:
-sintonía de TV → logo → limbo azul profundo: la onda «enciende» el combo CHAAK + SMAA en su trípode → giro alrededor del combo,
-SMAA despierta → interior a distancia media con foco por pieza: láser (física), espiral de gas a los barriles (química) →
-mediciones → API → la toma se abre: el piso del estudio se vuelve una azotea, la ciudad se enciende y llueve → los datos suben a
-AIreGPT → cierre.
+Apertura de 75 s para el keynote, en una sola toma:
+sintonía de TV → logo → limbo azul profundo: la onda «enciende» el combo CHAAK + SMAA en su trípode → SMAA despierta →
+la carcasa se vuelve translúcida y las piezas se arman una por una mientras la cámara gira → láser (física) → espiral de gas a
+los barriles (química) → tarjeta → vista explotada y «clic» de cierre → cifras del producto → API → la toma se abre con lluvia
+y lecturas → los datos suben a AIreGPT → cierre.
 
 - Página: `/reelintro/` (three.js r128; usa `../models/smaa.glb`, `../models/chaak.glb`, `../models/montaje.glb` y `../images/logo_smability.png`).
-- Versión Mapbox: `/reelintro/?map=1` — la ciudad del final es Mapbox: el combo en la azotea de la oficina (casa de 2 pisos,
-  6 m; 19.414878, −99.167249). Altura y rumbo en `CONFIG.site`. Si Mapbox no carga, se usa la ciudad simulada.
+- Por defecto: limbo, sin mapa ni edificios.
+- Versión Mapbox: `/reelintro/?map=1` — al abrirse la toma (53–62 s) aparece Mapbox con el combo en la azotea de la oficina
+  (casa de 2 pisos, 6 m; 19.414878, −99.167249). Altura y rumbo en `CONFIG.site` (`roofH`, `bearing`). Si Mapbox no carga, sigue en limbo.
 - Parámetros: `?lang=es|en` · `?format=h|v` (16:9 o 9:16) · `?t=20` · `?autoplay=1` · `?render=1` (sin controles, para exportar).
 - Teclas: espacio (pausa), L (idioma), F (pantalla completa), ← → (±2 s). Los controles se esconden solos mientras corre el reel.
 - Subtítulos: botón ES/EN en la página; para video, `subtitulos_es.srt` y `subtitulos_en.srt`.
@@ -22,3 +23,6 @@ AIreGPT → cierre.
 - v5 (27 nov): sin ciudad al inicio (limbo azul profundo y combo en trípode); interior a ~40 cm con foco y etiquetas por pieza;
   espiral de gas hacia los barriles; la ciudad aparece al final (revelación lenta de 8 s) con la lluvia; Mapbox en la azotea de la
   oficina; duración 64 s.
+- v6 (27 nov): logo con la onda cortada al borde del cuadro, SMABILITY al pie y ©; por defecto en limbo (sin ciudad simulada);
+  Mapbox solo con `?map=1`; armado pieza por pieza con lista de componentes y giro de cámara; vista explotada; cifras
+  «12 variables · 2 equipos · 1 min» y lecturas PM2.5 38 µg/m³ · ozono 21 ppb · lluvia 4.2 mm/h; duración 75 s.

@@ -15,25 +15,33 @@ CHAAK lee el viento, la lluvia y el sol…
 …y SMAA despierta…
 
 5
-00:00:22,000 --> 00:00:25,600
+00:00:22,000 --> 00:00:25,200
 …para respirar el aire.
 
 6
-00:00:26,600 --> 00:00:31,400
-Un láser cuenta cada partícula que cruza su paso.
+00:00:25,600 --> 00:00:29,800
+Por dentro, cada pieza tiene una función.
 
 7
-00:00:32,000 --> 00:00:36,600
-Los gases entran a los electrodos, reaccionan y se vuelven corriente.
+00:00:30,600 --> 00:00:35,200
+Un láser cuenta cada partícula que cruza su paso.
 
 8
-00:00:37,300 --> 00:00:41,400
-Cada pulso se vuelve una medición…
+00:00:35,600 --> 00:00:40,600
+Los gases entran a los electrodos, reaccionan y se vuelven corriente.
 
 9
-00:00:41,600 --> 00:00:46,600
-…y cada medición, un dato abierto, en tu ciudad.
+00:00:45,000 --> 00:00:49,400
+Ingeniería mexicana, pieza por pieza.
 
 10
-00:00:51,600 --> 00:00:58,200
+00:00:50,800 --> 00:00:55,000
+Cada pulso se vuelve una medición, y cada medición, un dato abierto.
+
+11
+00:00:56,200 --> 00:01:01,000
+…en tu ciudad, en tiempo real.
+
+12
+00:01:02,600 --> 00:01:09,200
 Así llega a AIreGPT: para que sepas qué hacer.

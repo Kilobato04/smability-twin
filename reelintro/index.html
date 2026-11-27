@@ -37,14 +37,14 @@ body.render #ctl,body.render #play,body.render #load{display:none!important}
 <body>
 <div id="stage"><div id="map" hidden></div><canvas id="gl" class="l"></canvas><canvas id="hud" class="l"></canvas></div>
 <div id="load">CARGANDO…</div>
-<button id="play" type="button" aria-label="Reproducir" hidden><div><svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="46" fill="rgba(0,43,173,.85)" stroke="#9FB2FF" stroke-width="2"/><path d="M39 30l30 18-30 18z" fill="#fff"/></svg><span id="playLbl">REPRODUCIR · 1:04</span></div></button>
+<button id="play" type="button" aria-label="Reproducir" hidden><div><svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="46" fill="rgba(0,43,173,.85)" stroke="#9FB2FF" stroke-width="2"/><path d="M39 30l30 18-30 18z" fill="#fff"/></svg><span id="playLbl">REPRODUCIR · 1:15</span></div></button>
 <div id="ctl">
   <button id="bPlay" type="button" aria-label="Reproducir o pausar">▶</button>
   <button id="bLang" type="button" aria-label="Idioma de subtítulos">ES</button>
   <button id="bFmt" type="button" aria-label="Formato">16:9</button>
   <button id="bFs" type="button" aria-label="Pantalla completa">⛶</button>
-  <span class="t" id="tOut">0:00 / 1:04</span>
-  <input id="scrub" type="range" min="0" max="64" step="0.02" value="0" aria-label="Posición">
+  <span class="t" id="tOut">0:00 / 1:15</span>
+  <input id="scrub" type="range" min="0" max="75" step="0.02" value="0" aria-label="Posición">
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -63,7 +63,7 @@ body.render #ctl,body.render #play,body.render #load{display:none!important}
    Datos simulados, sin ciudad ni hora en el texto.
    ===================================================================== */
 const CONFIG = {
-  duration: 64, smaa: "../models/smaa.glb", chaak: "../models/chaak.glb", tripod: "../models/montaje.glb", logo: "../images/logo_smability.png",
+  duration: 75, smaa: "../models/smaa.glb", chaak: "../models/chaak.glb", tripod: "../models/montaje.glb", logo: "../images/logo_smability.png",
   // Mismo token público de Mapbox que el reel (/reel). En el dashboard de Mapbox restríngelo al dominio de Netlify.
   mapboxToken: 'pk.eyJ1Ijoia2lsb2JhdG8iLCJhIjoiY21jd2g2b3RzMDJiNDJxcTA0cTFhZmE4OCJ9.u5zPxYCxqEaF2jnj32l4ng',
   // Versión Mapbox: azotea de la oficina. roofH: altura de la azotea sobre la calle (m). bearing: rumbo del eje +Z local
@@ -82,7 +82,7 @@ const win = (t,a,b,f=.5)=> Math.min(ease(seg(t,a,a+f)), 1-ease(seg(t,b-f,b)));  
 const RENDER_MODE = Q.has("render");
 const MAP_MODE = ["1","true","oficina","reforma"].includes((Q.get("map") || "").toLowerCase());
 let USE_MAP = MAP_MODE;                       // pasa a false si Mapbox no carga
-const D = 5;                                  // reloj de SMAA: lo de dentro de SMAA ocurre 5 s después que en la v1
+const D = 8;                                  // reloj del interior de SMAA (láser, gases, tarjeta): u = t − 8
 if(RENDER_MODE) document.body.classList.add("render");
 
 /* ---------- textos y subtítulos ---------- */
@@ -93,25 +93,33 @@ const T = {
        a1:"Calidad del aire: <b>regular</b>. PM2.5 en 38 µg/m³.", a2:"Está lloviendo (4 mm/h): la lluvia lava el aire y el PM2.5 va a bajar en la próxima hora.", a3:"Si sales, lleva paraguas. Para correr, mejor mañana temprano.",
        tag1:"De la física y la química…", tag2:"…a tu mano.", tag3:"Entendemos el aire para ponerlo en tu mano.", wake:"SMAA · EN LÍNEA", wakeSub:"PM2.5 · PM10 · GASES · T/HR · RUIDO",
        chaak:"CHAAK · EN LÍNEA", chaakSub:"VIENTO · LLUVIA · PRESIÓN · RADIACIÓN", ask:"Pregunta a AIreGPT", place:"CIUDAD DE MÉXICO",
-       lPM:"SENSOR DE PARTÍCULAS · LÁSER", lGas:"SENSORES ELECTROQUÍMICOS · CO · O₃", lPcb:"TARJETA · MÓDEM 2G/4G" },
+       lPM:"SENSOR DE PARTÍCULAS · LÁSER", lGas:"SENSORES ELECTROQUÍMICOS · CO · O₃", lPcb:"TARJETA · MÓDEM 2G/4G",
+       comp:"COMPONENTES", aTar:"Tarjeta principal · módem 2G/4G", aGas:"2 sensores electroquímicos", aPM:"Partículas PM2.5 / PM10", aTH:"Temperatura y humedad", aNoise:"Sensor de ruido",
+       aGPS:"GPS", aLipo:"Batería LiPo de respaldo", aSw:"Interruptores", aSil:"Sílica gel",
+       c1:"VARIABLES", c1l:"AIRE · CLIMA · RUIDO", c2:"EQUIPOS", c3:"RESOLUCIÓN", c3l:"EN TIEMPO REAL", r1:"PM2.5", r2:"OZONO", r3:"LLUVIA" },
   en:{ physics:"PHYSICS", chem:"CHEMISTRY", data:"DATA", pd:"PHOTODIODE · LASER SCATTERING", pdSub:"every peak is a particle", el1:"ELECTRODE · CO", el2:"ELECTRODE · O₃", elSub:"reaction current, in nanoamps",
        meas:"LIVE MEASUREMENT", sim:"SIMULATED DATA", api:"OPEN API", online:"● online", q:"How's the air in my neighborhood?",
        a1:"Air quality: <b>moderate</b>. PM2.5 at 38 µg/m³.", a2:"It's raining (4 mm/h): rain washes the air, so PM2.5 should drop within the hour.", a3:"Take an umbrella if you head out. For a run, wait until tomorrow morning.",
        tag1:"From physics and chemistry…", tag2:"…to your hand.", tag3:"We understand the air to put it in your hand.", wake:"SMAA · ONLINE", wakeSub:"PM2.5 · PM10 · GASES · T/RH · NOISE",
        chaak:"CHAAK · ONLINE", chaakSub:"WIND · RAIN · PRESSURE · RADIATION", ask:"Ask AIreGPT", place:"MEXICO CITY",
-       lPM:"PARTICLE SENSOR · LASER", lGas:"ELECTROCHEMICAL SENSORS · CO · O₃", lPcb:"MAIN BOARD · 2G/4G MODEM" }
+       lPM:"PARTICLE SENSOR · LASER", lGas:"ELECTROCHEMICAL SENSORS · CO · O₃", lPcb:"MAIN BOARD · 2G/4G MODEM",
+       comp:"COMPONENTS", aTar:"Main board · 2G/4G modem", aGas:"2 electrochemical sensors", aPM:"PM2.5 / PM10 particles", aTH:"Temperature & humidity", aNoise:"Noise sensor",
+       aGPS:"GPS", aLipo:"Backup LiPo battery", aSw:"Switches", aSil:"Silica gel",
+       c1:"VARIABLES", c1l:"AIR · WEATHER · NOISE", c2:"DEVICES", c3:"RESOLUTION", c3l:"REAL TIME", r1:"PM2.5", r2:"OZONE", r3:"RAIN" }
 };
 const SUBS = [
   [1.2, 6.5, "La naturaleza habla en ondas. Nosotros la traducimos.", "Nature speaks in waves. We translate it."],
   [8.2, 12.4, "El aire no se ve. Pero se puede entender.", "You can't see the air. But you can understand it."],
   [13.4, 17.6, "CHAAK lee el viento, la lluvia y el sol…", "CHAAK reads the wind, the rain and the sun…"],
   [18.2, 21.8, "…y SMAA despierta…", "…and SMAA wakes up…"],
-  [22.0, 25.6, "…para respirar el aire.", "…to breathe the air."],
-  [26.6, 31.4, "Un láser cuenta cada partícula que cruza su paso.", "A laser counts every particle that crosses its beam."],
-  [32.0, 36.6, "Los gases entran a los electrodos, reaccionan y se vuelven corriente.", "Gases flow into the electrodes, react and become current."],
-  [37.3, 41.4, "Cada pulso se vuelve una medición…", "Every pulse becomes a measurement…"],
-  [41.6, 46.6, "…y cada medición, un dato abierto, en tu ciudad.", "…and every measurement, open data, in your city."],
-  [51.6, 58.2, "Así llega a AIreGPT: para que sepas qué hacer.", "That's how it reaches AIreGPT, so you know what to do."]
+  [22.0, 25.2, "…para respirar el aire.", "…to breathe the air."],
+  [25.6, 29.8, "Por dentro, cada pieza tiene una función.", "Inside, every part has a job."],
+  [30.6, 35.2, "Un láser cuenta cada partícula que cruza su paso.", "A laser counts every particle that crosses its beam."],
+  [35.6, 40.6, "Los gases entran a los electrodos, reaccionan y se vuelven corriente.", "Gases flow into the electrodes, react and become current."],
+  [45.0, 49.4, "Ingeniería mexicana, pieza por pieza.", "Engineered in Mexico, piece by piece."],
+  [50.8, 55.0, "Cada pulso se vuelve una medición, y cada medición, un dato abierto.", "Every pulse becomes a measurement, and every measurement, open data."],
+  [56.2, 61.0, "…en tu ciudad, en tiempo real.", "…in your city, in real time."],
+  [62.6, 69.2, "Así llega a AIreGPT: para que sepas qué hacer.", "That's how it reaches AIreGPT, so you know what to do."]
 ];
 const tx = k => T[LANG][k];
 
@@ -130,11 +138,9 @@ renderer.setPixelRatio(1); renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
 renderer.setClearColor(0x000000, 0);                         // el limbo es el degradado del fondo (#stage); al final, el cielo o Mapbox
 const scene = new THREE.Scene();
-const LIMBO = new THREE.Color(0x03103f), CITYFOG = new THREE.Color(0x0b1430), FOGD = .009;
-scene.fog = new THREE.FogExp2(LIMBO.clone(), .35);
+const LIMBO = new THREE.Color(0x03103f);
 const cam = new THREE.PerspectiveCamera(38, 16/9, .003, 9000);
 const V = (x,y,z)=> new THREE.Vector3(x,y,z);
-const CITY = new THREE.Group(); scene.add(CITY);              // la ciudad simulada del final (no se usa con Mapbox)
 
 /* luces de estudio: contraluz primero, luego la principal; el combo sale de la oscuridad */
 const hemi = new THREE.HemisphereLight(0x6f86c8, 0x0a0c14, .06); scene.add(hemi);
@@ -143,29 +149,6 @@ const rim = new THREE.DirectionalLight(0x8fb0ff, .2); rim.position.set(40, 25, 5
 const smaaSpot = new THREE.PointLight(0xbfd0ff, 0, 3.5, 2); smaaSpot.position.set(-.8, 3.9, -.5); scene.add(smaaSpot);
 const ledLight = new THREE.PointLight(0xff3020, 0, .3, 2); ledLight.position.set(-.052, 3.12, 0); scene.add(ledLight);
 const laserLight = new THREE.PointLight(0xff2a2a, 0, .12, 2); laserLight.position.set(-.128, 3.158, -.046); scene.add(laserLight);
-
-/* cielo: degradado de anochecer, resplandor al poniente y los volcanes al oriente */
-const sky = new THREE.Mesh(new THREE.SphereGeometry(6000, 48, 24), new THREE.ShaderMaterial({
-  side:THREE.BackSide, depthWrite:false, depthTest:false, fog:false, uniforms:{uMix:{value:0}},   // opaco y primero: escribe su color premultiplicado sobre el degradado del limbo
-  vertexShader:`varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-  fragmentShader:`varying vec3 vD; uniform float uMix;
-    float bump(float a, float c, float w, float h){ float d = (a-c)/w; return h*exp(-d*d); }
-    void main(){
-      float y = vD.y, az = atan(vD.z, vD.x);
-      vec3 top = vec3(.008,.016,.055), mid = vec3(.03,.06,.17), hor = vec3(.16,.17,.33);
-      vec3 c = mix(hor, mid, smoothstep(0.0,.18,y)); c = mix(c, top, smoothstep(.18,.7,y));
-      float west = pow(max(0.0, dot(normalize(vec2(vD.x,vD.z)), normalize(vec2(-1.0,-.35)))), 6.0);
-      c += vec3(.55,.22,.10)*west*exp(-max(y,0.0)*14.0)*.9;                      // último resplandor del sol
-      float m = bump(az, .55, .10, .045) + bump(az, .78, .16, .03) + bump(az, .70, .05, .012);   // Popocatépetl e Iztaccíhuatl
-      if(y < m && y > -.02) c = mix(c, vec3(.045,.055,.11), .85);
-      if(y < .0) c = vec3(.02,.025,.05);
-      gl_FragColor = vec4(c*uMix, uMix);
-    }`
-}));
-sky.renderOrder = -10; scene.add(sky);
-
-
-CITY.add(sky); scene.remove(sky);
 
 /* ---------- el combo en su trípode (models/montaje.glb, mástil de 1.12 m), igual que en el gemelo ---------- */
 const CHAAK_Y = 2.75, SMAA_Y = CHAAK_Y + .5;                  // SMAA 0.335 m sobre la base de CHAAK + 0.165 m «arriba»
@@ -180,86 +163,6 @@ const limboFloor = new THREE.Mesh(new THREE.CircleGeometry(7, 96), new THREE.Mes
 limboFloor.rotation.x = -Math.PI/2; limboFloor.position.y = ROOF_Y + .002; scene.add(limboFloor);
 const contact = new THREE.Mesh(new THREE.CircleGeometry(.55, 64), new THREE.MeshBasicMaterial({map:radialTex([[0,"rgba(0,0,8,.7)"],[1,"rgba(0,0,8,0)"]]), transparent:true, depthWrite:false, fog:false}));
 contact.rotation.x = -Math.PI/2; contact.position.y = ROOF_Y + .004; scene.add(contact);
-
-/* ---------- la ciudad del final (simulada): la casa de la azotea, la colonia alrededor y las torres al fondo ---------- */
-CITY.position.y = ROOF_Y - ROOF_H;
-const HOUSE = {x0:-4.5, x1:7.5, z0:-7, z1:7};
-const bMat = new THREE.ShaderMaterial({
-  uniforms:{ fogColor:{value:LIMBO.clone()}, fogDensity:{value:.35}, uLit:{value:0}, uGround:{value:0} },
-  vertexShader:`#include <common>
-    #include <logdepthbuf_pars_vertex>
-    varying vec3 vW; varying vec3 vN; varying float vSeed;
-    void main(){
-      vec4 wp = modelMatrix * instanceMatrix * vec4(position,1.0);
-      vW = wp.xyz; vN = normalize(mat3(modelMatrix * instanceMatrix) * normal); vSeed = instanceMatrix[3].x*.013 + instanceMatrix[3].z*.071;
-      vec4 mv = viewMatrix * wp; gl_Position = projectionMatrix * mv;
-      #include <logdepthbuf_vertex>
-    }`,
-  fragmentShader:`#include <logdepthbuf_pars_fragment>
-    uniform vec3 fogColor; uniform float fogDensity; uniform float uLit; uniform float uGround;
-    varying vec3 vW; varying vec3 vN; varying float vSeed;
-    float h(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
-    void main(){
-      #include <logdepthbuf_fragment>
-      vec3 base = vec3(.020,.026,.048);
-      vec3 c = base * (.6 + .4*max(0.0, dot(vN, normalize(vec3(-.4,.5,-.6)))));
-      if(abs(vN.y) < .5){
-        float along = abs(vN.x) > .5 ? vW.z : vW.x;
-        vec2 cell = floor(vec2(along/2.4, vW.y/3.3)); vec2 f = fract(vec2(along/2.4, vW.y/3.3));
-        float win = step(.18, f.x)*step(f.x, .82)*step(.25, f.y)*step(f.y, .78);
-        float r = h(cell + vSeed*31.0);
-        float lit = step(.80, r) * step(uGround + 2.0, vW.y) * step(length(vW.xz), uLit);   // se encienden en ola desde la azotea
-        vec3 warm = mix(vec3(1.0,.72,.42), vec3(.72,.82,1.0), step(.93, r));
-        c += win*lit*warm*(.55 + .6*h(cell*1.7 + 3.0));
-        c += win*(1.0-lit)*vec3(.012,.018,.035);
-      }
-      float d = length(vW - cameraPosition);
-      float fog = 1.0 - exp(-fogDensity*fogDensity*d*d);
-      gl_FragColor = vec4(mix(c, fogColor, fog), 1.0);
-    }`
-});
-
-(function buildCity(){
-  const R = rng(7), boxes = [];
-  boxes.push([(HOUSE.x0 + HOUSE.x1)/2, (HOUSE.z0 + HOUSE.z1)/2, HOUSE.x1 - HOUSE.x0, HOUSE.z1 - HOUSE.z0, ROOF_H]);   // la casa (2 pisos)
-  for(let gx=-10; gx<=10; gx++) for(let gz=-10; gz<=10; gz++){            // la colonia: casas y edificios de 2 a 6 pisos
-    const cx = gx*20 + 10, cz = gz*20;
-    if(cx > -16 && cx < -4) continue;                                       // la calle de enfrente (a lo largo de Z)
-    for(let k=0;k<2;k++){ const w = 8 + R()*8, d = 9 + R()*8, x = cx + (R()-.5)*6, z = cz + (k ? 5 : -5) + (R()-.5)*3;
-      if(x + w/2 > HOUSE.x0 - 1 && x - w/2 < HOUSE.x1 + 1 && z + d/2 > HOUSE.z0 - 1 && z - d/2 < HOUSE.z1 + 1) continue;
-      let hgt = 6 + Math.floor(R()*R()*5)*3.2; if(R() < .04) hgt = 26 + R()*20; boxes.push([x, z, w, d, hgt]); }
-  }
-  for(let k=0;k<16;k++){ const a = -.62 + (R()-.5)*.9, r = 700 + R()*900, hh = 110 + R()*140;   // torres al fondo (hacia donde mira la toma final)
-    boxes.push([Math.cos(a)*r, Math.sin(a)*r, 30 + R()*25, 30 + R()*25, hh]); }
-  const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1), bMat, boxes.length), m = new THREE.Matrix4();
-  boxes.forEach(([x,z,w,d,hh],i)=>{ m.makeScale(w,hh,d); m.setPosition(x, hh/2, z); im.setMatrixAt(i, m); });
-  CITY.add(im);
-  const mat = (c, r=.85, mt=0)=> new THREE.MeshStandardMaterial({color:c, roughness:r, metalness:mt});
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(8000, 8000), mat(0x05070d, .5, .1)); ground.rotation.x = -Math.PI/2; CITY.add(ground);
-  /* azotea: losa, pretil, tinacos y un equipo de aire */
-  const add = (geo, m2, x, y, z)=>{ const o = new THREE.Mesh(geo, m2); o.position.set(x, y, z); CITY.add(o); return o; };
-  add(new THREE.BoxGeometry(HOUSE.x1 - HOUSE.x0, .06, HOUSE.z1 - HOUSE.z0), mat(0x101218, 1, 0), (HOUSE.x0 + HOUSE.x1)/2, ROOF_H + .03, 0);
-  const pm2 = mat(0x3a404d);
-  add(new THREE.BoxGeometry(HOUSE.x1 - HOUSE.x0, .55, .15), pm2, (HOUSE.x0 + HOUSE.x1)/2, ROOF_H + .27, HOUSE.z0);
-  add(new THREE.BoxGeometry(HOUSE.x1 - HOUSE.x0, .55, .15), pm2, (HOUSE.x0 + HOUSE.x1)/2, ROOF_H + .27, HOUSE.z1);
-  add(new THREE.BoxGeometry(.15, .55, HOUSE.z1 - HOUSE.z0), pm2, HOUSE.x0, ROOF_H + .27, 0);
-  add(new THREE.BoxGeometry(.15, .55, HOUSE.z1 - HOUSE.z0), pm2, HOUSE.x1, ROOF_H + .27, 0);
-  const tin = mat(0x101114, .5);
-  add(new THREE.CylinderGeometry(.55, .5, 1.15, 28), tin, 6.4, ROOF_H + .62, 5.6); add(new THREE.CylinderGeometry(.55, .5, 1.15, 28), tin, 5.0, ROOF_H + .62, 5.6);
-  add(new THREE.BoxGeometry(.9, .7, .45), mat(0x5d636c, .6, .3), 6.6, ROOF_H + .4, -6.0);
-})();
-/* árboles a lo largo de la calle de enfrente */
-const TREES = [];
-for(let i=-14;i<=14;i++) for(const x of [-6.2, -13.8]) TREES.push([x, i*11 + (x < -10 ? 5.5 : 0), rng(77 + i*3 + (x < -10 ? 1 : 0))()]);
-{
-  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(.12,.16,4,6), new THREE.MeshStandardMaterial({color:0x1c1712, roughness:1}), TREES.length);
-  const crown = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), new THREE.MeshStandardMaterial({color:0x08140f, roughness:1, flatShading:true}), TREES.length*3);
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = V(1,1,1);
-  TREES.forEach(([x,z,r],i)=>{ m.makeTranslation(x, 2, z); trunk.setMatrixAt(i, m);
-    for(let k=0;k<3;k++){ const R = rng(900 + i*3 + k), s2 = 1.8 + R()*1.4 + r*.8; sc.set(s2, s2*.85, s2); q.setFromAxisAngle(V(0,1,0), R()*6);
-      m.compose(V(x + (R()-.5)*1.8, 4.6 + R()*1.8, z + (R()-.5)*1.8), q, sc); crown.setMatrixAt(i*3 + k, m); } });
-  CITY.add(trunk); CITY.add(crown);
-}
 
 /* ---------- partículas (un solo sombreador para la onda, el aire, la ciudad y los datos) ---------- */
 const PT_VS = `#include <common>
@@ -290,14 +193,7 @@ function points(n){
 }
 
 
-const LAMPS = points(80), CARS = points(240), WAVE = points(900), HAZE = points(500), AIR = points(520), STREAM = points(900), GLOW = points(40), BEAM = points(30), SPLASH = points(1400), GAS = points(360);
-[LAMPS.p, CARS.p].forEach(p=>{ scene.remove(p); CITY.add(p); });
-
-/* luminarias de la calle de enfrente */
-const LAMP_POS = [];
-for(let i=-14;i<=14;i++){ LAMP_POS.push([-5.6, i*24 + 12, -1]); LAMP_POS.push([-14.4, i*24, 1]); }
-{ const pg = new THREE.CylinderGeometry(.06,.08,6.5,6), mt = new THREE.MeshStandardMaterial({color:0x1a1f2b}), ip = new THREE.InstancedMesh(pg, mt, LAMP_POS.length), m = new THREE.Matrix4();
-  LAMP_POS.forEach(([x,z],i)=>{ m.makeTranslation(x, 3.25, z); ip.setMatrixAt(i, m); }); CITY.add(ip); }
+const WAVE = points(900), HAZE = points(500), AIR = points(520), STREAM = points(900), GLOW = points(40), BEAM = points(30), SPLASH = points(1400), GAS = points(360);
 
 /* ---------- lluvia: rayas finas inclinadas por el viento ---------- */
 const RAIN_N = 2600, RAIN = (()=>{ const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(RAIN_N*6), 3));
@@ -341,8 +237,16 @@ let modelReady = false;
 function modelsLoaded(){
   for(const k of ["smaa_top","smaa_bottom"]) if(NODE[k]){ const m = NODE[k].material; m.color.set(0xe9ecf2); m.roughness = .38; }
   if(NODE.smaa_in_switches_led) NODE.smaa_in_switches_led.material.emissive = new THREE.Color(0xff2a14);
+  for(const k in NODE){ const o = NODE[k]; o.userData.p0 = o.position.clone(); o.geometry.computeBoundingBox(); o.userData.c = o.geometry.boundingBox.getCenter(new THREE.Vector3()); }
   modelReady = true; ready();
 }
+/* ensamble: las piezas internas aparecen una por una; vista explosionada: se separan y vuelven a cerrar */
+const ASSEMBLY = [["smaa_in_tarjeta",24.0,"aTar"],["smaa_in_gases",24.7,"aGas"],["smaa_in_pm25",25.4,"aPM"],["smaa_in_temphum",26.1,"aTH"],["smaa_in_ruido",26.7,"aNoise"],
+  ["smaa_in_gps",27.3,"aGPS"],["smaa_in_lipo",27.9,"aLipo"],["smaa_in_switches",28.5,"aSw"],["smaa_in_silica",29.0,"aSil"]];
+const APPEAR = Object.fromEntries(ASSEMBLY.map(([k,t0])=>[k,t0])); APPEAR.smaa_in_switches_led = APPEAR.smaa_in_switches_metal = APPEAR.smaa_in_switches;
+const EXPLODE = { smaa_top:[0,.15,0], smaa_bottom:[0,-.11,0], smaa_in_tarjeta:[0,.07,0], smaa_in_gases:[0,.02,0], smaa_in_pm25:[-.1,-.02,-.03],
+  smaa_in_temphum:[0,-.17,0], smaa_in_gps:[0,.23,0], smaa_in_ruido:[0,-.07,.05], smaa_in_switches:[0,-.2,0], smaa_in_switches_led:[0,-.2,0],
+  smaa_in_switches_metal:[0,-.2,0], smaa_in_lipo:[-.13,0,.06], smaa_in_silica:[0,0,-.13] };
 const isSmaaOuter = k => !k.startsWith("smaa_in_") && !/chaak|carcasa|cabezal|cople|tubo|tornillos_(carcasa|sensor)|sensorsolido/.test(k);
 const isChaak = k => /chaak|carcasa|cabezal|cople|tubo_soporte|tornillos_(carcasa|sensor)|sensorsolido/.test(k);
 
@@ -362,17 +266,22 @@ const KEYS = [   // t, posición, mira a      (el frente de SMAA mira a −X; el
   [16.4,[-2.5, 4.55, -.25],  [0, 3.45, 0]],
   [18.0,[-2.1, 3.9, 1.6],    [-.05, 3.3, .03]],
   [19.6,[-1.5, 3.45, 1.0],   [-.08, 3.18, 0]],
-  [21.6,[-1.15, 3.05, .75],  [-.08, 3.15, 0]],
-  [23.8,[-.78, 3.27, -.48],  [-.1, 3.16, -.02]],
-  [26.4,[-.5, 3.27, -.32],   [-.11, 3.16, -.04]],     // interior: nunca a menos de ~40 cm; SMAA completa en cuadro
-  [29.6,[-.46, 3.25, -.2],   [-.12, 3.155, -.04]],
-  [32.8,[-.43, 3.17, .4],    [-.09, 3.14, .045]],
-  [36.8,[-.5, 3.42, .36],    [-.09, 3.18, .02]],
-  [40.0,[-1.3, 3.8, .95],    [-.05, 3.3, 0]],
-  [44.6,[-6.8, 6.0, 5.4],    [2.5, 3.6, -2.0]],       // se abre la toma: el combo en primer plano y la ciudad detrás (revelación lenta)
-  [49.0,[-11.5, 8.0, 9.5],   [8, 6.0, -7]],
-  [53.4,[-10.5, 10.5, 8.6],  [-1.1, 12, 0]],
-  [64,  [-10.8, 13.5, 9.0],  [-1.4, 17, 0]],
+  [21.4,[-1.15, 3.05, .75],  [-.08, 3.15, 0]],
+  [23.6,[-.74, 3.36, .55],   [-.09, 3.17, 0]],        // ensamble: giro lento de 90° alrededor de SMAA mientras aparecen las piezas
+  [26.6,[-.84, 3.33, 0],     [-.09, 3.17, 0]],
+  [29.6,[-.58, 3.3, -.34],   [-.09, 3.165, -.01]],
+  [32.2,[-.5, 3.27, -.32],   [-.11, 3.16, -.04]],     // láser (nunca a menos de ~40 cm)
+  [34.8,[-.46, 3.25, -.2],   [-.12, 3.155, -.04]],
+  [38.0,[-.43, 3.17, .4],    [-.09, 3.14, .045]],     // espiral de gas
+  [42.0,[-.5, 3.42, .36],    [-.09, 3.18, .02]],      // tarjeta
+  [44.6,[-.78, 3.5, .58],    [-.09, 3.17, 0]],        // vista explosionada
+  [47.0,[-.98, 3.42, -.55],  [-.09, 3.15, 0]],
+  [49.6,[-1.05, 3.55, .35],  [-.09, 3.17, 0]],
+  [52.0,[-1.4, 3.8, .95],    [-.05, 3.3, 0]],
+  [56.6,[-6.8, 6.0, 5.4],    [2.5, 3.6, -2.0]],       // se abre la toma (con ?map=1, la ciudad real)
+  [61.0,[-11.5, 8.0, 9.5],   [8, 6.0, -7]],
+  [65.4,[-10.5, 10.5, 8.6],  [-1.1, 12, 0]],
+  [75,  [-10.8, 13.5, 9.0],  [-1.4, 17, 0]],
 ].map(([t,p,q])=>({t, p:V(...p), q:V(...q)}));
 function cr(p0,p1,p2,p3,u){ const u2=u*u, u3=u2*u; return p1.clone().multiplyScalar(2).add(p2.clone().sub(p0).multiplyScalar(u)).add(p0.clone().multiplyScalar(2).sub(p1.clone().multiplyScalar(5)).add(p2.clone().multiplyScalar(4)).sub(p3).multiplyScalar(u2)).add(p1.clone().multiplyScalar(3).sub(p0).sub(p2.clone().multiplyScalar(3)).add(p3).multiplyScalar(u3)).multiplyScalar(.5); }
 function logLerp(k, i, u){       // posiciones en escala logarítmica respecto a SMAA: la cámara se acerca de forma pareja de 150 m a 15 cm
@@ -385,7 +294,7 @@ function camAt(t){
   let i = 0; while(i < KEYS.length-2 && t > KEYS[i+1].t) i++;
   const u = clamp((t - KEYS[i].t)/(KEYS[i+1].t - KEYS[i].t));
   const p = logLerp("p", i, u), q = logLerp("q", i, u);
-  if(FMT === "v"){ const k = win(t, 20.5, 41, 2.5); p.sub(q).multiplyScalar(1 + .5*k).add(q); }   // en vertical, el interior se ve un poco más lejos
+  if(FMT === "v"){ const k = win(t, 22, 52, 2.5); p.sub(q).multiplyScalar(1 + .5*k).add(q); }   // en vertical, el interior se ve un poco más lejos
   return {p, q};
 }
 
@@ -422,61 +331,51 @@ function updateScene(t){
   const u = t - D;                                        // reloj de SMAA
   /* luz: contraluz y luego la principal; el combo sale de la oscuridad cuando lo toca la onda */
   const lightOn = sm(seg(t, 9.4, 13.2)), backOn = sm(seg(t, 8.0, 11.5));
-  const rv = sm(seg(t, 40.5, 48.5));                     // la ciudad aparece (lenta, 8 s)
-  hemi.intensity = .06 + .5*lightOn + .35*sm(seg(t, 40.5, 48.5)); key.intensity = .95*lightOn*(1 - .7*rv); rim.intensity = (.25 + 1.0*backOn)*(1 - .6*rv);   // de noche en la ciudad, menos luz de estudio
+  const rv = sm(seg(t, 53.5, 61.5));                     // se abre la toma (lenta, 8 s)
+  hemi.intensity = .06 + .5*lightOn + .35*rv; key.intensity = .95*lightOn*(1 - .7*rv); rim.intensity = (.25 + 1.0*backOn)*(1 - .6*rv);   // de noche en la ciudad, menos luz de estudio
   smaaSpot.intensity = .15 + 1.4*lightOn*(1 - .5*rv);
 
-  /* limbo → ciudad: la niebla azul se abre, el piso del estudio se vuelve la azotea, el cielo y las ventanas se encienden */
-  const dens = Math.exp(lerp(Math.log(.35), Math.log(FOGD), Math.pow(rv, .45)));     // la niebla se abre rápido al inicio de la revelación
-  scene.fog.density = dens; scene.fog.color.copy(LIMBO).lerp(CITYFOG, rv);
-  bMat.uniforms.fogDensity.value = dens; bMat.uniforms.fogColor.value.copy(scene.fog.color);
-  bMat.uniforms.uLit.value = 30 + rv*rv*2400; bMat.uniforms.uGround.value = ROOF_Y - ROOF_H;
-  sky.material.uniforms.uMix.value = rv;
-  CITY.visible = !USE_MAP && rv > .002;
-  limboFloor.material.opacity = 1 - rv; contact.material.opacity = 1 - .6*rv;
+  /* final: con Mapbox (?map=1) el piso del estudio se desvanece y aparece la ciudad real; sin mapa, todo sigue en el limbo */
+  limboFloor.material.opacity = 1 - (USE_MAP ? rv : 0); contact.material.opacity = 1 - (USE_MAP ? .6*rv : 0);
   if(USE_MAP && map) $("map").style.opacity = rv.toFixed(3);
 
   /* carcasas translúcidas: primero CHAAK, panel, batería y trípode; luego la carcasa de SMAA; foco en la pieza que se explica */
-  const out = 1 - sm(seg(u, 33.6, 38.2));                // se vuelve sólida al salir la cámara
-  const accF = sm(seg(u, 19.0, 23.6)) * out;
-  const inside = sm(seg(u, 20.0, 25.0)) * out;
+  const out = 1 - sm(seg(t, 50.6, 53.4));                // se vuelve sólida al salir la cámara
+  const accF = sm(seg(t, 22.4, 26.4)) * out;
+  const inside = sm(seg(t, 23.2, 27.8)) * out;
+  const ex = sm(seg(t, 44.8, 46.8)) * (1 - eio(seg(t, 48.8, 49.7)));   // vista explosionada; se cierra con un «clic»
   const pmF = sm(seg(u, 22.8, 25.4)) * (1 - sm(seg(u, 27.4, 29.8)));
   const fPM = win(u, 22.0, 27.6, 1.0), fGas = win(u, 27.2, 32.6, 1.0), fPcb = win(u, 31.8, 36.4, 1.0), anyF = Math.max(fPM, fGas, fPcb);
   for(const k in NODE){
     const m = NODE[k].material; let o = 1;
-    if(k === "smaa_top" || k === "smaa_bottom") o = 1 - .88*inside;
+    if(k === "smaa_top" || k === "smaa_bottom") o = 1 - .88*inside*(1 - .45*ex);
     else if(k === "smaa_in_pm25") o = 1 - .72*pmF;
     else if(isChaak(k) || isSmaaOuter(k)) o = 1 - .96*accF;
+    let ap = 1;
+    if(APPEAR[k] !== undefined){ ap = sm(seg(t, APPEAR[k], APPEAR[k] + .9)); o *= ap; }          // la pieza se materializa
     if(k.startsWith("smaa_in_") && k !== "smaa_in_switches_led"){
       const foc = k === "smaa_in_pm25" ? fPM : (k === "smaa_in_gases" ? fGas : (k === "smaa_in_tarjeta" ? fPcb : 0));
       o *= 1 - .55*anyF*(1 - foc);                         // las demás piezas se atenúan
-      if(m.emissive) m.emissive.setRGB(.05*foc, .12*foc, .42*foc);
+      const scan = APPEAR[k] !== undefined ? win(t, APPEAR[k], APPEAR[k] + 1.8, .4)*.8 : 0, e = Math.max(foc, scan);
+      if(m.emissive) m.emissive.setRGB(.05*e, .12*e, .42*e);
     }
+    const n = NODE[k], off = EXPLODE[k];
+    if(n.userData.p0){ n.position.copy(n.userData.p0); n.position.y += .015*(1 - ap); if(off) n.position.add(V(off[0]*ex, off[1]*ex, off[2]*ex)); }
     m.opacity = o; m.transparent = o < .999; m.depthWrite = o > .85; NODE[k].visible = o > .02;
   }
   const flick = t < 18.4 ? 0 : (t < 19.2 ? (hash(Math.floor(t*22)) > .4 ? 1 : .15) : 1), wake = ease(seg(t, 18.4, 19.4));
   if(NODE.smaa_in_switches_led) NODE.smaa_in_switches_led.material.emissiveIntensity = 3.5*flick*wake;
   ledLight.intensity = .35*flick*wake;
   /* anillos: 2 en CHAAK cuando lo toca la onda, 2 en SMAA cuando despierta */
-  pings.forEach((m,i)=>{ const isC = i < 2, t0 = isC ? 13.5 + i*.6 : 18.6 + (i-2)*.6, a = seg(t, t0, t0 + 1.8);
+  pings.forEach((m,i)=>{ const isC = i < 2, t0 = isC ? 13.5 + i*.6 : (t > 40 ? 49.7 + (i-2)*.35 : 18.6 + (i-2)*.6), a = seg(t, t0, t0 + 1.8);
     if(isC) m.position.set(0, CHAAK_Y + .8, 0); else m.position.set(-.08, SMAA_Y - .12, 0);
-    const r = (isC ? .08 : .12) + a*(isC ? .55 : .7); m.scale.set(r,r,r); m.material.opacity = (a > 0 && a < 1) ? (1-a)*.6 : 0; });
+    const r = (isC ? .08 : .12) + a*(isC ? .55 : (t > 40 ? .22 : .7)); m.scale.set(r,r,r); m.material.opacity = (a > 0 && a < 1) ? (1-a)*.6 : 0; });
 
   /* láser y su luz */
   const las = ease(seg(u, 21.8, 22.8)) * (1 - ease(seg(u, 31.5, 33)));
   laser.material.opacity = .95*las; laserLight.intensity = .5*las;
   for(let i=0;i<BEAM.n;i++){ const z = -.067 + .042*i/(BEAM.n-1); BEAM.set(i, P.beamX, P.beamY, z, .0026*(.8 + .2*Math.sin(t*20 + i)), 1, .12, .1, .55*las); }
   BEAM.done();
-
-  /* luminarias y coches de la calle de enfrente (coordenadas de la ciudad) */
-  const cityOn = USE_MAP ? 0 : rv;
-  LAMP_POS.forEach(([x,z,dir],i)=> LAMPS.set(i, x + dir*1.2, 6.4, z, 1.4, 1.0, .7, .38, .95*cityOn));
-  LAMPS.done();
-  for(let c=0;c<CARS.n/4;c++){ const R = rng(500+c), dir = c%2 ? 1 : -1, lane = dir > 0 ? -8.4 : -11.6, L = 600, sp = 7 + R()*6;
-    const z = (((R()*L + dir*sp*t) % L) + L) % L - L/2;
-    for(let k=0;k<4;k++){ const front = k < 2, side = k%2 ? .75 : -.75, zz = z + (front ? dir*2.1 : -dir*2.1);
-      CARS.set(c*4 + k, lane + side, .65, zz, .55, front ? 1 : .95, front ? .95 : .1, front ? .85 : .06, .9*cityOn); } }
-  CARS.done();
 
   /* la onda: de la «S» del logo, por la oscuridad, a la cabeza de CHAAK */
   const c7 = camAt(7), S0 = c7.p.clone().lerp(c7.q, .12), tgt = P.head.clone().add(V(0,.02,0)), dirv = tgt.clone().sub(S0), Lw = dirv.length(); dirv.normalize();
@@ -495,7 +394,7 @@ function updateScene(t){
   WAVE.done();
 
   /* lluvia y rebotes: solo cuando aparece la ciudad */
-  const rain = sm(seg(t, 42.0, 45.0)) * (1 - ease(seg(t, 60, 62.5))), farRain = sm(seg(t, 43.0, 47.0));
+  const rain = sm(seg(t, 55.0, 58.0)) * (1 - ease(seg(t, 70, 72.5))), farRain = sm(seg(t, 56.0, 60.0));
   const rp = RAIN.geometry.attributes.position.array, rc = RAIN.geometry.attributes.color.array;
   let sp = 0;
   for(let i=0;i<RAIN_N;i++){
@@ -527,11 +426,11 @@ function updateScene(t){
   for(let i=0;i<HAZE.n;i++){ const R = rng(3000+i), x = -3.5 + R()*7, y = ROOF_Y + .2 + R()*4.5, z = -3.5 + R()*7, sp2 = .05 + R()*.1;
     const px = x + Math.sin(t*sp2 + i)*.4, pz = z + Math.cos(t*sp2*1.3 + i)*.4, py = y + Math.sin(t*.2 + i*.7)*.15;
     const sz = (.004 + R()*.01), warm = R() < .3;
-    HAZE.set(i, px, py, pz, sz, warm?.9:.6, warm?.7:.7, warm?.5:1, .45*lightOn*(1 - .7*seg(u,40,46))); }
+    HAZE.set(i, px, py, pz, sz, warm?.9:.6, warm?.7:.7, warm?.5:1, .45*lightOn*(1 - .7*seg(t,52,58))); }
   HAZE.done();
 
   /* el aire que entra al PM2.5: toma → láser (destello) → ventilador → túnel */
-  const breathe = seg(u, 15.6, 18.5), airOn = breathe * (1 - ease(seg(u, 33, 36)));
+  const breathe = seg(t, 20.6, 23.5), airOn = breathe * (1 - ease(seg(u, 33, 36)));
   for(let i=0;i<AIRN;i++){
     const s = AIR_SEED[i], q = airPos(i, t), p = q.p;
     let sz = s.sz*(q.zone === 0 ? lerp(.012, .0016, ease(q.u/.66)) : .0011), r = .65, gg = .8, b = 1, a = .9;
@@ -558,11 +457,11 @@ function updateScene(t){
       GLOW.set(gi++, c.x + Math.cos(a)*rr, c.y + .013, c.z + Math.sin(a)*rr, .0035*(.6 + .4*Math.sin(t*6 + k + ph)), .35, 1, .7, gas); }
   }
   for(let k=0;k<16;k++){ const R = rng(9000+k), x = P.pcb.x + (R()-.5)*.08, z = (R()-.5)*.14, blink = .5 + .5*Math.sin(t*(4 + R()*6) + k);
-    GLOW.set(gi++, x, P.pcb.y + .0025, z, .0022*blink, .4, .7, 1, pcbOn*(1 - ease(seg(u,40,43)))); }
+    GLOW.set(gi++, x, P.pcb.y + .0025, z, .0022*blink, .4, .7, 1, pcbOn*(1 - ease(seg(u,36,36.8)))); }
   GLOW.done();
 
   /* los datos suben del combo sobre la ciudad, hacia AIreGPT */
-  const sh = eio(seg(t, 44.0, 55.0)), sOn = seg(t, 43.6, 44.8) * (1 - ease(seg(t, 59, 61)));
+  const sh = eio(seg(t, 57.0, 66.0)), sOn = seg(t, 56.6, 57.8) * (1 - ease(seg(t, 69, 71)));
   for(let i=0;i<STREAM.n;i++){
     const s = i/(STREAM.n-1), y = P.pcb.y + Math.pow(s, 2.1)*26, rr = .008 + .9*Math.pow(s, 1.5), ang = s*28 - t*3.2 + (i%3)*2.094;
     const vis = s <= sh ? 1 : 0, nearH = Math.exp(-Math.pow((sh - s)*25, 2)), pkt = (Math.sin(s*90 - t*14) > .93) ? 1 : 0;
@@ -612,7 +511,7 @@ function drawTuning(t, w, h){
       y = lerp(y, cy, flat); x = lerp(x, lerp(-w*.1, w*1.1, u), flat);
       i ? g.lineTo(x + off, y) : g.moveTo(x + off, y);
     }
-    g.strokeStyle = col; g.lineWidth = Math.max(2, S*.085*morph*(1 - flat*.85)) + 3*(1-morph); g.lineCap = "round";
+    g.strokeStyle = col; g.lineWidth = Math.max(2, S*.085*morph*(1 - flat*.85)) + 3*(1-morph); g.lineCap = morph > .5 ? "butt" : "round";   // al fijarse, la onda corta al ras del cuadrado
     g.globalCompositeOperation = off ? "lighter" : "source-over"; g.shadowColor = "rgba(120,160,255,.9)"; g.shadowBlur = off ? 0 : 18*(1 - morph*.5);
     g.stroke();
   }
@@ -620,10 +519,19 @@ function drawTuning(t, w, h){
   /* marca */
   const wm = ease(seg(t, 5.5, 6.4)) * (1 - ease(seg(t, 6.5, 7.2)));
   if(wm > 0){ g.globalAlpha = on*wm; g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "top";
-    g.font = F(800, S*.22); const sp = S*.035*(1 - wm) + S*.012; drawSpaced("SMABILITY", cx, cy + S*.62, sp); g.globalAlpha = on; }
+    drawWordmark(cx, cy + S*.5 + S*.045, S); g.globalAlpha = on; }
   /* líneas de barrido */
   g.globalAlpha = on*.14; g.fillStyle = "#000"; for(let y=0;y<h;y+=4) g.fillRect(0, y, w, 2);
   g.restore();
+}
+function drawWordmark(cx, top, S){        // SMABILITY© del ancho del cuadrado, justo al pie de su borde inferior
+  const N = "SMABILITY", spF = .07;
+  const widthAt = fs=>{ g.font = F(800, fs); return [...N].reduce((a,c)=> a + g.measureText(c).width, 0) + spF*fs*(N.length - 1); };
+  const fs = S*.2*S/widthAt(S*.2); g.font = F(800, fs); g.textAlign = "left"; g.textBaseline = "top";
+  let x = cx - S/2; const y = top - fs*.1;
+  for(const c of N){ g.fillText(c, x, y); x += g.measureText(c).width + spF*fs; }
+  g.font = F(700, fs*.38); g.fillText("©", x - spF*fs + fs*.08, y + fs*.02);
+  return fs;
 }
 function drawSpaced(s, cx, y, sp){ const ws = [...s].map(c=> g.measureText(c).width), tot = ws.reduce((a,b)=>a+b,0) + sp*(s.length-1); let x = cx - tot/2; g.textAlign = "left"; [...s].forEach((c,i)=>{ g.fillText(c, x, y); x += ws[i] + sp; }); g.textAlign = "center"; }
 
@@ -699,6 +607,30 @@ function leader(t, a, b, p3, text, V9, w, h){       // etiqueta con línea guía
   g.font = F(700, V9 ? 26 : 22, "mono"); g.textAlign = "left"; g.textBaseline = "top"; const tw = g.measureText(text).width;
   rr(lx - 12, ly, tw + 24, V9 ? 42 : 38, 8); g.fillStyle = "rgba(3,10,36,.78)"; g.fill(); g.fillStyle = "#fff"; g.fillText(text, lx, ly + 8); g.restore();
 }
+function components(t, V9, w, h){        // ensamble: lista de piezas que se van materializando; línea guía a la pieza actual
+  const k = win(t, 23.8, 30.6, .6); if(k <= 0) return;
+  const pw = V9 ? w*.86 : w*.34, px = V9 ? (w - pw)/2 : w*.62, py = V9 ? h*.6 : h*.16, lh = V9 ? 44 : 44, ph = 80 + ASSEMBLY.length*lh;
+  panel(px, py, pw, ph, k, tx("comp"), null);
+  g.save(); let curI = -1;
+  ASSEMBLY.forEach(([key, t0, lab], i)=>{ const a = sm(seg(t, t0, t0 + .5)), on = t >= t0 && t < (ASSEMBLY[i+1] ? ASSEMBLY[i+1][1] : t0 + 1.6); if(on) curI = i;
+    const y = py + 62 + i*lh; g.globalAlpha = k*a; g.fillStyle = on ? "#fff" : "rgba(199,210,255,.6)"; g.font = F(on ? 700 : 500, V9 ? 26 : 23);
+    g.textAlign = "left"; g.textBaseline = "top"; g.fillText(tx(lab), px + 52, y); g.fillStyle = on ? "#5cf2b0" : "rgba(159,178,255,.5)"; g.beginPath(); g.arc(px + 32, y + 13, on ? 7 : 5, 0, 7); g.fill(); });
+  if(curI >= 0){ const n = NODE[ASSEMBLY[curI][0]];
+    if(n && n.userData.c){ const q = n.userData.c.clone().applyMatrix4(n.matrixWorld).project(cam), x = (q.x + 1)/2*w, y = (1 - q.y)/2*h, ly = py + 62 + curI*lh + 13;
+      g.globalAlpha = k*.9; g.strokeStyle = "rgba(92,242,176,.85)"; g.lineWidth = 2; g.beginPath(); g.moveTo(px + 20, ly); g.lineTo(x, y); g.stroke(); g.fillStyle = "#5cf2b0"; g.beginPath(); g.arc(x, y, 6, 0, 7); g.fill(); } }
+  g.restore();
+}
+function bigTrio(t, a, b, items, yTop, V9, w, h){   // tres cifras grandes en columnas
+  const k = win(t, a, b, .6); if(k <= 0) return;
+  const cw = (V9 ? w*.9 : w*.66)/3, x0 = (w - cw*3)/2;
+  g.save(); g.textAlign = "center"; g.textBaseline = "top";
+  items.forEach(([num, unit, lab], i)=>{ const a2 = sm(seg(t, a + i*.35, a + i*.35 + .7)), cx = x0 + cw*(i + .5); g.globalAlpha = k*a2;
+    g.font = F(900, V9 ? 96 : 104); g.fillStyle = "#fff"; g.shadowColor = "rgba(32,70,242,.8)"; g.shadowBlur = 28; g.fillText(num, cx, yTop + (1 - a2)*16); g.shadowBlur = 0;
+    g.font = F(600, V9 ? 26 : 24, "mono"); g.fillStyle = "#9FB2FF"; g.fillText(unit, cx, yTop + (V9 ? 108 : 116));
+    g.font = F(700, V9 ? 24 : 22, "mono"); g.fillStyle = "rgba(199,210,255,.8)"; g.fillText(lab, cx, yTop + (V9 ? 146 : 152));
+    if(i){ g.fillStyle = "rgba(159,178,255,.25)"; g.fillRect(x0 + cw*i, yTop + 10, 1.5, 160); } });
+  g.restore();
+}
 function label(t, a, b, title, sub, V9, w, h){
   const k = win(t, a, b, .4); if(k <= 0) return;
   g.save(); g.globalAlpha = k; g.font = F(700, V9 ? 28 : 24, "mono"); g.textAlign = "left"; g.textBaseline = "top";
@@ -710,9 +642,12 @@ function drawHUD(t){
   g.clearRect(0, 0, w, h);
   const vg = g.createRadialGradient(w/2, h/2, Math.min(w,h)*.35, w/2, h/2, Math.max(w,h)*.75); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,2,10,.55)"); g.fillStyle = vg; g.fillRect(0, 0, w, h);
 
-  if(USE_MAP) label(t, 43.6, 48.6, tx("place"), "19.4149 N · 99.1672 W", V9, w, h);
+  if(USE_MAP) label(t, 56.0, 61.0, tx("place"), "19.4149 N · 99.1672 W", V9, w, h);
   label(t, 13.8, 18.0, tx("chaak"), tx("chaakSub"), V9, w, h);
-  label(t, 18.6, 24.0, tx("wake"), tx("wakeSub"), V9, w, h);
+  label(t, 18.6, 23.4, tx("wake"), tx("wakeSub"), V9, w, h);
+  components(t, V9, w, h);
+  bigTrio(t, 49.9, 53.2, [["12", tx("c1"), tx("c1l")], ["2", tx("c2"), "SMAA + CHAAK"], ["1 min", tx("c3"), tx("c3l")]], V9 ? h*.6 : h*.6, V9, w, h);
+  bigTrio(t, 57.4, 62.2, [["38", "µg/m³", tx("r1")], ["21", "ppb", tx("r2")], ["4.2", "mm/h", tx("r3")]], V9 ? h*.17 : h*.17, V9, w, h);
 
   const bwX = V9 ? w/2 : w*.06, bwY = V9 ? h*.09 : h*.12, bwS = V9 ? 120 : 132, al = V9 ? "center" : "left";
   leader(u, 22.6, 27.2, V(-.122, SMAA_Y - .0915, -.046), tx("lPM"), V9, w, h);
@@ -720,7 +655,7 @@ function drawHUD(t){
   leader(u, 32.2, 36.4, V(-.09, SMAA_Y - .058, -.02), tx("lPcb"), V9, w, h);
   bigWord(u, 22.4, 27.0, tx("physics"), bwX, bwY, bwS, al);
   bigWord(u, 27.4, 32.0, tx("chem"), bwX, bwY, bwS, al);
-  bigWord(u, 36.6, 41.6, tx("data"), bwX, bwY, bwS, al);
+  bigWord(t, 52.8, 57.2, tx("data"), bwX, bwY, bwS, al);
 
   const pw = V9 ? w*.86 : w*.38, px = V9 ? (w - pw)/2 : w*.585, py = V9 ? h*.58 : h*.14, phh = V9 ? 340 : 320;
   const k1 = win(u, 22.6, 27.2, .5);
@@ -729,37 +664,32 @@ function drawHUD(t){
   if(k2 > 0){ panel(px, py, pw, phh + 90, k2, `${tx("el1")}  ·  ${tx("el2")}`, tx("elSub"));
     const sig1 = tt=> .25 + .45*ease(seg(tt - D, 27.6, 30)) + .04*Math.sin(tt*9) + .03*Math.sin(tt*23 + 1), sig2 = tt=> .12 + .22*ease(seg(tt - D, 28, 30.4)) + .03*Math.sin(tt*7 + 2) + .02*Math.sin(tt*31);
     const sh2 = (phh + 90 - 114)/2 - 6; scope(px + 24, py + 90, pw - 48, sh2, k2, sig1, t, "#5cf2b0", 3); scope(px + 24, py + 90 + sh2 + 12, pw - 48, sh2, k2, sig2, t, "#7cc4ff", 3); }
-  const k3 = win(u, 32.4, 37.4, .5);
-  if(k3 > 0){ const ph3 = 96 + READ.length*54; panel(px, py, pw, ph3, k3, tx("meas"), null);
-    g.save(); READ.forEach(([lab, val, un, dd], i)=>{ const a = ease(seg(u, 32.6 + i*.22, 33.6 + i*.22)), v = val*a, y = py + 70 + i*54;
-      g.globalAlpha = k3*a; g.font = F(600, 23, "mono"); g.fillStyle = "rgba(199,210,255,.8)"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(LANG === "en" ? (READ_EN[lab] || lab) : lab, px + 26, y + 9);
-      g.font = F(700, 38, "mono"); g.fillStyle = "#fff"; g.textAlign = "right"; g.fillText(v.toFixed(dd), px + pw - 130, y); g.font = F(500, 21, "mono"); g.fillStyle = "#9FB2FF"; g.textAlign = "left"; g.fillText(un, px + pw - 116, y + 13);
-      g.fillStyle = "rgba(159,178,255,.14)"; g.fillRect(px + 26, y + 49, pw - 52, 1); });
-    g.globalAlpha = k3; g.font = F(600, 16, "mono"); g.fillStyle = "rgba(199,210,255,.55)"; g.textAlign = "right"; g.fillText(tx("sim"), px + pw - 24, py + 24); g.restore(); }
-  const k4 = win(u, 37.2, 42.4, .5);
+  const k4 = win(t, 53.0, 57.0, .5);
   if(k4 > 0){ const ph4 = 100 + JSON_LINES.length*38; panel(px, py, pw, ph4, k4, tx("api"), null);
     g.save(); g.globalAlpha = k4; g.font = F(500, V9 ? 25 : 24, "mono"); g.textAlign = "left"; g.textBaseline = "top";
-    const chars = Math.floor(seg(u, 37.4, 40.6)*JSON_LINES.join("").length); let used = 0;
+    const chars = Math.floor(seg(t, 53.2, 56.0)*JSON_LINES.join("").length); let used = 0;
     JSON_LINES.forEach((l, i)=>{ const n = clamp(chars - used, 0, l.length); used += l.length; const s = l.slice(0, n);
       g.fillStyle = i === 0 ? "#5cf2b0" : /"\w+":/.test(l) ? "#C7D2FF" : "#fff"; g.fillText(s, px + 26, py + 66 + i*38);
       if(n > 0 && n < l.length && Math.floor(t*4)%2) g.fillRect(px + 26 + g.measureText(s).width + 2, py + 68 + i*38, 12, 24); });
     g.restore(); }
 
-  drawPhone(t - 9.4, w, h);
+  drawPhone(t - 20.0, w, h);
 
-  const ue = t - 9.6, end = ease(seg(ue, 50.0, 51.2));
+  const ue = t - 20.4, end = ease(seg(ue, 50.0, 51.2));
   if(end > 0){
-    g.save(); g.globalAlpha = end; g.fillStyle = "rgba(0,3,14,.92)"; g.fillRect(0, 0, w, h);
-    const S = Math.min(w, h)*(V9 ? .2 : .16), cx = w/2, cy = h*(V9 ? .36 : .3);
+    g.save(); g.globalAlpha = end; g.fillStyle = "rgba(0,3,14,.94)"; g.fillRect(0, 0, w, h);
+    const S = Math.min(w, h)*(V9 ? .2 : .15), cx = w/2, cy = h*(V9 ? .3 : .25);
     g.fillStyle = "#000"; g.fillRect(cx - S/2, cy - S/2, S, S); g.strokeStyle = "rgba(159,178,255,.4)"; g.lineWidth = 2; g.strokeRect(cx - S/2, cy - S/2, S, S);
     const dr = eio(seg(ue, 50.4, 51.8)); g.beginPath(); for(let i=0;i<=80;i++){ const uu = i/80*dr, [x,y] = logoCurve(cx, cy, S, uu); i ? g.lineTo(x,y) : g.moveTo(x,y); }
     g.strokeStyle = "#fff"; g.lineWidth = S*.085; g.lineCap = "butt"; g.shadowColor = "rgba(120,160,255,.9)"; g.shadowBlur = 16; g.stroke(); g.shadowBlur = 0;
-    const l1 = ease(seg(ue, 51.0, 51.8)), l2 = ease(seg(ue, 52.0, 52.8)), l3 = ease(seg(ue, 53.0, 53.8)), fs = V9 ? 68 : 76;
+    g.globalAlpha = end*ease(seg(ue, 50.8, 51.6)); g.fillStyle = "#fff"; const wf = drawWordmark(cx, cy + S*.5 + S*.045, S);
+    const ty = cy + S*.5 + wf*1.25 + (V9 ? 70 : 56);
+    const l1 = ease(seg(ue, 51.6, 52.4)), l2 = ease(seg(ue, 52.5, 53.3)), l3 = ease(seg(ue, 53.4, 54.0)), fs = V9 ? 68 : 72;
     g.textAlign = "center"; g.textBaseline = "top"; g.font = F(800, fs);
-    g.globalAlpha = end*l1; g.fillStyle = "#fff"; g.fillText(tx("tag1"), cx, cy + S*.75 + (1-l1)*14);
-    g.globalAlpha = end*l2; g.fillStyle = "#9FB2FF"; g.fillText(tx("tag2"), cx, cy + S*.75 + fs*1.25 + (1-l2)*14);
-    g.globalAlpha = end*l3; g.font = F(500, V9 ? 30 : 28); g.fillStyle = "rgba(199,210,255,.85)"; g.fillText(tx("tag3"), cx, cy + S*.75 + fs*2.7);
-    g.font = F(700, V9 ? 26 : 22, "mono"); g.fillStyle = "rgba(159,178,255,.75)"; g.fillText("smability.io  ·  AIreGPT", cx, h*(V9 ? .86 : .88));
+    g.globalAlpha = end*l1; g.fillStyle = "#fff"; g.fillText(tx("tag1"), cx, ty + (1-l1)*14);
+    g.globalAlpha = end*l2; g.fillStyle = "#9FB2FF"; g.fillText(tx("tag2"), cx, ty + fs*1.2 + (1-l2)*14);
+    g.globalAlpha = end*l3; g.font = F(500, V9 ? 30 : 28); g.fillStyle = "rgba(199,210,255,.85)"; g.fillText(tx("tag3"), cx, ty + fs*2.6);
+    g.font = F(700, V9 ? 26 : 22, "mono"); g.fillStyle = "rgba(159,178,255,.75)"; g.fillText("smability.io  ·  AIreGPT", cx, h*(V9 ? .86 : .9));
     g.restore();
   }
 

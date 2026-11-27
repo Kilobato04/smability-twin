@@ -15,25 +15,33 @@ CHAAK reads the wind, the rain and the sun…
 …and SMAA wakes up…
 
 5
-00:00:22,000 --> 00:00:25,600
+00:00:22,000 --> 00:00:25,200
 …to breathe the air.
 
 6
-00:00:26,600 --> 00:00:31,400
-A laser counts every particle that crosses its beam.
+00:00:25,600 --> 00:00:29,800
+Inside, every part has a job.
 
 7
-00:00:32,000 --> 00:00:36,600
-Gases flow into the electrodes, react and become current.
+00:00:30,600 --> 00:00:35,200
+A laser counts every particle that crosses its beam.
 
 8
-00:00:37,300 --> 00:00:41,400
-Every pulse becomes a measurement…
+00:00:35,600 --> 00:00:40,600
+Gases flow into the electrodes, react and become current.
 
 9
-00:00:41,600 --> 00:00:46,600
-…and every measurement, open data, in your city.
+00:00:45,000 --> 00:00:49,400
+Engineered in Mexico, piece by piece.
 
 10
-00:00:51,600 --> 00:00:58,200
+00:00:50,800 --> 00:00:55,000
+Every pulse becomes a measurement, and every measurement, open data.
+
+11
+00:00:56,200 --> 00:01:01,000
+…in your city, in real time.
+
+12
+00:01:02,600 --> 00:01:09,200
 That's how it reaches AIreGPT, so you know what to do.
