@@ -49,3 +49,4 @@ y lecturas → los datos suben a AIreGPT → cierre.
   precarga todo el tramo final y no se mueve ni se redibuja antes de 52.5 s; la cámara final con mapa mira siempre un poco hacia
   abajo (Mapbox no pasa de ~85°), así el combo queda anclado a la azotea.
 - v13 (27 nov): voz en off en español (13 frases) mezclada con cada pista; botón VOZ.
+- v13b (27 nov): nueva toma de «…y Smaa despierta…».
