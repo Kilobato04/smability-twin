@@ -11,7 +11,7 @@ y lecturas → los datos suben a AIreGPT → cierre.
 - Versión Mapbox: `/reelintro/?map=1` — al abrirse la toma (53–62 s) aparece Mapbox con el combo en la azotea de la oficina
   (casa de 2 pisos, 6 m; 19.414878, −99.167249). Altura y rumbo en `CONFIG.site` (`roofH`, `bearing`). Si Mapbox no carga, sigue en limbo.
 - Parámetros: `?lang=es|en` · `?format=h|v` (16:9 o 9:16) · `?t=20` · `?autoplay=1` · `?render=1` (sin controles, para exportar).
-- Teclas: espacio (pausa), L (idioma), M (música), F (pantalla completa), ← → (±2 s). Los controles se esconden solos mientras corre el reel.
+- Teclas: espacio (pausa), L (idioma), M (música), T (pista), V (voz), F (pantalla completa), ← → (±2 s). Los controles se esconden solos mientras corre el reel.
 - Subtítulos: botón ES/EN en la página; para video, `subtitulos_es.srt` y `subtitulos_en.srt`.
 - Datos simulados, sin ciudad ni hora en el texto.
 - Música: dos pistas editadas a 78 s sobre el ritmo y con el mismo volumen (−16 LUFS); botón NEON/SYNTH (o tecla T) para cambiar,
@@ -20,7 +20,10 @@ y lecturas → los datos suben a AIreGPT → cierre.
     pausa ambiental dentro de SMAA (≈26–47 s), vuelve al cerrar la vista explosionada (≈48.6 s), final natural con el logo.
   - `audio/synthwave.mp3` — «Synthwave», AtlasAudio (Pixabay). 95 BPM: arranca filtrada, como sintonía, y se abre a los 8 s;
     pausa ambiental (≈29–48 s), vuelve en ≈48.6 s y cierra con un golpe final cuando aparece el logo (≈73.9 s).
-- Exportar a MP4 (con música): `python3 tools/reelintro_render.py http://localhost:8000/reelintro/index.html h es 30 salida.mp4 reelintro/audio/neon-drive.mp3`
+- Voz en off (ElevenLabs · «Roberto», español): `audio/neon-drive_voz.mp3` y `audio/synthwave_voz.mp3` traen la voz ya mezclada,
+  con la música 10 dB abajo mientras habla. Botón VOZ (tecla V) para quitarla o ponerla; `?voz=0` arranca sin voz.
+  La voz entra con cada subtítulo en español y la frase final («De la física y la química… a tu mano») en 74.6 s.
+- Exportar a MP4 (con música): `python3 tools/reelintro_render.py http://localhost:8000/reelintro/index.html h es 30 salida.mp4 reelintro/audio/neon-drive_voz.mp3`
 
 ## Versiones
 - v1 (26 nov): primera versión completa, sin música.
@@ -45,3 +48,4 @@ y lecturas → los datos suben a AIreGPT → cierre.
 - v12 (27 nov): la música es el reloj del reel (si la pantalla se traba, el audio sigue y la imagen lo alcanza); con `?map=1` el mapa
   precarga todo el tramo final y no se mueve ni se redibuja antes de 52.5 s; la cámara final con mapa mira siempre un poco hacia
   abajo (Mapbox no pasa de ~85°), así el combo queda anclado a la azotea.
+- v13 (27 nov): voz en off en español (13 frases) mezclada con cada pista; botón VOZ.

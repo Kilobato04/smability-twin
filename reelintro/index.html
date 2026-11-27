@@ -44,6 +44,7 @@ body.render #ctl,body.render #play,body.render #load{display:none!important}
   <button id="bFmt" type="button" aria-label="Formato">16:9</button>
   <button id="bSnd" type="button" aria-label="Silenciar música" aria-pressed="false">♪</button>
   <button id="bTrk" type="button" aria-label="Cambiar pista de música">NEON</button>
+  <button id="bVoz" type="button" aria-label="Voz en off" aria-pressed="true">VOZ</button>
   <button id="bFs" type="button" aria-label="Pantalla completa">⛶</button>
   <span class="t" id="tOut">0:00 / 1:18</span>
   <input id="scrub" type="range" min="0" max="78" step="0.02" value="0" aria-label="Posición">
@@ -886,19 +887,25 @@ const fmtT = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0"
    neon  · «Neon Drive» (Artur Aravidi · Pixabay), 100 BPM: intro suave 0–8 s · entra el ritmo con la onda · pausa ambiental dentro de SMAA (≈26–47 s) · vuelve en ≈48.6 s · final natural
    synth · «Synthwave» (AtlasAudio · Pixabay), 95 BPM: arranca filtrada como sintonía y se abre a los 8 s · pausa ambiental (≈29–48 s) · vuelve en ≈48.6 s · golpe final con el logo (≈73.9 s) */
 const TRACKS = { neon:{file:"audio/neon-drive.mp3", label:"NEON", name:"Neon Drive"}, synth:{file:"audio/synthwave.mp3", label:"SYNTH", name:"Synthwave"} };
-const MUSIC = {};
-for(const k in TRACKS){ const a = new Audio(); a.preload = "auto"; MUSIC[k] = a;
-  // se descarga completa para poder adelantar y atrasar en cualquier servidor
-  fetch(TRACKS[k].file).then(r=> r.ok ? r.blob() : Promise.reject()).then(bl=>{ a.src = URL.createObjectURL(bl); }).catch(()=>{ a.src = TRACKS[k].file; }); }
+/* voz en off (ElevenLabs · «Roberto», español): ya viene mezclada con cada pista, con la música 10 dB abajo mientras habla.
+   archivos: audio/<pista>_voz.mp3 · botón VOZ (tecla V) · ?voz=0 la apaga */
 let track = TRACKS[Q.get("track")] ? Q.get("track") : "neon";
+let voz = Q.get("voz") !== "0";
+const MUSIC = {}, curKey = ()=> track + (voz ? "_voz" : "");
+const loadOrder = [...new Set([curKey(), "neon_voz", "neon", "synth_voz", "synth"])];
+for(const key of loadOrder){ const a = new Audio(); a.preload = "auto"; MUSIC[key] = a; }
+(async ()=>{ for(const key of loadOrder){ const [k, v] = key.split("_"), f = v ? TRACKS[k].file.replace(".mp3", "_voz.mp3") : TRACKS[k].file;
+  // se descarga completa para poder adelantar y atrasar en cualquier servidor; primero la que suena
+  try{ const r = await fetch(f); if(!r.ok) throw 0; MUSIC[key].src = URL.createObjectURL(await r.blob()); }catch(_){ MUSIC[key].src = f; } } })();
 let muted = Q.get("mute") === "1";
 function syncAudio(){
   const ok = playing && !muted && !RENDER_MODE && cur < CONFIG.duration - .05;
   for(const k in MUSIC){ const m = MUSIC[k];
-    if(ok && k === track){ if(m.paused){ try{ m.currentTime = cur; }catch(_){} m.play().catch(()=>{}); }
+    if(ok && k === curKey()){ if(m.paused){ try{ m.currentTime = cur; }catch(_){} m.play().catch(()=>{}); }
       else if(Math.abs(m.currentTime - cur) > .5){ try{ m.currentTime = cur; }catch(_){} } }   // solo al adelantar o atrasar
     else if(!m.paused) m.pause(); }
 }
+function setVoz(on){ voz = on; const b = $("bVoz"); b.setAttribute("aria-pressed", on ? "true" : "false"); b.textContent = on ? "VOZ" : "VOZ̸"; b.setAttribute("aria-label", on ? "Quitar voz en off" : "Poner voz en off"); }
 function setTrack(k){ track = k; const b = $("bTrk"); b.textContent = TRACKS[k].label; b.title = `${TRACKS[k].name} · ${LANG === "en" ? "change track" : "cambiar pista"}`; }
 function setMute(m){ muted = m; const b = $("bSnd"); b.setAttribute("aria-pressed", m ? "true" : "false"); b.textContent = m ? "♪̸" : "♪"; b.setAttribute("aria-label", m ? "Activar música" : "Silenciar música"); }
 function setPlaying(on){
@@ -906,7 +913,7 @@ function setPlaying(on){
   if(on){ $("play").hidden = true; poke(); } else document.body.classList.remove("idle");
 }
 function loop(now){
-  if(playing){ const m = MUSIC[track];
+  if(playing){ const m = MUSIC[curKey()];
     if(!muted && m && !m.paused && !m.seeking && m.readyState >= 3 && Math.abs(m.currentTime - cur) < 1) cur = m.currentTime;   // la música manda
     else cur += Math.min(.1, (now - last)/1000);
     if(cur >= CONFIG.duration){ cur = CONFIG.duration; setPlaying(false); } }
@@ -921,9 +928,10 @@ $("bLang").onclick = ()=>{ LANG = LANG === "es" ? "en" : "es"; document.document
 $("bFmt").onclick = ()=>{ FMT = FMT === "v" ? "h" : "v"; fit(); };
 $("bSnd").onclick = ()=> setMute(!muted); setMute(muted);
 $("bTrk").onclick = ()=> setTrack(track === "neon" ? "synth" : "neon"); setTrack(track);
+$("bVoz").onclick = ()=> setVoz(!voz); setVoz(voz);
 $("bFs").onclick = ()=>{ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.(); };
 $("scrub").oninput = e=>{ cur = +e.target.value; $("play").hidden = true; };
-addEventListener("keydown", e=>{ if(e.key === " "){ e.preventDefault(); $("bPlay").click(); } else if(e.key === "l" || e.key === "L") $("bLang").click(); else if(e.key === "f" || e.key === "F") $("bFs").click(); else if(e.key === "m" || e.key === "M") $("bSnd").click(); else if(e.key === "t" || e.key === "T") $("bTrk").click(); else if(e.key === "ArrowRight") cur = clamp(cur + 2, 0, CONFIG.duration); else if(e.key === "ArrowLeft") cur = clamp(cur - 2, 0, CONFIG.duration); poke(); });
+addEventListener("keydown", e=>{ if(e.key === " "){ e.preventDefault(); $("bPlay").click(); } else if(e.key === "l" || e.key === "L") $("bLang").click(); else if(e.key === "f" || e.key === "F") $("bFs").click(); else if(e.key === "m" || e.key === "M") $("bSnd").click(); else if(e.key === "t" || e.key === "T") $("bTrk").click(); else if(e.key === "v" || e.key === "V") $("bVoz").click(); else if(e.key === "ArrowRight") cur = clamp(cur + 2, 0, CONFIG.duration); else if(e.key === "ArrowLeft") cur = clamp(cur - 2, 0, CONFIG.duration); poke(); });
 /* los controles se esconden solos mientras corre el reel; vuelven al mover el mouse o tocar la pantalla */
 let idleT; function poke(){ document.body.classList.remove("idle"); clearTimeout(idleT); idleT = setTimeout(()=>{ if(playing) document.body.classList.add("idle"); }, 2000); }
 addEventListener("pointermove", poke); addEventListener("pointerdown", poke);
