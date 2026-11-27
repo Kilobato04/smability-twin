@@ -43,5 +43,5 @@ Every pulse becomes a measurement, and every measurement, open data.
 …in your city, in real time.
 
 12
-00:01:02,600 --> 00:01:09,200
+00:01:02,800 --> 00:01:10,400
 That's how it reaches AIreGPT, so you know what to do.

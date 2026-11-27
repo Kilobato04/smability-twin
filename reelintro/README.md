@@ -1,6 +1,6 @@
 # Reel intro · «De la física y la química… a tu mano»
 
-Apertura de 75 s para el keynote, en una sola toma:
+Apertura de 78 s para el keynote, en una sola toma:
 sintonía de TV → logo → limbo azul profundo: la onda «enciende» el combo CHAAK + SMAA en su trípode → SMAA despierta →
 la carcasa se vuelve translúcida y las piezas se arman una por una mientras la cámara gira → láser (física) → espiral de gas a
 los barriles (química) → tarjeta → vista explotada y «clic» de cierre → cifras del producto → API → la toma se abre con lluvia
@@ -31,3 +31,6 @@ y lecturas → los datos suben a AIreGPT → cierre.
   y se retira por completo al alejarse hacia el cierre.
 - v8 (27 nov): logo igual al oficial (cuadro con la onda y «smability» en Arial Bold a la derecha, con ©); la lluvia se retira
   entre 50 y 53 s y las tomas siguientes (API, ciudad, AIreGPT, cierre) van sin lluvia.
+- v9 (27 nov): nueva conversación de AIreGPT con el estilo de airegpt.ai (Telegram): pregunta del usuario, tarjeta «Aire ahora · casa»
+  (IAS regular 62, PM2.5 38 µg/m³, ozono 21 ppb, clima), notificación «Regresa la lluvia · trabajo» y alerta de lluvia; el teléfono
+  dura ~11 s; duración 78 s.

@@ -43,5 +43,5 @@ Cada pulso se vuelve una medición, y cada medición, un dato abierto.
 …en tu ciudad, en tiempo real.
 
 12
-00:01:02,600 --> 00:01:09,200
+00:01:02,800 --> 00:01:10,400
 Así llega a AIreGPT: para que sepas qué hacer.

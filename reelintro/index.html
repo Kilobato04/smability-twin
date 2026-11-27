@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#000510">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&family=Poppins:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#000;color:#fff;overflow:hidden;font-family:Inter,system-ui,sans-serif}
@@ -37,14 +37,14 @@ body.render #ctl,body.render #play,body.render #load{display:none!important}
 <body>
 <div id="stage"><div id="map" hidden></div><canvas id="gl" class="l"></canvas><canvas id="hud" class="l"></canvas></div>
 <div id="load">CARGANDO…</div>
-<button id="play" type="button" aria-label="Reproducir" hidden><div><svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="46" fill="rgba(0,43,173,.85)" stroke="#9FB2FF" stroke-width="2"/><path d="M39 30l30 18-30 18z" fill="#fff"/></svg><span id="playLbl">REPRODUCIR · 1:15</span></div></button>
+<button id="play" type="button" aria-label="Reproducir" hidden><div><svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="46" fill="rgba(0,43,173,.85)" stroke="#9FB2FF" stroke-width="2"/><path d="M39 30l30 18-30 18z" fill="#fff"/></svg><span id="playLbl">REPRODUCIR · 1:18</span></div></button>
 <div id="ctl">
   <button id="bPlay" type="button" aria-label="Reproducir o pausar">▶</button>
   <button id="bLang" type="button" aria-label="Idioma de subtítulos">ES</button>
   <button id="bFmt" type="button" aria-label="Formato">16:9</button>
   <button id="bFs" type="button" aria-label="Pantalla completa">⛶</button>
-  <span class="t" id="tOut">0:00 / 1:15</span>
-  <input id="scrub" type="range" min="0" max="75" step="0.02" value="0" aria-label="Posición">
+  <span class="t" id="tOut">0:00 / 1:18</span>
+  <input id="scrub" type="range" min="0" max="78" step="0.02" value="0" aria-label="Posición">
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -63,7 +63,7 @@ body.render #ctl,body.render #play,body.render #load{display:none!important}
    Datos simulados, sin ciudad ni hora en el texto.
    ===================================================================== */
 const CONFIG = {
-  duration: 75, smaa: "../models/smaa.glb", chaak: "../models/chaak.glb", tripod: "../models/montaje.glb", logo: "../images/logo_smability.png",
+  duration: 78, smaa: "../models/smaa.glb", chaak: "../models/chaak.glb", tripod: "../models/montaje.glb", logo: "../images/logo_smability.png",
   // Mismo token público de Mapbox que el reel (/reel). En el dashboard de Mapbox restríngelo al dominio de Netlify.
   mapboxToken: 'pk.eyJ1Ijoia2lsb2JhdG8iLCJhIjoiY21jd2g2b3RzMDJiNDJxcTA0cTFhZmE4OCJ9.u5zPxYCxqEaF2jnj32l4ng',
   // Versión Mapbox: azotea de la oficina. roofH: altura de la azotea sobre la calle (m). bearing: rumbo del eje +Z local
@@ -89,7 +89,11 @@ if(RENDER_MODE) document.body.classList.add("render");
 let LANG = (Q.get("lang") || "es").toLowerCase().startsWith("en") ? "en" : "es";
 const T = {
   es:{ physics:"FÍSICA", chem:"QUÍMICA", data:"DATOS", pd:"FOTODIODO · DISPERSIÓN LÁSER", pdSub:"cada pico es una partícula", el1:"ELECTRODO · CO", el2:"ELECTRODO · O₃", elSub:"corriente de la reacción, en nanoamperes",
-       meas:"MEDICIÓN · EN VIVO", sim:"DATOS SIMULADOS", api:"API ABIERTA", online:"● en línea", q:"¿Cómo está el aire en mi colonia?",
+       meas:"MEDICIÓN · EN VIVO", sim:"DATOS SIMULADOS", api:"API ABIERTA", online0:"● en línea", q:"¿Cómo está el aire cerca de mi casa? Y avísame si va a llover cuando salga del trabajo 🏠🏢",
+       online:"● EN LÍNEA · Aire + Lluvia", cA:"🌫️ AIRE AHORA · CASA", cAh:"Calidad del aire: regular", cAs:"Col. Roma · hace 1 min", cIas:"IAS", cIasV:"Regular · 62",
+       cPM:"PM2.5", cO3:"OZONO", cWx:["14 °C","HR 88%","Viento 3 m/s NE","Lluvia 4.2 mm/h · última hora"], cAbT:"💨 Por qué", cAb:"La lluvia limpió el aire; el PM2.5 seguirá bajando esta noche.",
+       pApp:"Telegram · AIreGPT", pT:"🌧️ REGRESA LA LLUVIA · TRABAJO", pM:"Polanco · en 20 min · moderada",
+       cR:"🌧️ ALERTA DE LLUVIA · TRABAJO", cRh:"LLUVIA MODERADA EN CAMINO", cRs:"Polanco · en 20 min", cRi:"INTENSIDAD", cRiV:"Moderada (~6 mm/h)", cRbT:"⚠️ Sal antes de las 18:00", cRb:"o lleva paraguas.", hoy:"17:38",
        a1:"Calidad del aire: <b>regular</b>. PM2.5 en 38 µg/m³.", a2:"Está lloviendo (4 mm/h): la lluvia lava el aire y el PM2.5 va a bajar en la próxima hora.", a3:"Si sales, lleva paraguas. Para correr, mejor mañana temprano.",
        tag1:"De la física y la química…", tag2:"…a tu mano.", tag3:"Entendemos el aire para ponerlo en tu mano.", wake:"SMAA · EN LÍNEA", wakeSub:"PM2.5 · PM10 · GASES · T/HR · RUIDO",
        chaak:"CHAAK · EN LÍNEA", chaakSub:"VIENTO · LLUVIA · PRESIÓN · RADIACIÓN", ask:"Pregunta a AIreGPT", place:"CIUDAD DE MÉXICO",
@@ -99,7 +103,11 @@ const T = {
        chH:"CHAAK · CABEZAL DE ESTADO SÓLIDO", chS:"SIN PARTES MÓVILES", chW:"Viento", chWv:"3.1 m/s · NE", chR:"Lluvia", chRv:"4.2 mm/h", chQ:"Radiación solar", chQv:"180 W/m²",
        c1:"VARIABLES", c1l:"AIRE · CLIMA · RUIDO", c2:"EQUIPOS", c3:"RESOLUCIÓN", c3l:"EN TIEMPO REAL", r1:"PM2.5", r2:"OZONO", r3:"LLUVIA" },
   en:{ physics:"PHYSICS", chem:"CHEMISTRY", data:"DATA", pd:"PHOTODIODE · LASER SCATTERING", pdSub:"every peak is a particle", el1:"ELECTRODE · CO", el2:"ELECTRODE · O₃", elSub:"reaction current, in nanoamps",
-       meas:"LIVE MEASUREMENT", sim:"SIMULATED DATA", api:"OPEN API", online:"● online", q:"How's the air in my neighborhood?",
+       meas:"LIVE MEASUREMENT", sim:"SIMULATED DATA", api:"OPEN API", online0:"● online", q:"How's the air near my home? And let me know if it'll rain when I leave work 🏠🏢",
+       online:"● ONLINE · Air + Rain", cA:"🌫️ AIR NOW · HOME", cAh:"Air quality: moderate", cAs:"Col. Roma · 1 min ago", cIas:"AQI", cIasV:"Moderate · 62",
+       cPM:"PM2.5", cO3:"OZONE", cWx:["14 °C","RH 88%","Wind 3 m/s NE","Rain 4.2 mm/h · last hour"], cAbT:"💨 Why", cAb:"The rain washed the air; PM2.5 will keep dropping tonight.",
+       pApp:"Telegram · AIreGPT", pT:"🌧️ RAIN IS COMING BACK · WORK", pM:"Polanco · in 20 min · moderate",
+       cR:"🌧️ RAIN ALERT · WORK", cRh:"MODERATE RAIN ON ITS WAY", cRs:"Polanco · in 20 min", cRi:"INTENSITY", cRiV:"Moderate (~6 mm/h)", cRbT:"⚠️ Leave before 6 pm", cRb:"or take an umbrella.", hoy:"5:38 pm",
        a1:"Air quality: <b>moderate</b>. PM2.5 at 38 µg/m³.", a2:"It's raining (4 mm/h): rain washes the air, so PM2.5 should drop within the hour.", a3:"Take an umbrella if you head out. For a run, wait until tomorrow morning.",
        tag1:"From physics and chemistry…", tag2:"…to your hand.", tag3:"We understand the air to put it in your hand.", wake:"SMAA · ONLINE", wakeSub:"PM2.5 · PM10 · GASES · T/RH · NOISE",
        chaak:"CHAAK · ONLINE", chaakSub:"WIND · RAIN · PRESSURE · RADIATION", ask:"Ask AIreGPT", place:"MEXICO CITY",
@@ -121,7 +129,7 @@ const SUBS = [
   [45.0, 49.4, "Ingeniería mexicana, pieza por pieza.", "Engineered in Mexico, piece by piece."],
   [50.8, 55.0, "Cada pulso se vuelve una medición, y cada medición, un dato abierto.", "Every pulse becomes a measurement, and every measurement, open data."],
   [56.2, 61.0, "…en tu ciudad, en tiempo real.", "…in your city, in real time."],
-  [62.6, 69.2, "Así llega a AIreGPT: para que sepas qué hacer.", "That's how it reaches AIreGPT, so you know what to do."]
+  [62.8, 70.4, "Así llega a AIreGPT: para que sepas qué hacer.", "That's how it reaches AIreGPT, so you know what to do."]
 ];
 const tx = k => T[LANG][k];
 
@@ -285,7 +293,7 @@ const KEYS = [   // t, posición, mira a      (el frente de SMAA mira a −X; el
   [56.6,[-6.8, 6.0, 5.4],    [2.5, 3.6, -2.0]],       // se abre la toma (con ?map=1, la ciudad real)
   [61.0,[-11.5, 8.0, 9.5],   [8, 6.0, -7]],
   [65.4,[-10.5, 10.5, 8.6],  [-1.1, 12, 0]],
-  [75,  [-10.8, 13.5, 9.0],  [-1.4, 17, 0]],
+  [78,  [-10.9, 14.2, 9.1],  [-1.45, 18, 0]],
 ].map(([t,p,q])=>({t, p:V(...p), q:V(...q)}));
 function cr(p0,p1,p2,p3,u){ const u2=u*u, u3=u2*u; return p1.clone().multiplyScalar(2).add(p2.clone().sub(p0).multiplyScalar(u)).add(p0.clone().multiplyScalar(2).sub(p1.clone().multiplyScalar(5)).add(p2.clone().multiplyScalar(4)).sub(p3).multiplyScalar(u2)).add(p1.clone().multiplyScalar(3).sub(p0).sub(p2.clone().multiplyScalar(3)).add(p3).multiplyScalar(u3)).multiplyScalar(.5); }
 function logLerp(k, i, u){       // posiciones en escala logarítmica respecto a SMAA: la cámara se acerca de forma pareja de 150 m a 15 cm
@@ -577,37 +585,93 @@ function richLine(s, x, y){ let cx = x; for(const part of s.split(/(<b>.*?<\/b>)
 const READ = [["PM2.5", 38, "µg/m³", 0], ["PM10", 64, "µg/m³", 0], ["CO", 1.6, "ppm", 1], ["O₃", 21, "ppb", 0], ["TEMP", 14.2, "°C", 1], ["HR", 88, "%", 0], ["LLUVIA", 4.2, "mm/h", 1], ["VIENTO", 3.1, "m/s", 1]];
 const READ_EN = {HR:"RH", LLUVIA:"RAIN", VIENTO:"WIND"};
 const JSON_LINES = ['GET /v1/stations/SMAA-01/latest', '', '{', '  "station": "SMAA-01 + CHAAK-01",', '  "pm25": 38,  "pm10": 64,', '  "co_ppm": 1.6,  "o3_ppb": 21,', '  "temp_c": 14.2,  "rh": 88,', '  "rain_mmh": 4.2,  "wind_ms": 3.1,', '  "noise_db": 63,', '  "aqi": "regular"', '}'];
-function drawPhone(t, w, h){
-  const k = ease(seg(t, 42.4, 43.6)) * (1 - ease(seg(t, 49.6, 50.6))); if(k <= 0) return;
-  const ph = FMT === "v" ? h*.6 : h*.8, pw = ph*.49, cx = w*.5, cy = h*.48 + (1-k)*h*.25;
-  const x = cx - pw/2, y = cy - ph/2, sc = ph/880;
-  g.save(); g.globalAlpha = k;
-  g.shadowColor = "rgba(32,70,242,.55)"; g.shadowBlur = 60; rr(x, y, pw, ph, 54*sc); g.fillStyle = "#0b0f1c"; g.fill(); g.shadowBlur = 0;
-  g.strokeStyle = "rgba(159,178,255,.45)"; g.lineWidth = 3; g.stroke();
-  const ix = x + 14*sc, iy = y + 14*sc, iw = pw - 28*sc, ih = ph - 28*sc;
-  rr(ix, iy, iw, ih, 44*sc); g.save(); g.clip();
-  const bg = g.createLinearGradient(0, iy, 0, iy+ih); bg.addColorStop(0, "#061238"); bg.addColorStop(1, "#020818"); g.fillStyle = bg; g.fillRect(ix, iy, iw, ih);
-  g.fillStyle = "#000"; rr(cx - 60*sc, iy + 10*sc, 120*sc, 30*sc, 15*sc); g.fill();
+function drawPhone(t, w, h){        // AIreGPT en Telegram: pregunta → tarjeta de aire → push → alerta de lluvia (tiempo local t = reel − 20)
+  const k = ease(seg(t, 42.4, 43.6)) * (1 - ease(seg(t, 52.6, 53.6))); if(k <= 0) return;
+  const ph = FMT === "v" ? h*.68 : h*.8, pw = ph*.5, cx = w*.5, cy = h*(FMT === "v" ? .46 : .45) + (1-k)*h*.25;
+  const x = cx - pw/2, y = cy - ph/2, sc = ph/880, P = "Poppins,Inter,system-ui,sans-serif", M = '"Roboto Mono","JetBrains Mono",monospace';
+  const PF = (wt, s, f=P) => `${wt} ${Math.round(s*sc)}px ${f}`;
+  const sh = (t > 47.4 && t < 48.0) ? Math.sin((t - 47.4)*60)*6*sc*(1 - (t - 47.4)/.6) : 0;
+  g.save(); g.globalAlpha = k; g.translate(sh, 0);
+  /* cuerpo con brillo cian, como en airegpt.ai */
+  g.shadowColor = "rgba(0,242,254,.6)"; g.shadowBlur = 40; rr(x, y, pw, ph, 54*sc); g.fillStyle = "#1c1c1e"; g.fill(); g.shadowBlur = 0;
+  g.strokeStyle = "#00f2fe"; g.lineWidth = 4; g.stroke();
+  const ix = x + 12*sc, iy = y + 12*sc, iw = pw - 24*sc, ih = ph - 24*sc;
+  rr(ix, iy, iw, ih, 46*sc); g.save(); g.clip();
+  g.fillStyle = "#17212b"; g.fillRect(ix, iy, iw, ih);
   /* encabezado */
-  const hy = iy + 58*sc; g.fillStyle = "rgba(255,255,255,.06)"; g.fillRect(ix, hy, iw, 74*sc);
-  g.save(); g.beginPath(); g.arc(ix + 46*sc, hy + 37*sc, 24*sc, 0, 7); g.fillStyle = "#000"; g.fill(); g.strokeStyle = "#2046F2"; g.lineWidth = 2; g.stroke(); g.clip();
-  if(logoOK) g.drawImage(LOGO, ix + 22*sc, hy + 13*sc, 48*sc, 48*sc); g.restore();
-  g.fillStyle = "#fff"; g.font = F(800, 26*sc); g.textAlign = "left"; g.textBaseline = "middle"; g.fillText("AIreGPT", ix + 82*sc, hy + 28*sc);
-  g.fillStyle = "#4ade80"; g.font = F(600, 17*sc); g.fillText(tx("online"), ix + 82*sc, hy + 52*sc);
-  /* conversación */
-  let by = hy + 104*sc; const bw = iw*.8, pad = 18*sc, fs = 21*sc, lh = fs*1.32;
-  const q = seg(t, 43.4, 43.9);
-  if(q > 0){ g.globalAlpha = k*q; g.font = F(600, fs); const L = wrapText(tx("q"), bw - 2*pad), bh = L.length*lh + 2*pad, bx = ix + iw - 16*sc - bw*.86;
-    rr(bx, by, bw*.86, bh, 22*sc); g.fillStyle = "#2046F2"; g.fill(); g.fillStyle = "#fff"; g.textBaseline = "top"; L.forEach((l,i)=> g.fillText(l, bx + pad, by + pad + i*lh)); by += bh + 16*sc; g.globalAlpha = k; }
-  const typing = t >= 44.1 && t < 45.3;
-  if(typing){ rr(ix + 16*sc, by, 96*sc, 50*sc, 22*sc); g.fillStyle = "rgba(255,255,255,.1)"; g.fill(); for(let i=0;i<3;i++){ const a = .35 + .65*Math.max(0, Math.sin(t*9 - i*.9)); g.fillStyle = `rgba(199,210,255,${a})`; g.beginPath(); g.arc(ix + (40 + i*22)*sc, by + 25*sc, 6*sc, 0, 7); g.fill(); } }
-  const ans = [["a1", 45.3], ["a2", 46.3], ["a3", 47.4]];
-  for(const [kk, ta] of ans){ const a = seg(t, ta, ta + .45); if(a <= 0) continue; g.globalAlpha = k*a; g.font = F(500, fs);
-    const L = wrapText(tx(kk), bw - 2*pad), bh = L.length*lh + 2*pad, bx = ix + 16*sc; rr(bx, by + (1-a)*12, bw, bh, 22*sc); g.fillStyle = "rgba(255,255,255,.1)"; g.fill();
-    g.fillStyle = "#fff"; g.textBaseline = "top"; L.forEach((l,i)=> richLine(l, bx + pad, by + (1-a)*12 + pad + i*lh)); by += bh + 12*sc; g.globalAlpha = k; }
+  const hh = 118*sc, hg = g.createLinearGradient(ix, iy, ix + iw, iy + hh); hg.addColorStop(0, "#1a1a3a"); hg.addColorStop(1, "#4a3a8a");
+  const top = iy + hh;
+  /* conversación (anclada abajo, se recorre hacia arriba al llegar mensajes) */
+  const cw = iw*.88, lx = ix + 14*sc, rx = ix + iw - 14*sc, bottom = iy + ih - 92*sc;
+  const items = [];
+  const qa = seg(t, 43.3, 43.75); if(qa > 0) items.push({a:qa, kind:"user"});
+  const typ = t >= 44.0 && t < 45.1; if(typ) items.push({a:1, kind:"typing"});
+  const c1 = seg(t, 45.1, 45.6); if(c1 > 0) items.push({a:c1, kind:"air"});
+  const typ2 = t >= 48.3 && t < 49.3; if(typ2) items.push({a:1, kind:"typing"});
+  const c2 = seg(t, 49.3, 49.8); if(c2 > 0) items.push({a:c2, kind:"rain"});
+  // medir y dibujar en dos pasadas
+  const draw = (it, yy, dry)=>{
+    if(it.kind === "user"){ g.font = PF(500, 17); const L = wrapText(tx("q"), cw*.86 - 32*sc), lh = 25*sc, bh = L.length*lh + 26*sc, bw = Math.min(cw*.86, Math.max(...L.map(l=> g.measureText(l).width)) + 32*sc);
+      if(!dry){ rr(rx - bw, yy, bw, bh, 18*sc); g.fillStyle = "#2b5278"; g.fill(); g.strokeStyle = "#3a6a99"; g.lineWidth = 1; g.stroke(); g.fillStyle = "#fff"; g.textAlign = "left"; g.textBaseline = "top"; L.forEach((l,i)=> g.fillText(l, rx - bw + 16*sc, yy + 13*sc + i*lh));
+        g.font = PF(500, 12); g.fillStyle = "rgba(42,171,238,.75)"; g.textAlign = "right"; g.fillText("✓✓ " + tx("hoy"), rx - 4*sc, yy + bh + 4*sc); }
+      return bh + 22*sc; }
+    if(it.kind === "typing"){ if(!dry){ rr(lx, yy, 78*sc, 40*sc, 18*sc); g.fillStyle = "#212d3b"; g.fill(); for(let i=0;i<3;i++){ g.fillStyle = "#00f2fe"; g.beginPath(); g.arc(lx + (22 + i*17)*sc, yy + 20*sc - Math.max(0, Math.sin(t*8 - i*.8))*5*sc, 5*sc, 0, 7); g.fill(); } } return 52*sc; }
+    const air = it.kind === "air", col = air ? "#00f2fe" : "#7eb8ff", bc = air ? "#00f2fe" : "#1a6fff";
+    let hgt = 0; const pad = 14*sc, ww = cw;
+    // nombre del bot
+    if(!dry){ g.font = PF(800, 13); g.fillStyle = col; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(tx(air ? "cA" : "cR"), lx + 2*sc, yy); }
+    hgt += 22*sc; const y0 = yy + hgt;
+    // encabezado de la tarjeta
+    const headH = 58*sc; let rowsY = y0 + headH + pad;
+    const rows = air ? [[tx("cIas"), tx("cIasV"), "#FFD84D", false], [tx("cPM"), "38 µg/m³", "#ff00ff", true], [tx("cO3"), "21 ppb", "#ff00ff", true]] : [[tx("cRi"), tx("cRiV"), "#7eb8ff", false]];
+    const rowH = 34*sc; let yy2 = rowsY + rows.length*rowH;
+    // chips de clima
+    let chipsH = 0;
+    if(air){ g.font = PF(500, 12.5, M); let cx2 = lx + pad, cy2 = yy2 + 4*sc; const chipRows = [];
+      for(const c of tx("cWx")){ const cwid = g.measureText(c).width + 16*sc; if(cx2 + cwid > lx + ww - pad){ cx2 = lx + pad; cy2 += 30*sc; } chipRows.push([c, cx2, cy2, cwid]); cx2 += cwid + 6*sc; }
+      chipsH = cy2 + 30*sc - yy2; it.chips = chipRows; }
+    yy2 += chipsH;
+    // bloque de recomendación
+    g.font = PF(500, 14); const bL = wrapText(tx(air ? "cAb" : "cRb"), ww - 2*pad - 20*sc), bH = 34*sc + bL.length*21*sc;
+    const blockY = yy2 + 8*sc; const cardH = blockY + bH + pad - y0;
+    if(!dry){
+      rr(lx, y0, ww, cardH, 14*sc); g.fillStyle = air ? "#0d1c26" : "#080d1e"; g.fill();
+      g.save(); g.clip(); const hb = g.createLinearGradient(lx, y0, lx + ww, y0); hb.addColorStop(0, air ? "#0a1a2a" : "#0a1a40"); hb.addColorStop(1, air ? "#0d2a40" : "#0d2a80"); g.fillStyle = hb; g.fillRect(lx, y0, ww, headH); g.restore();
+      g.shadowColor = air ? "rgba(0,242,254,.25)" : "rgba(26,111,255,.35)"; g.shadowBlur = 16; rr(lx, y0, ww, cardH, 14*sc); g.strokeStyle = bc; g.lineWidth = 1.5; g.stroke(); g.shadowBlur = 0;
+      g.font = PF(400, 24); g.textBaseline = "middle"; g.textAlign = "left"; g.fillText(air ? "🌫️" : "⛈️", lx + pad, y0 + headH/2);
+      g.font = PF(800, 15); g.fillStyle = col; g.textBaseline = "top"; g.fillText(tx(air ? "cAh" : "cRh"), lx + pad + 38*sc, y0 + 11*sc);
+      g.font = PF(500, 12.5); g.fillStyle = "rgba(255,255,255,.55)"; g.fillText(tx(air ? "cAs" : "cRs"), lx + pad + 38*sc, y0 + 33*sc);
+      rows.forEach(([lb, v, c, mono], i)=>{ const ry = rowsY + i*rowH + rowH/2; g.textBaseline = "middle"; g.textAlign = "left"; g.font = PF(600, 12); g.fillStyle = "rgba(255,255,255,.45)"; g.fillText(lb, lx + pad, ry);
+        g.textAlign = "right"; g.font = mono ? PF(900, 20, M) : PF(700, 15); g.fillStyle = c; g.fillText(v, lx + ww - pad, ry); });
+      if(air) it.chips.forEach(([c, x2, y2, cw2])=>{ rr(x2, y2, cw2, 24*sc, 5*sc); g.fillStyle = "rgba(0,242,254,.07)"; g.fill(); g.strokeStyle = "rgba(0,242,254,.25)"; g.lineWidth = 1; g.stroke();
+        g.font = PF(500, 12.5, M); g.fillStyle = "#cfe6f2"; g.textAlign = "left"; g.textBaseline = "middle"; g.fillText(c, x2 + 8*sc, y2 + 12*sc); });
+      rr(lx + pad, blockY, ww - 2*pad, bH, 8*sc); g.fillStyle = air ? "#0a2230" : "#0a1030"; g.fill(); g.strokeStyle = air ? "rgba(0,242,254,.3)" : "rgba(26,111,255,.35)"; g.lineWidth = 1; g.stroke();
+      g.textAlign = "left"; g.textBaseline = "top"; g.font = PF(800, 14); g.fillStyle = col; g.fillText(tx(air ? "cAbT" : "cRbT"), lx + pad + 10*sc, blockY + 9*sc);
+      g.font = PF(500, 14); g.fillStyle = air ? "#cfe6f2" : "#aac8ff"; bL.forEach((l,i)=> g.fillText(l, lx + pad + 10*sc, blockY + 31*sc + i*21*sc));
+      g.font = PF(500, 11.5); g.fillStyle = "rgba(255,255,255,.3)"; g.fillText(air ? tx("hoy").replace("38","39") : tx("hoy").replace("38","42"), lx + 4*sc, y0 + cardH + 4*sc); }
+    return hgt + cardH + 26*sc; };
+  let tot = 0; const hs = items.map(it=>{ const v = draw(it, 0, true)*ease(it.a); tot += v; return v; });
+  let yy = Math.min(top + 18*sc, bottom - tot);
+  items.forEach((it, i)=>{ g.save(); g.globalAlpha = k*it.a; draw(it, yy + (1 - it.a)*14*sc, false); g.restore(); yy += hs[i]; });
+  /* encabezado encima de la conversación */
+  g.fillStyle = hg; g.fillRect(ix, iy, iw, hh); g.fillStyle = "rgba(111,66,193,.45)"; g.fillRect(ix, iy + hh - 1, iw, 1.5);
+  g.fillStyle = "#1c1c1e"; rr(cx - 70*sc, iy, 140*sc, 26*sc, 14*sc); g.fill();
+  const avx = ix + 40*sc, avy = iy + 76*sc; g.save(); g.beginPath(); g.arc(avx, avy, 22*sc, 0, 7); g.fillStyle = "rgba(0,0,0,.45)"; g.fill(); g.strokeStyle = "#00f2fe"; g.lineWidth = 2.5; g.stroke(); g.clip();
+  if(logoOK) g.drawImage(LOGO, avx - 18*sc, avy - 18*sc, 36*sc, 36*sc); g.restore();
+  g.textAlign = "left"; g.textBaseline = "middle"; g.fillStyle = "#fff"; g.font = PF(800, 19); g.fillText("AIreGPT", avx + 32*sc, avy - 9*sc);
+  g.fillStyle = "#00f2fe"; g.font = PF(600, 12.5); g.fillText(tx("online"), avx + 32*sc, avy + 13*sc);
   /* barra de escritura */
-  g.fillStyle = "rgba(255,255,255,.07)"; rr(ix + 16*sc, iy + ih - 76*sc, iw - 32*sc, 54*sc, 27*sc); g.fill();
-  g.fillStyle = "rgba(199,210,255,.5)"; g.font = F(500, 19*sc); g.textBaseline = "middle"; g.fillText(tx("ask"), ix + 40*sc, iy + ih - 49*sc);
+  g.fillStyle = "#17212b"; g.fillRect(ix, bottom + 6*sc, iw, iy + ih - bottom);
+  g.fillStyle = "rgba(255,255,255,.07)"; rr(ix + 14*sc, iy + ih - 72*sc, iw - 28*sc, 48*sc, 24*sc); g.fill();
+  g.fillStyle = "rgba(199,210,255,.5)"; g.font = PF(500, 15); g.textBaseline = "middle"; g.fillText(tx("ask"), ix + 36*sc, iy + ih - 48*sc);
+  g.fillStyle = "rgba(255,255,255,.2)"; rr(cx - 50*sc, iy + ih - 12*sc, 100*sc, 4*sc, 2*sc); g.fill();
+  /* notificación push */
+  const pa = ease(seg(t, 47.3, 47.75)) * (1 - ease(seg(t, 49.4, 49.8)));
+  if(pa > 0){ const px = ix + 10*sc, pyy = iy + 34*sc - (1 - pa)*110*sc, pwid = iw - 20*sc, phh = 86*sc; g.globalAlpha = k*Math.min(1, pa*1.4);
+    g.shadowColor = "rgba(0,0,0,.7)"; g.shadowBlur = 24; rr(px, pyy, pwid, phh, 16*sc); g.fillStyle = "rgba(10,20,30,.97)"; g.fill(); g.shadowBlur = 0; g.strokeStyle = "rgba(0,242,254,.35)"; g.lineWidth = 1; g.stroke();
+    g.textAlign = "left"; g.textBaseline = "top"; g.font = PF(600, 11.5); g.fillStyle = "rgba(255,255,255,.45)"; g.fillText(tx("pApp").toUpperCase(), px + 16*sc, pyy + 12*sc);
+    g.font = PF(800, 14.5); g.fillStyle = "#00f2fe"; g.fillText(tx("pT"), px + 16*sc, pyy + 32*sc);
+    g.font = PF(500, 13.5); g.fillStyle = "rgba(255,255,255,.8)"; g.fillText(tx("pM"), px + 16*sc, pyy + 56*sc); }
   g.restore(); g.restore();
 }
 
@@ -705,7 +769,7 @@ function drawHUD(t){
 
   drawPhone(t - 20.0, w, h);
 
-  const ue = t - 20.4, end = ease(seg(ue, 50.0, 51.2));
+  const ue = t - 23.4, end = ease(seg(ue, 50.0, 51.2));
   if(end > 0){
     g.save(); g.globalAlpha = end; g.fillStyle = "rgba(0,3,14,.94)"; g.fillRect(0, 0, w, h);
     const S = Math.min(w, h)*(V9 ? .22 : .15), cx = w/2, sx = cx - logoDX(S), cy = h*(V9 ? .3 : .25);
