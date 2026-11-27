@@ -47,6 +47,7 @@ body.render #ctl,body.render #play,body.render #load{display:none!important}
   <button id="bVoz" type="button" aria-label="Voz en off" aria-pressed="true">VOZ</button>
   <button id="bFs" type="button" aria-label="Pantalla completa">⛶</button>
   <span class="t" id="tOut">0:00 / 1:18</span>
+  <span class="t" id="ver" title="versión del reel" style="min-width:0;opacity:.55">v14</span>
   <input id="scrub" type="range" min="0" max="78" step="0.02" value="0" aria-label="Posición">
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -98,7 +99,7 @@ const T = {
        pApp:"Telegram · AIreGPT", pT:"🌧️ REGRESA LA LLUVIA · TRABAJO", pM:"Polanco · en 20 min · moderada",
        cR:"🌧️ ALERTA DE LLUVIA · TRABAJO", cRh:"LLUVIA MODERADA EN CAMINO", cRs:"Polanco · en 20 min", cRi:"INTENSIDAD", cRiV:"Moderada (~6 mm/h)", cRbT:"⚠️ Sal antes de las 18:00", cRb:"o lleva paraguas.", hoy:"17:38",
        a1:"Calidad del aire: <b>regular</b>. PM2.5 en 38 µg/m³.", a2:"Está lloviendo (4 mm/h): la lluvia lava el aire y el PM2.5 va a bajar en la próxima hora.", a3:"Si sales, lleva paraguas. Para correr, mejor mañana temprano.",
-       tag1:"De la física y la química…", tag2:"…a tu mano.", tag3:"Entendemos el aire para ponerlo en tu mano.", wake:"SMAA · EN LÍNEA", wakeSub:"PM2.5 · PM10 · GASES · T/HR · RUIDO",
+       tag1:"De la física y la química…", tag2:"…a tu mano.", tag3:"Entendemos el aire para ponerlo en tu mano.", qrL:"ESCANEA · HABLA CON AIreGPT", wake:"SMAA · EN LÍNEA", wakeSub:"PM2.5 · PM10 · GASES · T/HR · RUIDO",
        chaak:"CHAAK · EN LÍNEA", chaakSub:"VIENTO · LLUVIA · PRESIÓN · RADIACIÓN", ask:"Pregunta a AIreGPT", place:"CIUDAD DE MÉXICO",
        lPM:"SENSOR DE PARTÍCULAS · LÁSER", lGas:"SENSORES ELECTROQUÍMICOS · CO · O₃", lPcb:"TARJETA · MÓDEM 2G/4G",
        comp:"COMPONENTES", aTar:"Tarjeta principal · módem 2G/4G", aGas:"2 sensores electroquímicos", aPM:"Partículas PM2.5 / PM10", aTH:"Temperatura y humedad", aNoise:"Sensor de ruido",
@@ -112,7 +113,7 @@ const T = {
        pApp:"Telegram · AIreGPT", pT:"🌧️ RAIN IS COMING BACK · WORK", pM:"Polanco · in 20 min · moderate",
        cR:"🌧️ RAIN ALERT · WORK", cRh:"MODERATE RAIN ON ITS WAY", cRs:"Polanco · in 20 min", cRi:"INTENSITY", cRiV:"Moderate (~6 mm/h)", cRbT:"⚠️ Leave before 6 pm", cRb:"or take an umbrella.", hoy:"5:38 pm",
        a1:"Air quality: <b>moderate</b>. PM2.5 at 38 µg/m³.", a2:"It's raining (4 mm/h): rain washes the air, so PM2.5 should drop within the hour.", a3:"Take an umbrella if you head out. For a run, wait until tomorrow morning.",
-       tag1:"From physics and chemistry…", tag2:"…to your hand.", tag3:"We understand the air to put it in your hand.", wake:"SMAA · ONLINE", wakeSub:"PM2.5 · PM10 · GASES · T/RH · NOISE",
+       tag1:"From physics and chemistry…", tag2:"…to your hand.", tag3:"We understand the air to put it in your hand.", qrL:"SCAN · TALK TO AIreGPT", wake:"SMAA · ONLINE", wakeSub:"PM2.5 · PM10 · GASES · T/RH · NOISE",
        chaak:"CHAAK · ONLINE", chaakSub:"WIND · RAIN · PRESSURE · RADIATION", ask:"Ask AIreGPT", place:"MEXICO CITY",
        lPM:"PARTICLE SENSOR · LASER", lGas:"ELECTROCHEMICAL SENSORS · CO · O₃", lPcb:"MAIN BOARD · 2G/4G MODEM",
        comp:"COMPONENTS", aTar:"Main board · 2G/4G modem", aGas:"2 electrochemical sensors", aPM:"PM2.5 / PM10 particles", aTH:"Temperature & humidity", aNoise:"Noise sensor",
@@ -135,6 +136,7 @@ const SUBS = [
   [62.8, 70.4, "Así llega a AIreGPT: para que sepas qué hacer.", "That's how it reaches AIreGPT, so you know what to do."]
 ];
 const tx = k => T[LANG][k];
+const QR_ROWS = "11111110110011110111101111111,10000010101101001110101000001,10111010000110001011101011101,10111010110110110100001011101,10111010010100101011001011101,10000010011101011001101000001,11111110101010101010101111111,00000000111010011101100000000,10110111000011010011001001011,10111000110001110101111010001,01001111100111001010111000110,00001000011000001011110100001,01111111110010110100100001100,11001101101000101101001000111,01110110111001011101001100111,11001101110110101010000100010,00001010011100111010010111010,01100100001100101100100101110,10110110000101111100111000100,00011101000111100111010010100,11010110011001101111111111100,00000000101110011000100011111,11111110101010110111101011010,10000010111111110000100011001,10111010001110001010111110101,10111010100100000001110111010,10111010110000000110010000101,10000010010010110110110011010,11111110101100100111101001010".split(",");   // https://t.me/airegptcdmx_bot (QR versión 3, corrección M)
 
 /* ---------- formato ---------- */
 let FMT = Q.get("format") === "v" ? "v" : "h";
@@ -785,11 +787,16 @@ function drawHUD(t){
     g.strokeStyle = "#fff"; g.lineWidth = S*.095; g.lineCap = "butt"; g.shadowColor = "rgba(120,160,255,.9)"; g.shadowBlur = 16; g.stroke(); g.shadowBlur = 0;
     g.globalAlpha = end*ease(seg(ue, 50.8, 51.6)); g.fillStyle = "#fff"; logoText(sx, cy, S);
     const ty = cy + S*LOGO_H/2 + S*.12 + (V9 ? 80 : 64);
-    const l1 = ease(seg(ue, 51.6, 52.4)), l2 = ease(seg(ue, 52.5, 53.3)), l3 = ease(seg(ue, 53.4, 54.0)), fs = V9 ? 68 : 72;
+    const l1 = ease(seg(ue, 51.2, 52.0)), l2 = ease(seg(ue, 51.9, 52.7)), l3 = ease(seg(ue, 52.6, 53.2)), lq = ease(seg(ue, 53.0, 53.7)), fs = V9 ? 68 : 72;
     g.textAlign = "center"; g.textBaseline = "top"; g.font = F(800, fs);
     g.globalAlpha = end*l1; g.fillStyle = "#fff"; g.fillText(tx("tag1"), cx, ty + (1-l1)*14);
     g.globalAlpha = end*l2; g.fillStyle = "#9FB2FF"; g.fillText(tx("tag2"), cx, ty + fs*1.2 + (1-l2)*14);
     g.globalAlpha = end*l3; g.font = F(500, V9 ? 30 : 28); g.fillStyle = "rgba(199,210,255,.85)"; g.fillText(tx("tag3"), cx, ty + fs*2.6);
+    /* QR al bot de AIreGPT en Telegram */
+    if(lq > 0){ const qs = V9 ? 300 : 180, qy = ty + fs*2.6 + (V9 ? 90 : 62) + (1 - lq)*14, n = QR_ROWS.length, pad = qs*.07, cell = (qs - 2*pad)/n, qx = cx - qs/2;
+      g.globalAlpha = end*lq; g.shadowColor = "rgba(0,242,254,.45)"; g.shadowBlur = 30; rr(qx, qy, qs, qs, 14); g.fillStyle = "#fff"; g.fill(); g.shadowBlur = 0;
+      g.fillStyle = "#001766"; for(let r=0;r<n;r++) for(let c=0;c<n;c++) if(QR_ROWS[r][c] === "1") g.fillRect(Math.floor(qx + pad + c*cell), Math.floor(qy + pad + r*cell), Math.ceil(cell), Math.ceil(cell));
+      g.font = F(700, V9 ? 26 : 21, "mono"); g.fillStyle = "#9FB2FF"; g.textAlign = "center"; g.textBaseline = "top"; g.fillText(tx("qrL"), cx, qy + qs + (V9 ? 22 : 16)); }
     g.font = F(700, V9 ? 26 : 22, "mono"); g.fillStyle = "rgba(159,178,255,.75)"; g.fillText("smability.io  ·  AIreGPT", cx, h*(V9 ? .86 : .9));
     g.restore();
   }
@@ -803,8 +810,8 @@ function drawHUD(t){
     L.forEach((l, i)=>{ const y = by + (i - (L.length-1)/2)*lh, tw = g.measureText(l).width; rr(w/2 - tw/2 - 18, y - lh/2 + 2, tw + 36, lh - 4, 10); g.fillStyle = "rgba(0,4,18,.62)"; g.fill(); g.fillStyle = "#fff"; g.fillText(l, w/2, y); });
     g.restore(); }
 
-  const fin = 1 - ease(seg(t, 0, .6)), fout = ease(seg(t, CONFIG.duration - .7, CONFIG.duration));
-  if(fin + fout > 0){ g.fillStyle = `rgba(0,0,0,${Math.max(fin, fout)})`; g.fillRect(0, 0, w, h); }
+  const fin = 1 - ease(seg(t, 0, .6));            // sin fundido a negro al final: el cierre con el QR se queda en pantalla
+  if(fin > 0){ g.fillStyle = `rgba(0,0,0,${fin})`; g.fillRect(0, 0, w, h); }
 }
 
 /* ================= MAPBOX (versión ?map=1) =================

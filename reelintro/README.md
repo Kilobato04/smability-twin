@@ -50,3 +50,4 @@ y lecturas → los datos suben a AIreGPT → cierre.
   abajo (Mapbox no pasa de ~85°), así el combo queda anclado a la azotea.
 - v13 (27 nov): voz en off en español (13 frases) mezclada con cada pista; botón VOZ.
 - v13b (27 nov): nueva toma de «…y Smaa despierta…».
+- v14 (27 nov): el cierre se queda en pantalla al terminar (sin fundido a negro) con un QR al bot de AIreGPT en Telegram (t.me/airegptcdmx_bot).
