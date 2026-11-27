@@ -9,6 +9,7 @@ Marco del soporte (mm): x a lo largo, y del frente (y=0) hacia el tubo (placa ve
 Salida: metros, Y arriba, origen en la cara inferior de la pestaña sobre el eje del tubo de CHAAK (r=21.5 mm), frente hacia −X.
 
 Uso: python3 tools/smaa_build.py <carpeta_con_archivos> models/smaa.glb
+Después: python3 tools/smaa_interior.py <carpeta_con_STL_de_sensores> models/smaa.glb  (agrega sensores, tarjeta, LiPo y sílica gel)
 """
 import json, struct, sys
 import numpy as np
