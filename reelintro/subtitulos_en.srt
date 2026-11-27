@@ -3,12 +3,12 @@
 Nature speaks in waves. We translate it.
 
 2
-00:00:08,200 --> 00:00:12,600
+00:00:08,200 --> 00:00:12,400
 You can't see the air. But you can understand it.
 
 3
 00:00:13,400 --> 00:00:17,600
-CHAAK feels the wind and the rain…
+CHAAK reads the wind, the rain and the sun…
 
 4
 00:00:18,200 --> 00:00:21,800
@@ -24,16 +24,16 @@ A laser counts every particle that crosses its beam.
 
 7
 00:00:32,000 --> 00:00:36,600
-Gases react on electrodes and become current.
+Gases flow into the electrodes, react and become current.
 
 8
 00:00:37,300 --> 00:00:41,400
 Every pulse becomes a measurement…
 
 9
-00:00:41,600 --> 00:00:46,400
-…and every measurement, open data.
+00:00:41,600 --> 00:00:46,600
+…and every measurement, open data, in your city.
 
 10
-00:00:47,600 --> 00:00:54,200
+00:00:51,600 --> 00:00:58,200
 That's how it reaches AIreGPT, so you know what to do.

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Smability · Reel intro · De la física y la química a tu mano</title>
-<meta name="description" content="Reel intro de 60 s: CHAAK siente la lluvia, SMAA despierta y respira el aire, y lo convierte en datos que llegan a AIreGPT. Subtítulos en español e inglés.">
+<meta name="description" content="Reel intro de 60 s: el combo CHAAK + SMAA despierta, respira el aire y lo convierte en datos que llegan a AIreGPT. Subtítulos en español e inglés.">
 <meta name="theme-color" content="#000510">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,9 +12,9 @@
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#000;color:#fff;overflow:hidden;font-family:Inter,system-ui,sans-serif}
-#stage{position:absolute;left:0;top:0;transform-origin:0 0;background:#000510;overflow:hidden}
+#stage{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden;background:radial-gradient(120% 95% at 50% 42%,#0b2275 0%,#03103f 52%,#010726 100%)}
 #stage canvas.l,#map{position:absolute;inset:0;width:100%;height:100%;display:block}
-#map{z-index:0}
+#map{z-index:0;opacity:0}
 #gl{z-index:1}#hud{z-index:2;pointer-events:none}
 #map .mapboxgl-ctrl-bottom-left,#map .mapboxgl-ctrl-bottom-right{transform:scale(1.4);opacity:.75}
 #map .mapboxgl-ctrl-bottom-left{transform-origin:bottom left}#map .mapboxgl-ctrl-bottom-right{transform-origin:bottom right}
@@ -37,50 +37,52 @@ body.render #ctl,body.render #play,body.render #load{display:none!important}
 <body>
 <div id="stage"><div id="map" hidden></div><canvas id="gl" class="l"></canvas><canvas id="hud" class="l"></canvas></div>
 <div id="load">CARGANDO…</div>
-<button id="play" type="button" aria-label="Reproducir" hidden><div><svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="46" fill="rgba(0,43,173,.85)" stroke="#9FB2FF" stroke-width="2"/><path d="M39 30l30 18-30 18z" fill="#fff"/></svg><span id="playLbl">REPRODUCIR · 1:00</span></div></button>
+<button id="play" type="button" aria-label="Reproducir" hidden><div><svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="46" fill="rgba(0,43,173,.85)" stroke="#9FB2FF" stroke-width="2"/><path d="M39 30l30 18-30 18z" fill="#fff"/></svg><span id="playLbl">REPRODUCIR · 1:04</span></div></button>
 <div id="ctl">
   <button id="bPlay" type="button" aria-label="Reproducir o pausar">▶</button>
   <button id="bLang" type="button" aria-label="Idioma de subtítulos">ES</button>
   <button id="bFmt" type="button" aria-label="Formato">16:9</button>
   <button id="bFs" type="button" aria-label="Pantalla completa">⛶</button>
-  <span class="t" id="tOut">0:00 / 1:00</span>
-  <input id="scrub" type="range" min="0" max="60" step="0.02" value="0" aria-label="Posición">
+  <span class="t" id="tOut">0:00 / 1:04</span>
+  <input id="scrub" type="range" min="0" max="64" step="0.02" value="0" aria-label="Posición">
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 /* =====================================================================
-   Smability · Reel intro (60 s, una sola toma, 16:9 y 9:16, subtítulos ES/EN)
+   Smability · Reel intro (60 s, una sola toma, 16:9 y 9:16, subtítulos ES/EN) · v5
    1. Sintonía de TV de los 90: la onda se vuelve la «S» del logo. «La naturaleza habla en ondas…»
-   2. La onda cruza la ciudad hasta el combo CHAAK + SMAA, en un poste de banqueta de una calle chica. «El aire no se ve…»
-   3. La onda toca a CHAAK: empieza a llover (gotas que rebotan en CHAAK y en el panel de SMAA). SMAA despierta y respira.
-   4. Dentro de SMAA: láser (física), electrodos (química), pulsos → mediciones → API → AIreGPT. Cierre.
+   2. Limbo azul profundo: la onda viaja en la oscuridad y «enciende» el combo CHAAK + SMAA en su trípode. «El aire no se ve…»
+   3. Giro alrededor del combo; SMAA despierta. Dentro de SMAA, a distancia media y con foco por pieza:
+      láser (física) → espiral de gas hacia los barriles (química) → pulsos → mediciones → API.
+   4. La cámara se abre: el piso del estudio se vuelve una azotea, la ciudad se enciende y llueve; los datos suben a AIreGPT. Cierre.
    Todo se dibuja en función de t (render(t) es determinista): se puede adelantar, pausar y exportar cuadro a cuadro.
    Parámetros: ?lang=es|en  ?format=h|v  ?t=20  ?autoplay=1  ?render=1 (sin controles; expone window.REEL)
-               ?map=reforma  versión con Mapbox: el combo en su trípode, en la azotea del antiguo edificio de la Secretaría de Salud
-                             (Reforma y Lieja · 19.422432, -99.175614), con los edificios reales alrededor
+               ?map=1  la ciudad del final es Mapbox: el combo en la azotea de la oficina (casa de 2 pisos, 6 m),
+                       19.414878, -99.167249. Si Mapbox no carga, se usa la ciudad simulada.
    Datos simulados, sin ciudad ni hora en el texto.
    ===================================================================== */
 const CONFIG = {
-  duration: 60, smaa: "../models/smaa.glb", chaak: "../models/chaak.glb", logo: "../images/logo_smability.png",
+  duration: 64, smaa: "../models/smaa.glb", chaak: "../models/chaak.glb", tripod: "../models/montaje.glb", logo: "../images/logo_smability.png",
   // Mismo token público de Mapbox que el reel (/reel). En el dashboard de Mapbox restríngelo al dominio de Netlify.
   mapboxToken: 'pk.eyJ1Ijoia2lsb2JhdG8iLCJhIjoiY21jd2g2b3RzMDJiNDJxcTA0cTFhZmE4OCJ9.u5zPxYCxqEaF2jnj32l4ng',
-  // Versión Mapbox: el combo en su trípode, en la azotea del antiguo edificio de la Secretaría de Salud (Reforma y Lieja).
-  // roofH: altura de la azotea sobre la calle (m, estimada: 4 niveles altos + basamento). Si el trípode flota o se hunde en el
-  // edificio de Mapbox, se ajusta aquí. bearing: hacia dónde mira el eje +Z local (grados desde el norte; 58° = a lo largo de Reforma).
-  reforma: {lat:19.422432228118673, lon:-99.17561381529838, bearing:58, roofH:17}
+  // Versión Mapbox: azotea de la oficina. roofH: altura de la azotea sobre la calle (m). bearing: rumbo del eje +Z local
+  // (grados desde el norte); con 195° la toma final mira hacia el noroeste, a las torres de Reforma.
+  site: {lat:19.414878012104744, lon:-99.1672488143469, roofH:6, bearing:195}
 };
 const Q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
 const clamp = (x,a=0,b=1)=> Math.min(b, Math.max(a, x));
 const seg = (t,a,b)=> clamp((t-a)/(b-a));
 const ease = x => x*x*(3-2*x);
+const sm = x => x*x*x*(x*(x*6 - 15) + 10);                    // smootherstep: entra y sale sin golpe
 const eio = x => x<.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2;
 const lerp = (a,b,x)=> a+(b-a)*x;
 const win = (t,a,b,f=.5)=> Math.min(ease(seg(t,a,a+f)), 1-ease(seg(t,b-f,b)));     // aparece en a, se va en b
 const RENDER_MODE = Q.has("render");
-const MAP_MODE = Q.get("map") === "reforma";
-const D = 5;                                  // desfase: todo lo de SMAA ocurre 5 s después que en la v1 (entra CHAAK y la lluvia)
+const MAP_MODE = ["1","true","oficina","reforma"].includes((Q.get("map") || "").toLowerCase());
+let USE_MAP = MAP_MODE;                       // pasa a false si Mapbox no carga
+const D = 5;                                  // reloj de SMAA: lo de dentro de SMAA ocurre 5 s después que en la v1
 if(RENDER_MODE) document.body.classList.add("render");
 
 /* ---------- textos y subtítulos ---------- */
@@ -90,24 +92,26 @@ const T = {
        meas:"MEDICIÓN · EN VIVO", sim:"DATOS SIMULADOS", api:"API ABIERTA", online:"● en línea", q:"¿Cómo está el aire en mi colonia?",
        a1:"Calidad del aire: <b>regular</b>. PM2.5 en 38 µg/m³.", a2:"Está lloviendo (4 mm/h): la lluvia lava el aire y el PM2.5 va a bajar en la próxima hora.", a3:"Si sales, lleva paraguas. Para correr, mejor mañana temprano.",
        tag1:"De la física y la química…", tag2:"…a tu mano.", tag3:"Entendemos el aire para ponerlo en tu mano.", wake:"SMAA · EN LÍNEA", wakeSub:"PM2.5 · PM10 · GASES · T/HR · RUIDO",
-       chaak:"CHAAK · EN LÍNEA", chaakSub:"VIENTO · LLUVIA · PRESIÓN · RADIACIÓN", ask:"Pregunta a AIreGPT", place:"PASEO DE LA REFORMA · AZOTEA" },
+       chaak:"CHAAK · EN LÍNEA", chaakSub:"VIENTO · LLUVIA · PRESIÓN · RADIACIÓN", ask:"Pregunta a AIreGPT", place:"CIUDAD DE MÉXICO",
+       lPM:"SENSOR DE PARTÍCULAS · LÁSER", lGas:"SENSORES ELECTROQUÍMICOS · CO · O₃", lPcb:"TARJETA · MÓDEM 2G/4G" },
   en:{ physics:"PHYSICS", chem:"CHEMISTRY", data:"DATA", pd:"PHOTODIODE · LASER SCATTERING", pdSub:"every peak is a particle", el1:"ELECTRODE · CO", el2:"ELECTRODE · O₃", elSub:"reaction current, in nanoamps",
        meas:"LIVE MEASUREMENT", sim:"SIMULATED DATA", api:"OPEN API", online:"● online", q:"How's the air in my neighborhood?",
        a1:"Air quality: <b>moderate</b>. PM2.5 at 38 µg/m³.", a2:"It's raining (4 mm/h): rain washes the air, so PM2.5 should drop within the hour.", a3:"Take an umbrella if you head out. For a run, wait until tomorrow morning.",
        tag1:"From physics and chemistry…", tag2:"…to your hand.", tag3:"We understand the air to put it in your hand.", wake:"SMAA · ONLINE", wakeSub:"PM2.5 · PM10 · GASES · T/RH · NOISE",
-       chaak:"CHAAK · ONLINE", chaakSub:"WIND · RAIN · PRESSURE · RADIATION", ask:"Ask AIreGPT", place:"PASEO DE LA REFORMA · ROOFTOP" }
+       chaak:"CHAAK · ONLINE", chaakSub:"WIND · RAIN · PRESSURE · RADIATION", ask:"Ask AIreGPT", place:"MEXICO CITY",
+       lPM:"PARTICLE SENSOR · LASER", lGas:"ELECTROCHEMICAL SENSORS · CO · O₃", lPcb:"MAIN BOARD · 2G/4G MODEM" }
 };
 const SUBS = [
   [1.2, 6.5, "La naturaleza habla en ondas. Nosotros la traducimos.", "Nature speaks in waves. We translate it."],
-  [8.2, 12.6, "El aire no se ve. Pero se puede entender.", "You can't see the air. But you can understand it."],
-  [13.4, 17.6, "CHAAK siente el viento y la lluvia…", "CHAAK feels the wind and the rain…"],
+  [8.2, 12.4, "El aire no se ve. Pero se puede entender.", "You can't see the air. But you can understand it."],
+  [13.4, 17.6, "CHAAK lee el viento, la lluvia y el sol…", "CHAAK reads the wind, the rain and the sun…"],
   [18.2, 21.8, "…y SMAA despierta…", "…and SMAA wakes up…"],
   [22.0, 25.6, "…para respirar el aire.", "…to breathe the air."],
   [26.6, 31.4, "Un láser cuenta cada partícula que cruza su paso.", "A laser counts every particle that crosses its beam."],
-  [32.0, 36.6, "Los gases reaccionan en electrodos y se vuelven corriente.", "Gases react on electrodes and become current."],
+  [32.0, 36.6, "Los gases entran a los electrodos, reaccionan y se vuelven corriente.", "Gases flow into the electrodes, react and become current."],
   [37.3, 41.4, "Cada pulso se vuelve una medición…", "Every pulse becomes a measurement…"],
-  [41.6, 46.4, "…y cada medición, un dato abierto.", "…and every measurement, open data."],
-  [47.6, 54.2, "Así llega a AIreGPT: para que sepas qué hacer.", "That's how it reaches AIreGPT, so you know what to do."]
+  [41.6, 46.6, "…y cada medición, un dato abierto, en tu ciudad.", "…and every measurement, open data, in your city."],
+  [51.6, 58.2, "Así llega a AIreGPT: para que sepas qué hacer.", "That's how it reaches AIreGPT, so you know what to do."]
 ];
 const tx = k => T[LANG][k];
 
@@ -121,31 +125,30 @@ const hash = (n)=>{ const s = Math.sin(n*127.1 + 311.7)*43758.5453; return s - M
 
 /* ================= THREE ================= */
 const glc = $("gl"), hud = $("hud"), g = hud.getContext("2d");
-const renderer = new THREE.WebGLRenderer({canvas:glc, antialias:true, alpha:MAP_MODE, logarithmicDepthBuffer:true, preserveDrawingBuffer:RENDER_MODE});
+const renderer = new THREE.WebGLRenderer({canvas:glc, antialias:true, alpha:true, logarithmicDepthBuffer:true, preserveDrawingBuffer:RENDER_MODE});
 renderer.setPixelRatio(1); renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
-if(MAP_MODE) renderer.setClearColor(0x000000, 0);
+renderer.setClearColor(0x000000, 0);                         // el limbo es el degradado del fondo (#stage); al final, el cielo o Mapbox
 const scene = new THREE.Scene();
-const FOG = new THREE.Color(0x0b1430), FOGD = .0055;
-if(!MAP_MODE) scene.fog = new THREE.FogExp2(FOG, FOGD);
+const LIMBO = new THREE.Color(0x03103f), CITYFOG = new THREE.Color(0x0b1430), FOGD = .009;
+scene.fog = new THREE.FogExp2(LIMBO.clone(), .35);
 const cam = new THREE.PerspectiveCamera(38, 16/9, .003, 9000);
 const V = (x,y,z)=> new THREE.Vector3(x,y,z);
-const CITY = new THREE.Group(); scene.add(CITY);          // calle, edificios, árboles, luminarias y coches (se ocultan con Mapbox)
-CITY.visible = !MAP_MODE;
+const CITY = new THREE.Group(); scene.add(CITY);              // la ciudad simulada del final (no se usa con Mapbox)
 
-/* luz de anochecer */
-scene.add(new THREE.HemisphereLight(0x6f86c8, 0x0a0c14, .55));
-const key = new THREE.DirectionalLight(0xffc49a, .9); key.position.set(-60, 25, -80); scene.add(key);
-const rim = new THREE.DirectionalLight(0x8fb0ff, .7); rim.position.set(40, 30, 60); scene.add(rim);
+/* luces de estudio: contraluz primero, luego la principal; el combo sale de la oscuridad */
+const hemi = new THREE.HemisphereLight(0x6f86c8, 0x0a0c14, .06); scene.add(hemi);
+const key = new THREE.DirectionalLight(0xfff0e0, 0); key.position.set(-40, 30, -30); scene.add(key);
+const rim = new THREE.DirectionalLight(0x8fb0ff, .2); rim.position.set(40, 25, 50); scene.add(rim);
 const smaaSpot = new THREE.PointLight(0xbfd0ff, 0, 3.5, 2); smaaSpot.position.set(-.8, 3.9, -.5); scene.add(smaaSpot);
 const ledLight = new THREE.PointLight(0xff3020, 0, .3, 2); ledLight.position.set(-.052, 3.12, 0); scene.add(ledLight);
 const laserLight = new THREE.PointLight(0xff2a2a, 0, .12, 2); laserLight.position.set(-.128, 3.158, -.046); scene.add(laserLight);
 
 /* cielo: degradado de anochecer, resplandor al poniente y los volcanes al oriente */
 const sky = new THREE.Mesh(new THREE.SphereGeometry(6000, 48, 24), new THREE.ShaderMaterial({
-  side:THREE.BackSide, depthWrite:false, depthTest:false, fog:false,
+  side:THREE.BackSide, depthWrite:false, depthTest:false, fog:false, uniforms:{uMix:{value:0}},   // opaco y primero: escribe su color premultiplicado sobre el degradado del limbo
   vertexShader:`varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-  fragmentShader:`varying vec3 vD;
+  fragmentShader:`varying vec3 vD; uniform float uMix;
     float bump(float a, float c, float w, float h){ float d = (a-c)/w; return h*exp(-d*d); }
     void main(){
       float y = vD.y, az = atan(vD.z, vD.x);
@@ -156,7 +159,7 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(6000, 48, 24), new THREE.Sha
       float m = bump(az, .55, .10, .045) + bump(az, .78, .16, .03) + bump(az, .70, .05, .012);   // Popocatépetl e Iztaccíhuatl
       if(y < m && y > -.02) c = mix(c, vec3(.045,.055,.11), .85);
       if(y < .0) c = vec3(.02,.025,.05);
-      gl_FragColor = vec4(c, 1.0);
+      gl_FragColor = vec4(c*uMix, uMix);
     }`
 }));
 sky.renderOrder = -10; scene.add(sky);
@@ -164,19 +167,25 @@ sky.renderOrder = -10; scene.add(sky);
 
 CITY.add(sky); scene.remove(sky);
 
-/* ---------- calle chica: dos carriles a lo largo de Z, banquetas, árboles; el poste en la banqueta, junto a la guarnición ---------- */
-const STREET = {roadX0:-8.5, roadX1:-.6, curb:.15, walkA:[-.6, 3.4], walkB:[-11.6, -8.5]};
-{
-  const mat = (c, r=.9, m=0)=> new THREE.MeshStandardMaterial({color:c, roughness:r, metalness:m});
-  const plane = (w, d, c, x, y, z, r, m)=>{ const p = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat(c, r, m)); p.rotation.x = -Math.PI/2; p.position.set(x, y, z); CITY.add(p); return p; };
-  plane(8000, 8000, 0x05070d, 0, 0, 0);
-  plane(STREET.roadX1 - STREET.roadX0, 1600, 0x0c1019, (STREET.roadX0 + STREET.roadX1)/2, .005, 0, .35, .15);          // asfalto mojado
-  for(const [a, b] of [STREET.walkA, STREET.walkB]){ const s = new THREE.Mesh(new THREE.BoxGeometry(b - a, STREET.curb, 1600), mat(0x1a1f2b, .8)); s.position.set((a+b)/2, STREET.curb/2, 0); CITY.add(s); }
-  const dash = new THREE.InstancedMesh(new THREE.BoxGeometry(.12, .01, 2.6), new THREE.MeshBasicMaterial({color:0x8a8f99}), 140), m = new THREE.Matrix4();
-  for(let i=0;i<140;i++){ m.makeTranslation((STREET.roadX0 + STREET.roadX1)/2, .012, -420 + i*6); dash.setMatrixAt(i, m); } CITY.add(dash);
-}
+/* ---------- el combo en su trípode (models/montaje.glb, mástil de 1.12 m), igual que en el gemelo ---------- */
+const CHAAK_Y = 2.75, SMAA_Y = CHAAK_Y + .5;                  // SMAA 0.335 m sobre la base de CHAAK + 0.165 m «arriba»
+const TRIPOD_TOP = 1.12, ROOF_Y = CHAAK_Y - TRIPOD_TOP, ROOF_H = 6;   // piso del estudio = azotea; la calle 6 m abajo
+const COMBO = new THREE.Group(); scene.add(COMBO);
+const tripod = new THREE.Group(); tripod.position.set(0, ROOF_Y, 0); COMBO.add(tripod);
+
+/* piso del limbo: brillo suave bajo el trípode que se pierde hacia la orilla, y sombra de contacto */
+function radialTex(stops){ const c = document.createElement("canvas"); c.width = c.height = 512; const x = c.getContext("2d"), gr = x.createRadialGradient(256,256,0,256,256,256);
+  stops.forEach(([o,col])=> gr.addColorStop(o, col)); x.fillStyle = gr; x.fillRect(0,0,512,512); const tx = new THREE.CanvasTexture(c); tx.encoding = THREE.sRGBEncoding; return tx; }
+const limboFloor = new THREE.Mesh(new THREE.CircleGeometry(7, 96), new THREE.MeshBasicMaterial({map:radialTex([[0,"rgba(46,84,200,.55)"],[.35,"rgba(16,36,120,.38)"],[1,"rgba(3,16,63,0)"]]), transparent:true, depthWrite:false, fog:false}));
+limboFloor.rotation.x = -Math.PI/2; limboFloor.position.y = ROOF_Y + .002; scene.add(limboFloor);
+const contact = new THREE.Mesh(new THREE.CircleGeometry(.55, 64), new THREE.MeshBasicMaterial({map:radialTex([[0,"rgba(0,0,8,.7)"],[1,"rgba(0,0,8,0)"]]), transparent:true, depthWrite:false, fog:false}));
+contact.rotation.x = -Math.PI/2; contact.position.y = ROOF_Y + .004; scene.add(contact);
+
+/* ---------- la ciudad del final (simulada): la casa de la azotea, la colonia alrededor y las torres al fondo ---------- */
+CITY.position.y = ROOF_Y - ROOF_H;
+const HOUSE = {x0:-4.5, x1:7.5, z0:-7, z1:7};
 const bMat = new THREE.ShaderMaterial({
-  uniforms:{ fogColor:{value:FOG}, fogDensity:{value:FOGD} },
+  uniforms:{ fogColor:{value:LIMBO.clone()}, fogDensity:{value:.35}, uLit:{value:0}, uGround:{value:0} },
   vertexShader:`#include <common>
     #include <logdepthbuf_pars_vertex>
     varying vec3 vW; varying vec3 vN; varying float vSeed;
@@ -187,7 +196,7 @@ const bMat = new THREE.ShaderMaterial({
       #include <logdepthbuf_vertex>
     }`,
   fragmentShader:`#include <logdepthbuf_pars_fragment>
-    uniform vec3 fogColor; uniform float fogDensity;
+    uniform vec3 fogColor; uniform float fogDensity; uniform float uLit; uniform float uGround;
     varying vec3 vW; varying vec3 vN; varying float vSeed;
     float h(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
     void main(){
@@ -199,7 +208,7 @@ const bMat = new THREE.ShaderMaterial({
         vec2 cell = floor(vec2(along/2.4, vW.y/3.3)); vec2 f = fract(vec2(along/2.4, vW.y/3.3));
         float win = step(.18, f.x)*step(f.x, .82)*step(.25, f.y)*step(f.y, .78);
         float r = h(cell + vSeed*31.0);
-        float lit = step(.80, r) * step(2.0, vW.y);
+        float lit = step(.80, r) * step(uGround + 2.0, vW.y) * step(length(vW.xz), uLit);   // se encienden en ola desde la azotea
         vec3 warm = mix(vec3(1.0,.72,.42), vec3(.72,.82,1.0), step(.93, r));
         c += win*lit*warm*(.55 + .6*h(cell*1.7 + 3.0));
         c += win*(1.0-lit)*vec3(.012,.018,.035);
@@ -212,42 +221,45 @@ const bMat = new THREE.ShaderMaterial({
 
 (function buildCity(){
   const R = rng(7), boxes = [];
-  for(const side of [1, -1]){                     // fachadas continuas a los dos lados de la calle (cañón urbano)
-    let z = -460;
-    while(z < 460){ const w = 7 + R()*14, d = 12 + R()*16; let hgt = 7 + R()*R()*26; if(R() < .05) hgt = 40 + R()*45;
-      const x0 = side > 0 ? STREET.walkA[1] + .2 : STREET.walkB[0] - .2 - d; boxes.push([x0 + d/2, z + w/2, d, w, hgt]); z += w + (R() < .15 ? 3 : .2); }
+  boxes.push([(HOUSE.x0 + HOUSE.x1)/2, (HOUSE.z0 + HOUSE.z1)/2, HOUSE.x1 - HOUSE.x0, HOUSE.z1 - HOUSE.z0, ROOF_H]);   // la casa (2 pisos)
+  for(let gx=-10; gx<=10; gx++) for(let gz=-10; gz<=10; gz++){            // la colonia: casas y edificios de 2 a 6 pisos
+    const cx = gx*20 + 10, cz = gz*20;
+    if(cx > -16 && cx < -4) continue;                                       // la calle de enfrente (a lo largo de Z)
+    for(let k=0;k<2;k++){ const w = 8 + R()*8, d = 9 + R()*8, x = cx + (R()-.5)*6, z = cz + (k ? 5 : -5) + (R()-.5)*3;
+      if(x + w/2 > HOUSE.x0 - 1 && x - w/2 < HOUSE.x1 + 1 && z + d/2 > HOUSE.z0 - 1 && z - d/2 < HOUSE.z1 + 1) continue;
+      let hgt = 6 + Math.floor(R()*R()*5)*3.2; if(R() < .04) hgt = 26 + R()*20; boxes.push([x, z, w, d, hgt]); }
   }
-  for(let gx=-12; gx<=12; gx++) for(let gz=-12; gz<=12; gz++){       // la ciudad detrás, con algunas torres al fondo
-    const cx = gx*44, cz = gz*44; if(Math.abs(cx + 4) < 48) continue;
-    for(let k=0;k<2;k++){ const w = 12 + R()*16, d = 12 + R()*16; let hgt = 14 + R()*R()*50; if(R() < .06) hgt = 90 + R()*120; boxes.push([cx + (R()-.5)*16, cz + (R()-.5)*16, w, d, hgt]); }
-  }
+  for(let k=0;k<16;k++){ const a = -.62 + (R()-.5)*.9, r = 700 + R()*900, hh = 110 + R()*140;   // torres al fondo (hacia donde mira la toma final)
+    boxes.push([Math.cos(a)*r, Math.sin(a)*r, 30 + R()*25, 30 + R()*25, hh]); }
   const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1), bMat, boxes.length), m = new THREE.Matrix4();
   boxes.forEach(([x,z,w,d,hh],i)=>{ m.makeScale(w,hh,d); m.setPosition(x, hh/2, z); im.setMatrixAt(i, m); });
   CITY.add(im);
+  const mat = (c, r=.85, mt=0)=> new THREE.MeshStandardMaterial({color:c, roughness:r, metalness:mt});
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(8000, 8000), mat(0x05070d, .5, .1)); ground.rotation.x = -Math.PI/2; CITY.add(ground);
+  /* azotea: losa, pretil, tinacos y un equipo de aire */
+  const add = (geo, m2, x, y, z)=>{ const o = new THREE.Mesh(geo, m2); o.position.set(x, y, z); CITY.add(o); return o; };
+  add(new THREE.BoxGeometry(HOUSE.x1 - HOUSE.x0, .06, HOUSE.z1 - HOUSE.z0), mat(0x101218, 1, 0), (HOUSE.x0 + HOUSE.x1)/2, ROOF_H + .03, 0);
+  const pm2 = mat(0x3a404d);
+  add(new THREE.BoxGeometry(HOUSE.x1 - HOUSE.x0, .55, .15), pm2, (HOUSE.x0 + HOUSE.x1)/2, ROOF_H + .27, HOUSE.z0);
+  add(new THREE.BoxGeometry(HOUSE.x1 - HOUSE.x0, .55, .15), pm2, (HOUSE.x0 + HOUSE.x1)/2, ROOF_H + .27, HOUSE.z1);
+  add(new THREE.BoxGeometry(.15, .55, HOUSE.z1 - HOUSE.z0), pm2, HOUSE.x0, ROOF_H + .27, 0);
+  add(new THREE.BoxGeometry(.15, .55, HOUSE.z1 - HOUSE.z0), pm2, HOUSE.x1, ROOF_H + .27, 0);
+  const tin = mat(0x101114, .5);
+  add(new THREE.CylinderGeometry(.55, .5, 1.15, 28), tin, 6.4, ROOF_H + .62, 5.6); add(new THREE.CylinderGeometry(.55, .5, 1.15, 28), tin, 5.0, ROOF_H + .62, 5.6);
+  add(new THREE.BoxGeometry(.9, .7, .45), mat(0x5d636c, .6, .3), 6.6, ROOF_H + .4, -6.0);
 })();
-/* árboles estilizados en las banquetas (lejos del poste) */
+/* árboles a lo largo de la calle de enfrente */
 const TREES = [];
-for(let i=-30;i<=30;i++){ for(const x of [2.4, -10.4]){ const z = i*9 + (x < 0 ? 4.5 : 0); if(x > 0 && Math.abs(z) < 5) continue; TREES.push([x, z, rng(77+i*3+(x>0?1:0))()]); } }
+for(let i=-14;i<=14;i++) for(const x of [-6.2, -13.8]) TREES.push([x, i*11 + (x < -10 ? 5.5 : 0), rng(77 + i*3 + (x < -10 ? 1 : 0))()]);
 {
-  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(.09,.13,3.2,6), new THREE.MeshStandardMaterial({color:0x1c1712, roughness:1}), TREES.length);
+  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(.12,.16,4,6), new THREE.MeshStandardMaterial({color:0x1c1712, roughness:1}), TREES.length);
   const crown = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), new THREE.MeshStandardMaterial({color:0x08140f, roughness:1, flatShading:true}), TREES.length*3);
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = V(1,1,1);
-  TREES.forEach(([x,z,r],i)=>{ m.makeTranslation(x, STREET.curb + 1.6, z); trunk.setMatrixAt(i, m);
-    for(let k=0;k<3;k++){ const R = rng(900 + i*3 + k), s = 1.3 + R()*1.1 + r*.6; sc.set(s, s*.85, s); q.setFromAxisAngle(V(0,1,0), R()*6);
-      m.compose(V(x + (R()-.5)*1.4, STREET.curb + 3.6 + R()*1.4, z + (R()-.5)*1.4), q, sc); crown.setMatrixAt(i*3 + k, m); } });
+  TREES.forEach(([x,z,r],i)=>{ m.makeTranslation(x, 2, z); trunk.setMatrixAt(i, m);
+    for(let k=0;k<3;k++){ const R = rng(900 + i*3 + k), s2 = 1.8 + R()*1.4 + r*.8; sc.set(s2, s2*.85, s2); q.setFromAxisAngle(V(0,1,0), R()*6);
+      m.compose(V(x + (R()-.5)*1.8, 4.6 + R()*1.8, z + (R()-.5)*1.8), q, sc); crown.setMatrixAt(i*3 + k, m); } });
   CITY.add(trunk); CITY.add(crown);
 }
-
-/* ---------- el combo: poste de banqueta + CHAAK arriba + SMAA en el tubo de CHAAK ---------- */
-const MAST_TOP = 2.75, CHAAK_Y = MAST_TOP, SMAA_Y = MAST_TOP + .5;      // igual que el gemelo: SMAA 0.335 m sobre la base de CHAAK + 0.165 m «arriba»
-const COMBO = new THREE.Group(); scene.add(COMBO);
-const mastMat = new THREE.MeshStandardMaterial({color:0x7f8792, metalness:.6, roughness:.45, transparent:true});
-const mast = new THREE.Mesh(new THREE.CylinderGeometry(.021,.03,MAST_TOP - STREET.curb,20), mastMat); mast.position.set(0, STREET.curb + (MAST_TOP - STREET.curb)/2, 0); COMBO.add(mast);
-const base = new THREE.Mesh(new THREE.CylinderGeometry(.09,.11,.04,24), mastMat); base.position.set(0, STREET.curb + .02, 0); COMBO.add(base);
-/* versión Mapbox: el mismo combo sobre su trípode (models/montaje.glb, mástil de 1.12 m) en una azotea */
-const TRIPOD_TOP = 1.12, ROOF_Y = CHAAK_Y - TRIPOD_TOP;                 // azotea en coordenadas locales (las del reel)
-const tripod = new THREE.Group(); tripod.position.set(0, ROOF_Y, 0); COMBO.add(tripod);
-mast.visible = base.visible = !MAP_MODE; tripod.visible = MAP_MODE;
 
 /* ---------- partículas (un solo sombreador para la onda, el aire, la ciudad y los datos) ---------- */
 const PT_VS = `#include <common>
@@ -278,16 +290,14 @@ function points(n){
 }
 
 
-const LAMPS = points(160), CARS = points(320), WAVE = points(900), HAZE = points(700), AIR = points(520), STREAM = points(900), GLOW = points(40), BEAM = points(30), SPLASH = points(1400);
+const LAMPS = points(80), CARS = points(240), WAVE = points(900), HAZE = points(500), AIR = points(520), STREAM = points(900), GLOW = points(40), BEAM = points(30), SPLASH = points(1400), GAS = points(360);
 [LAMPS.p, CARS.p].forEach(p=>{ scene.remove(p); CITY.add(p); });
 
-/* luminarias de la calle (brazo sobre el arroyo) */
+/* luminarias de la calle de enfrente */
 const LAMP_POS = [];
-for(let i=-16;i<=16;i++){ const zA = i*26 + 13, zB = i*26; LAMP_POS.push([STREET.walkA[0] + .3, zA, -1]); LAMP_POS.push([STREET.walkB[1] - .3, zB, 1]); }
-{ const pg = new THREE.CylinderGeometry(.06,.08,7,6), ag = new THREE.BoxGeometry(1.6,.07,.07), mt = new THREE.MeshStandardMaterial({color:0x1a1f2b});
-  const ip = new THREE.InstancedMesh(pg, mt, LAMP_POS.length), ia = new THREE.InstancedMesh(ag, mt, LAMP_POS.length), m = new THREE.Matrix4();
-  LAMP_POS.forEach(([x,z,dir],i)=>{ m.makeTranslation(x, 3.5 + STREET.curb, z); ip.setMatrixAt(i, m); m.makeTranslation(x + dir*.8, 7 + STREET.curb, z); ia.setMatrixAt(i, m); });
-  CITY.add(ip); CITY.add(ia); }
+for(let i=-14;i<=14;i++){ LAMP_POS.push([-5.6, i*24 + 12, -1]); LAMP_POS.push([-14.4, i*24, 1]); }
+{ const pg = new THREE.CylinderGeometry(.06,.08,6.5,6), mt = new THREE.MeshStandardMaterial({color:0x1a1f2b}), ip = new THREE.InstancedMesh(pg, mt, LAMP_POS.length), m = new THREE.Matrix4();
+  LAMP_POS.forEach(([x,z],i)=>{ m.makeTranslation(x, 3.25, z); ip.setMatrixAt(i, m); }); CITY.add(ip); }
 
 /* ---------- lluvia: rayas finas inclinadas por el viento ---------- */
 const RAIN_N = 2600, RAIN = (()=>{ const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(RAIN_N*6), 3));
@@ -304,7 +314,7 @@ const RAIN_DROP = Array.from({length:RAIN_N}, (_,i)=>{ const R = rng(20000+i), n
 const WIND = V(.55, 0, .25);                                  // deriva de la lluvia (m/s)
 const headTop = r => CHAAK_Y + (r < .034 ? .927 : r < .0587 ? lerp(.927, .920, (r-.034)/.0247) : lerp(.920, .910, (r-.0587)/.0106));
 const panelTop = x => SMAA_Y + (.1245 + .731*(x*1000 + 46)/1000) + .005;   // +5 mm: el vidrio sobre el marco     // cara superior del panel (inclinado 37°, baja hacia el frente)
-function surfaceAt(d){ if(MAP_MODE && mapOK && d.kind === 0) return d.near ? ROOF_Y : ROOF_Y - 40; return d.kind === 1 ? headTop(Math.hypot(d.x, d.z)) : d.kind === 2 ? panelTop(d.x) : (d.x > STREET.roadX1 && d.x < STREET.walkA[1]) || (d.x < STREET.roadX0 && d.x > STREET.walkB[0]) ? STREET.curb : .005; }
+function surfaceAt(d){ return d.kind === 1 ? headTop(Math.hypot(d.x, d.z)) : d.kind === 2 ? panelTop(d.x) : d.near ? ROOF_Y : ROOF_Y - ROOF_H; }
 
 /* ---------- datos SMAA (coordenadas del modelo, en metros; el modelo cuelga del tubo de CHAAK) ---------- */
 const P = {                                   // puntos de interés (mundo)
@@ -319,14 +329,14 @@ const P = {                                   // puntos de interés (mundo)
 const smaa = new THREE.Group(); smaa.position.set(0, SMAA_Y, 0); COMBO.add(smaa);
 const chaak = new THREE.Group(); chaak.position.set(0, CHAAK_Y, 0); COMBO.add(chaak);
 const NODE = {};
-let pending = MAP_MODE ? 3 : 2;
+let pending = 3;
 function loadModel(url, parent){
   new THREE.GLTFLoader().load(url, gltf=>{
-    gltf.scene.traverse(o=>{ if(!o.isMesh) return; o.material = o.material.clone(); NODE[o.name] = o; });
+    gltf.scene.traverse(o=>{ if(!o.isMesh) return; o.material = o.material.clone(); o.material.fog = false; NODE[o.name] = o; });
     parent.add(gltf.scene); if(--pending === 0) modelsLoaded();
   }, undefined, e=>{ console.warn("modelo", url, e); if(--pending === 0) modelsLoaded(); });
 }
-loadModel(CONFIG.smaa, smaa); loadModel(CONFIG.chaak, chaak); if(MAP_MODE) loadModel("../models/montaje.glb", tripod);
+loadModel(CONFIG.smaa, smaa); loadModel(CONFIG.chaak, chaak); loadModel(CONFIG.tripod, tripod);
 let modelReady = false;
 function modelsLoaded(){
   for(const k of ["smaa_top","smaa_bottom"]) if(NODE[k]){ const m = NODE[k].material; m.color.set(0xe9ecf2); m.roughness = .38; }
@@ -343,38 +353,27 @@ laser.rotation.x = Math.PI/2; laser.position.set(P.beamX, P.beamY, -.046); scene
 const pings = [0,1,2,3].map(()=>{ const m = new THREE.Mesh(new THREE.RingGeometry(.97,1,96), new THREE.MeshBasicMaterial({color:0x9FB2FF, transparent:true, opacity:0, side:THREE.DoubleSide, blending:THREE.AdditiveBlending, depthWrite:false})); m.rotation.x = -Math.PI/2; scene.add(m); return m; });
 
 /* ---------- cámara: una sola toma (curva suave por fotogramas clave) ---------- */
-const KEYS = [   // t, posición, mira a      (la calle corre a lo largo de Z; el frente de SMAA mira a −X, hacia el arroyo)
-  [0,   [-4.6, 70, -270],    [-2, 8, 0]],
-  [7,   [-4.6, 40, -170],    [-2, 6, 0]],
-  [10,  [-5.2, 13, -46],     [-.8, 4, 0]],
-  [12.6,[-4.0, 4.5, -8.2],   [0, 3.45, 0]],
-  [14.8,[-1.7, 3.95, -2.1],  [0, 3.6, 0]],
-  [17.0,[-1.0, 4.3, -.55],   [0, 3.62, 0]],
-  [19.0,[-1.3, 3.8, .8],     [-.1, 3.36, .05]],
-  [21.2,[-1.05, 2.86, .65],  [-.08, 3.12, 0]],
-  [23.8,[-.72, 3.17, -.34],  [-.152, 3.166, -.046]],
-  [26.4,[-.34, 3.185, -.12], [-.13, 3.16, -.046]],
-  [29.6,[-.19, 3.18, -.08],  [-.125, 3.158, -.046]],
-  [32.8,[-.21, 3.2, .13],    [-.09, 3.142, .0535]],
-  [36.8,[-.27, 3.3, .17],    [-.09, 3.18, .02]],
-  [40.8,[-.4, 3.47, .33],    [-.09, 3.27, 0]],
-  [45.0,[-1.25, 3.6, .95],   [-.2, 3.95, 0]],
-  [49.4,[-5.0, 7.4, 4.2],    [-.9, 9.6, 0]],
-  [55,  [-7.4, 13, 7],       [-1.3, 18, 0]],
-  [60,  [-8.2, 14.2, 8],     [-1.4, 19.6, 0]],
+const KEYS = [   // t, posición, mira a      (el frente de SMAA mira a −X; el trípode está en el origen)
+  [0,   [-7, 8.5, -38],      [0, 3.2, 0]],
+  [7,   [-6, 6.8, -24],      [0, 3.2, 0]],
+  [10,  [-4.2, 4.8, -10.5],  [0, 3.2, 0]],
+  [12.6,[-2.7, 3.95, -4.6],  [0, 3.25, 0]],
+  [14.8,[-1.7, 3.95, -2.1],  [0, 3.55, 0]],
+  [16.4,[-2.5, 4.55, -.25],  [0, 3.45, 0]],
+  [18.0,[-2.1, 3.9, 1.6],    [-.05, 3.3, .03]],
+  [19.6,[-1.5, 3.45, 1.0],   [-.08, 3.18, 0]],
+  [21.6,[-1.15, 3.05, .75],  [-.08, 3.15, 0]],
+  [23.8,[-.78, 3.27, -.48],  [-.1, 3.16, -.02]],
+  [26.4,[-.5, 3.27, -.32],   [-.11, 3.16, -.04]],     // interior: nunca a menos de ~40 cm; SMAA completa en cuadro
+  [29.6,[-.46, 3.25, -.2],   [-.12, 3.155, -.04]],
+  [32.8,[-.43, 3.17, .4],    [-.09, 3.14, .045]],
+  [36.8,[-.5, 3.42, .36],    [-.09, 3.18, .02]],
+  [40.0,[-1.3, 3.8, .95],    [-.05, 3.3, 0]],
+  [44.6,[-6.8, 6.0, 5.4],    [2.5, 3.6, -2.0]],       // se abre la toma: el combo en primer plano y la ciudad detrás (revelación lenta)
+  [49.0,[-11.5, 8.0, 9.5],   [8, 6.0, -7]],
+  [53.4,[-10.5, 10.5, 8.6],  [-1.1, 12, 0]],
+  [64,  [-10.8, 13.5, 9.0],  [-1.4, 17, 0]],
 ].map(([t,p,q])=>({t, p:V(...p), q:V(...q)}));
-/* Mapbox: llegada desde el suroeste (Chapultepec) mirando Reforma; en la azotea la cámara rodea el combo y la ciudad gira detrás */
-const KEYS_MAP = [
-  [0,   [-40, 120, -340],    [0, 18, 0]],
-  [7,   [-26, 72, -205],     [0, 8, 0]],
-  [10,  [-12, 24, -62],      [0, 4, 0]],
-  [12.6,[-6.4, 5.6, -9],     [0, 3.4, 0]],
-  [14.8,[-1.7, 3.95, -2.1],  [0, 3.6, 0]],
-  [16.4,[-2.5, 4.65, -.25],  [0, 3.58, 0]],
-  [18.0,[-2.0, 4.2, 1.55],   [-.05, 3.45, .03]],
-  [19.4,[-1.3, 3.8, .8],     [-.1, 3.36, .05]],
-].map(([t,p,q])=>({t, p:V(...p), q:V(...q)}));
-if(MAP_MODE){ const rest = KEYS.filter(k=> k.t > 19.4); KEYS.length = 0; KEYS.push(...KEYS_MAP, ...rest); }
 function cr(p0,p1,p2,p3,u){ const u2=u*u, u3=u2*u; return p1.clone().multiplyScalar(2).add(p2.clone().sub(p0).multiplyScalar(u)).add(p0.clone().multiplyScalar(2).sub(p1.clone().multiplyScalar(5)).add(p2.clone().multiplyScalar(4)).sub(p3).multiplyScalar(u2)).add(p1.clone().multiplyScalar(3).sub(p0).sub(p2.clone().multiplyScalar(3)).add(p3).multiplyScalar(u3)).multiplyScalar(.5); }
 function logLerp(k, i, u){       // posiciones en escala logarítmica respecto a SMAA: la cámara se acerca de forma pareja de 150 m a 15 cm
   const c = V(-.09, SMAA_Y-.09, 0), at = j=> KEYS[clamp(j,0,KEYS.length-1)][k].clone().sub(c);
@@ -385,7 +384,9 @@ function logLerp(k, i, u){       // posiciones en escala logarítmica respecto a
 function camAt(t){
   let i = 0; while(i < KEYS.length-2 && t > KEYS[i+1].t) i++;
   const u = clamp((t - KEYS[i].t)/(KEYS[i+1].t - KEYS[i].t));
-  return {p: logLerp("p", i, u), q: logLerp("q", i, u)};
+  const p = logLerp("p", i, u), q = logLerp("q", i, u);
+  if(FMT === "v"){ const k = win(t, 20.5, 41, 2.5); p.sub(q).multiplyScalar(1 + .5*k).add(q); }   // en vertical, el interior se ve un poco más lejos
+  return {p, q};
 }
 
 
@@ -418,28 +419,44 @@ function spikeAt(tt){                     // señal del fotodiodo: un pico por c
 
 /* ================= ESCENA EN FUNCIÓN DE t ================= */
 function updateScene(t){
-  const u = t - D;                                        // reloj de la v1 para todo lo de SMAA
-  const wake = ease(seg(t, 18.4, 19.4));                 // SMAA despierta
-  const breathe = seg(u, 15.6, 18.5);
-  const sm = x => x*x*x*(x*(x*6 - 15) + 10);                     // smootherstep: entra y sale sin golpe
-  const out = 1 - sm(seg(u, 38.6, 43.2));
-  const accF = sm(seg(u, 19.0, 23.6)) * out;                      // primero se desvanecen CHAAK, panel, batería y poste
-  const inside = sm(seg(u, 20.0, 25.0)) * out;                    // luego la carcasa de SMAA
-  const pmF = sm(seg(u, 22.8, 25.4)) * (1 - sm(seg(u, 27.4, 29.8)));
+  const u = t - D;                                        // reloj de SMAA
+  /* luz: contraluz y luego la principal; el combo sale de la oscuridad cuando lo toca la onda */
+  const lightOn = sm(seg(t, 9.4, 13.2)), backOn = sm(seg(t, 8.0, 11.5));
+  const rv = sm(seg(t, 40.5, 48.5));                     // la ciudad aparece (lenta, 8 s)
+  hemi.intensity = .06 + .5*lightOn + .35*sm(seg(t, 40.5, 48.5)); key.intensity = .95*lightOn*(1 - .7*rv); rim.intensity = (.25 + 1.0*backOn)*(1 - .6*rv);   // de noche en la ciudad, menos luz de estudio
+  smaaSpot.intensity = .15 + 1.4*lightOn*(1 - .5*rv);
 
-  /* carcasas y accesorios translúcidos al entrar */
+  /* limbo → ciudad: la niebla azul se abre, el piso del estudio se vuelve la azotea, el cielo y las ventanas se encienden */
+  const dens = Math.exp(lerp(Math.log(.35), Math.log(FOGD), Math.pow(rv, .45)));     // la niebla se abre rápido al inicio de la revelación
+  scene.fog.density = dens; scene.fog.color.copy(LIMBO).lerp(CITYFOG, rv);
+  bMat.uniforms.fogDensity.value = dens; bMat.uniforms.fogColor.value.copy(scene.fog.color);
+  bMat.uniforms.uLit.value = 30 + rv*rv*2400; bMat.uniforms.uGround.value = ROOF_Y - ROOF_H;
+  sky.material.uniforms.uMix.value = rv;
+  CITY.visible = !USE_MAP && rv > .002;
+  limboFloor.material.opacity = 1 - rv; contact.material.opacity = 1 - .6*rv;
+  if(USE_MAP && map) $("map").style.opacity = rv.toFixed(3);
+
+  /* carcasas translúcidas: primero CHAAK, panel, batería y trípode; luego la carcasa de SMAA; foco en la pieza que se explica */
+  const out = 1 - sm(seg(u, 33.6, 38.2));                // se vuelve sólida al salir la cámara
+  const accF = sm(seg(u, 19.0, 23.6)) * out;
+  const inside = sm(seg(u, 20.0, 25.0)) * out;
+  const pmF = sm(seg(u, 22.8, 25.4)) * (1 - sm(seg(u, 27.4, 29.8)));
+  const fPM = win(u, 22.0, 27.6, 1.0), fGas = win(u, 27.2, 32.6, 1.0), fPcb = win(u, 31.8, 36.4, 1.0), anyF = Math.max(fPM, fGas, fPcb);
   for(const k in NODE){
     const m = NODE[k].material; let o = 1;
-    if(k === "smaa_top" || k === "smaa_bottom") o = 1 - .9*inside;
+    if(k === "smaa_top" || k === "smaa_bottom") o = 1 - .88*inside;
     else if(k === "smaa_in_pm25") o = 1 - .72*pmF;
     else if(isChaak(k) || isSmaaOuter(k)) o = 1 - .96*accF;
+    if(k.startsWith("smaa_in_") && k !== "smaa_in_switches_led"){
+      const foc = k === "smaa_in_pm25" ? fPM : (k === "smaa_in_gases" ? fGas : (k === "smaa_in_tarjeta" ? fPcb : 0));
+      o *= 1 - .55*anyF*(1 - foc);                         // las demás piezas se atenúan
+      if(m.emissive) m.emissive.setRGB(.05*foc, .12*foc, .42*foc);
+    }
     m.opacity = o; m.transparent = o < .999; m.depthWrite = o > .85; NODE[k].visible = o > .02;
   }
-  { const o = 1 - .93*accF; mastMat.opacity = o; mastMat.depthWrite = o > .85; }
-  const flick = t < 18.4 ? 0 : (t < 19.2 ? (hash(Math.floor(t*22)) > .4 ? 1 : .15) : 1);
+  const flick = t < 18.4 ? 0 : (t < 19.2 ? (hash(Math.floor(t*22)) > .4 ? 1 : .15) : 1), wake = ease(seg(t, 18.4, 19.4));
   if(NODE.smaa_in_switches_led) NODE.smaa_in_switches_led.material.emissiveIntensity = 3.5*flick*wake;
   ledLight.intensity = .35*flick*wake;
-  smaaSpot.intensity = .3 + 1.6*ease(seg(t, 11, 15));
   /* anillos: 2 en CHAAK cuando lo toca la onda, 2 en SMAA cuando despierta */
   pings.forEach((m,i)=>{ const isC = i < 2, t0 = isC ? 13.5 + i*.6 : 18.6 + (i-2)*.6, a = seg(t, t0, t0 + 1.8);
     if(isC) m.position.set(0, CHAAK_Y + .8, 0); else m.position.set(-.08, SMAA_Y - .12, 0);
@@ -451,97 +468,101 @@ function updateScene(t){
   for(let i=0;i<BEAM.n;i++){ const z = -.067 + .042*i/(BEAM.n-1); BEAM.set(i, P.beamX, P.beamY, z, .0026*(.8 + .2*Math.sin(t*20 + i)), 1, .12, .1, .55*las); }
   BEAM.done();
 
-  /* luminarias y coches (la calle corre a lo largo de Z) */
-  LAMP_POS.forEach(([x,z,dir],i)=> LAMPS.set(i, x + dir*1.5, 6.9 + STREET.curb, z, 1.6, 1.0, .7, .38, .95));
+  /* luminarias y coches de la calle de enfrente (coordenadas de la ciudad) */
+  const cityOn = USE_MAP ? 0 : rv;
+  LAMP_POS.forEach(([x,z,dir],i)=> LAMPS.set(i, x + dir*1.2, 6.4, z, 1.4, 1.0, .7, .38, .95*cityOn));
   LAMPS.done();
-  for(let c=0;c<CARS.n/4;c++){ const R = rng(500+c), dir = c%2 ? 1 : -1, lane = dir > 0 ? -2.6 : -6.5, L = 900, sp = 7 + R()*6;
+  for(let c=0;c<CARS.n/4;c++){ const R = rng(500+c), dir = c%2 ? 1 : -1, lane = dir > 0 ? -8.4 : -11.6, L = 600, sp = 7 + R()*6;
     const z = (((R()*L + dir*sp*t) % L) + L) % L - L/2;
     for(let k=0;k<4;k++){ const front = k < 2, side = k%2 ? .75 : -.75, zz = z + (front ? dir*2.1 : -dir*2.1);
-      CARS.set(c*4 + k, lane + side, .65, zz, .55, front ? 1 : .95, front ? .95 : .1, front ? .85 : .06, .9); } }
+      CARS.set(c*4 + k, lane + side, .65, zz, .55, front ? 1 : .95, front ? .95 : .1, front ? .85 : .06, .9*cityOn); } }
   CARS.done();
 
-  /* la onda: de la «S» del logo a la cabeza de CHAAK */
+  /* la onda: de la «S» del logo, por la oscuridad, a la cabeza de CHAAK */
   const c7 = camAt(7), S0 = c7.p.clone().lerp(c7.q, .12), tgt = P.head.clone().add(V(0,.02,0)), dirv = tgt.clone().sub(S0), Lw = dirv.length(); dirv.normalize();
   const side = V(0,1,0).cross(dirv).normalize(), upv = dirv.clone().cross(side).normalize();
   const head = eio(seg(t, 7, 13.5)), waveOn = seg(t, 6.6, 7.6) * (1 - seg(t, 15.0, 16.6));
   for(let i=0;i<WAVE.n;i++){
     const s = i/(WAVE.n-1), d = Math.pow(s, .55);
     const b = S0.clone().addScaledVector(dirv, d*Lw);
-    const amp = 3.2*Math.pow(1-d, 1.6) + .015, lam = lerp(14, .3, Math.pow(d,.8));
+    const amp = 1.4*Math.pow(1-d, 1.6) + .015, lam = lerp(5, .3, Math.pow(d,.8));
     const ph = (d*Lw)/lam*Math.PI*2 - t*5;
     b.addScaledVector(upv, Math.sin(ph)*amp).addScaledVector(side, Math.cos(ph*.5)*amp*.15);
     const vis = d <= head ? 1 : 0, nearHead = Math.exp(-Math.pow((head - d)*30, 2));
-    const sz = lerp(1.1, .006, Math.pow(d,.6))*(1 + 2.5*nearHead);
+    const sz = lerp(.35, .006, Math.pow(d,.6))*(1 + 2.5*nearHead);
     WAVE.set(i, b.x, b.y, b.z, sz*vis*waveOn, .45 + .55*nearHead, .62 + .38*nearHead, 1, vis*waveOn);
   }
   WAVE.done();
 
-  /* lluvia y rebotes */
-  /* la lluvia empieza ya en el acercamiento a CHAAK (antes se veía como «basurita» cayendo sobre la ciudad lejana) */
-  const rain = ease(seg(t, 14.4, 16.0)) * (1 - ease(seg(t, 50, 53))), farRain = ease(seg(t, 16.0, 18.5)), inMacro = 1 - .75*inside;
+  /* lluvia y rebotes: solo cuando aparece la ciudad */
+  const rain = sm(seg(t, 42.0, 45.0)) * (1 - ease(seg(t, 60, 62.5))), farRain = sm(seg(t, 43.0, 47.0));
   const rp = RAIN.geometry.attributes.position.array, rc = RAIN.geometry.attributes.color.array;
   let sp = 0;
   for(let i=0;i<RAIN_N;i++){
     const d = RAIN_DROP[i], per = d.H/d.v, top = (d.near ? SMAA_Y + 2.2 : 14), surf = surfaceAt(d);
     const fall = ((t/per + d.ph) % 1) * d.H, y = top - fall, dt = (top - y)/d.v;
-    const x = d.x + WIND.x*(dt - (top - surf)/d.v), z = d.z + WIND.z*(dt - (top - surf)/d.v);   // cae justo sobre su punto de impacto
-    const L = d.near ? .09 : .32, vis = (y > surf ? 1 : 0) * rain * (d.near ? inMacro : farRain);
+    const x = d.x + WIND.x*(dt - (top - surf)/d.v), z = d.z + WIND.z*(dt - (top - surf)/d.v);
+    const L = d.near ? .09 : .32, vis = (y > surf ? 1 : 0) * rain * (d.near ? 1 : farRain);
     const o = i*6, k = WIND.clone().multiplyScalar(L/d.v), Lv = vis > .02 ? L : 0;          // gota apagada = segmento de largo cero
     rp[o] = x; rp[o+1] = y; rp[o+2] = z; rp[o+3] = x - (Lv ? k.x : 0); rp[o+4] = y + Lv; rp[o+5] = z - (Lv ? k.z : 0);
     const c = vis*(d.near ? .8 : .6); for(let j=0;j<6;j+=3){ rc[o+j] = c*.82; rc[o+j+1] = c*.9; rc[o+j+2] = c; }
-    /* rebote: cada impacto suelta gotitas en arco durante 0.45 s */
-    if(!d.near || sp >= SPLASH.n - 6) continue;
+    if(!d.near || sp >= SPLASH.n - 8 || rain <= 0) continue;
     let tImp = ((Math.floor(t/per + d.ph) - d.ph) + (top - surf)/d.H)*per; if(t - tImp < 0) tImp -= per; const age = t - tImp;
-    if(age < 0 || age > .45 || rain <= 0) continue;   // (impacto del ciclo actual o del anterior)
     const R = rng(Math.floor(tImp*1000) + i*7), nN = d.kind ? 6 : 2, ix = d.x, iz = d.z, life = d.kind ? .34 : .26;
-    if(age > life) continue;
-    if(d.kind && age < .07) SPLASH.set(sp++, ix, surf + .002, iz, .007*(1 - age/.07), 1, 1, 1, rain*inMacro);    // destello del impacto
+    if(age < 0 || age > life) continue;
+    if(d.kind && age < .07) SPLASH.set(sp++, ix, surf + .002, iz, .007*(1 - age/.07), 1, 1, 1, rain);    // destello del impacto
     for(let k2=0;k2<nN;k2++){
-      const a = R()*Math.PI*2, hs = .08 + R()*.22, vs = .45 + R()*.7;                 // corona de gotitas: pocos cm de alcance, en arco
+      const a = R()*Math.PI*2, hs = .08 + R()*.22, vs = .45 + R()*.7;               // corona de gotitas: pocos cm de alcance, en arco
       let vx = Math.cos(a)*hs, vy = vs, vz = Math.sin(a)*hs;
-      if(d.kind === 2){ vx = vx*.6 - .5903*vs*.5 - .12; vy = .8072*vs; }                  // en el panel salen según su inclinación y escurren al frente
+      if(d.kind === 2){ vx = vx*.6 - .5903*vs*.5 - .12; vy = .8072*vs; }                // en el panel salen según su inclinación y escurren al frente
       const px = ix + vx*age, py = surf + vy*age - 4.9*age*age, pz = iz + vz*age;
-      const f = 1 - age/life, sz = (d.kind ? .0034 : .005)*(.7 + .5*R());
-      SPLASH.set(sp++, px, py, pz, sz, .9, .95, 1, f*rain*inMacro);
+      SPLASH.set(sp++, px, py, pz, (d.kind ? .0034 : .003)*(.7 + .5*R()), .9, .95, 1, (1 - age/life)*rain*(d.kind ? 1 : .35));
     }
   }
   RAIN.geometry.attributes.position.needsUpdate = RAIN.geometry.attributes.color.needsUpdate = true;
   for(let i=sp;i<SPLASH.n;i++) SPLASH.set(i, 0, 0, 0, 0, 0, 0, 0, 0);
   SPLASH.done();
 
-  /* polvo y partículas suspendidas alrededor del poste */
-  for(let i=0;i<HAZE.n;i++){ const R = rng(3000+i), x = -4 + R()*8, y = .3 + R()*7, z = -4 + R()*8, sp2 = .05 + R()*.1;
+  /* polvo suspendido, iluminado por la luz del estudio */
+  for(let i=0;i<HAZE.n;i++){ const R = rng(3000+i), x = -3.5 + R()*7, y = ROOF_Y + .2 + R()*4.5, z = -3.5 + R()*7, sp2 = .05 + R()*.1;
     const px = x + Math.sin(t*sp2 + i)*.4, pz = z + Math.cos(t*sp2*1.3 + i)*.4, py = y + Math.sin(t*.2 + i*.7)*.15;
-    const sz = (.004 + R()*.012), warm = R() < .3;
-    HAZE.set(i, px, py, pz, sz, warm?.9:.6, warm?.7:.7, warm?.5:1, .5*(1 - .7*seg(u,40,46))); }
+    const sz = (.004 + R()*.01), warm = R() < .3;
+    HAZE.set(i, px, py, pz, sz, warm?.9:.6, warm?.7:.7, warm?.5:1, .45*lightOn*(1 - .7*seg(u,40,46))); }
   HAZE.done();
 
-  /* el aire que entra: toma → láser (destello) → ventilador → túnel */
-  const airOn = breathe * (1 - ease(seg(u, 33, 36)));
+  /* el aire que entra al PM2.5: toma → láser (destello) → ventilador → túnel */
+  const breathe = seg(u, 15.6, 18.5), airOn = breathe * (1 - ease(seg(u, 33, 36)));
   for(let i=0;i<AIRN;i++){
     const s = AIR_SEED[i], q = airPos(i, t), p = q.p;
     let sz = s.sz*(q.zone === 0 ? lerp(.012, .0016, ease(q.u/.66)) : .0011), r = .65, gg = .8, b = 1, a = .9;
     if(q.zone === 1){ const dx = Math.abs(p.x - P.beamX), f = Math.exp(-dx*dx/(2*.0016*.0016)) * las;
       sz *= 1 + 7*f; r = lerp(.7, 1, f); gg = lerp(.85, .45, f); b = lerp(1, .4, f); }
     if(q.zone === 2) a = .5;
-    AIR.set(i, p.x, p.y, p.z, sz*airOn, r, gg, b, a*airOn);
+    AIR.set(i, p.x, p.y, p.z, sz*airOn*(q.zone ? 1.6 : 1), r, gg, b, a*airOn);
   }
   AIR.done();
 
-  /* brillo de los electrodos de gas y de la tarjeta */
-  const gas = ease(seg(u, 26.6, 27.8)) * (1 - ease(seg(u, 33, 35)));
-  const pcbOn = ease(seg(u, 31.6, 33));
+  /* gases: el aire sube por debajo de cada barril en espiral hasta el electrodo; ahí destella y nace la señal */
+  const gasOn = win(u, 26.8, 33.4, .8);
+  for(let i=0;i<GAS.n;i++){
+    const c = i < GAS.n/2 ? P.gasA : P.gasB, R = rng(7000 + i), ph = R(), s = ((u*.32 + ph) % 1 + 1) % 1, a0 = R()*Math.PI*2;
+    const y = lerp(c.y - .07, c.y + .012, Math.pow(s, .9)), r = lerp(.032, .0015, Math.pow(s, .75)), ang = a0 + s*Math.PI*7;
+    const end = Math.exp(-Math.pow((s - 1)*9, 2));         // al llegar al electrodo
+    GAS.set(i, c.x + Math.cos(ang)*r, y, c.z + Math.sin(ang)*r, .0016*(1 + 2.2*end), lerp(.25, 1, end), lerp(1, 1, end), lerp(.65, .9, end), gasOn*(.25 + .75*s));
+  }
+  GAS.done();
+  const gas = gasOn, pcbOn = ease(seg(u, 31.6, 33));
   let gi = 0;
   for(const [c, ph] of [[P.gasA, 0], [P.gasB, 1.7]]){
     for(let k=0;k<12;k++){ const a = k/12*Math.PI*2 + t*1.5 + ph, rr = .012 + .004*Math.sin(t*3 + k);
-      GLOW.set(gi++, c.x + Math.cos(a)*rr, c.y + .001, c.z + Math.sin(a)*rr, .0035*(.6 + .4*Math.sin(t*6 + k + ph)), .35, 1, .7, gas); }
+      GLOW.set(gi++, c.x + Math.cos(a)*rr, c.y + .013, c.z + Math.sin(a)*rr, .0035*(.6 + .4*Math.sin(t*6 + k + ph)), .35, 1, .7, gas); }
   }
   for(let k=0;k<16;k++){ const R = rng(9000+k), x = P.pcb.x + (R()-.5)*.08, z = (R()-.5)*.14, blink = .5 + .5*Math.sin(t*(4 + R()*6) + k);
-    GLOW.set(gi++, x, P.pcb.y + .0025, z, .0022*blink, .4, .7, 1, pcbOn*(1 - ease(seg(u,44,47)))); }
+    GLOW.set(gi++, x, P.pcb.y + .0025, z, .0022*blink, .4, .7, 1, pcbOn*(1 - ease(seg(u,40,43)))); }
   GLOW.done();
 
-  /* los datos suben de la tarjeta al cielo, hacia AIreGPT */
-  const sh = eio(seg(u, 36.2, 46.5)), sOn = seg(u, 35.8, 36.8) * (1 - ease(seg(u, 50, 52.5)));
+  /* los datos suben del combo sobre la ciudad, hacia AIreGPT */
+  const sh = eio(seg(t, 44.0, 55.0)), sOn = seg(t, 43.6, 44.8) * (1 - ease(seg(t, 59, 61)));
   for(let i=0;i<STREAM.n;i++){
     const s = i/(STREAM.n-1), y = P.pcb.y + Math.pow(s, 2.1)*26, rr = .008 + .9*Math.pow(s, 1.5), ang = s*28 - t*3.2 + (i%3)*2.094;
     const vis = s <= sh ? 1 : 0, nearH = Math.exp(-Math.pow((sh - s)*25, 2)), pkt = (Math.sin(s*90 - t*14) > .93) ? 1 : 0;
@@ -669,6 +690,15 @@ function drawPhone(t, w, h){
 }
 
 
+function leader(t, a, b, p3, text, V9, w, h){       // etiqueta con línea guía a la pieza que se explica
+  const k = win(t, a, b, .5); if(k <= 0) return;
+  const q = p3.clone().project(cam); if(q.z > 1) return;
+  const x = (q.x + 1)/2*w, y = (1 - q.y)/2*h, lx = clamp(x - (V9 ? .2 : .16)*w, 30, w - 300), ly = clamp(y + (V9 ? -.13 : .12)*h, 60, h*.78);
+  g.save(); g.globalAlpha = k; g.strokeStyle = "rgba(159,178,255,.85)"; g.lineWidth = 2; g.fillStyle = "#9FB2FF";
+  g.beginPath(); g.arc(x, y, 6, 0, 7); g.fill(); g.beginPath(); g.moveTo(x, y); g.lineTo(lx + 8, ly - 6); g.lineTo(lx, ly - 6); g.stroke();
+  g.font = F(700, V9 ? 26 : 22, "mono"); g.textAlign = "left"; g.textBaseline = "top"; const tw = g.measureText(text).width;
+  rr(lx - 12, ly, tw + 24, V9 ? 42 : 38, 8); g.fillStyle = "rgba(3,10,36,.78)"; g.fill(); g.fillStyle = "#fff"; g.fillText(text, lx, ly + 8); g.restore();
+}
 function label(t, a, b, title, sub, V9, w, h){
   const k = win(t, a, b, .4); if(k <= 0) return;
   g.save(); g.globalAlpha = k; g.font = F(700, V9 ? 28 : 24, "mono"); g.textAlign = "left"; g.textBaseline = "top";
@@ -680,16 +710,19 @@ function drawHUD(t){
   g.clearRect(0, 0, w, h);
   const vg = g.createRadialGradient(w/2, h/2, Math.min(w,h)*.35, w/2, h/2, Math.max(w,h)*.75); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,2,10,.55)"); g.fillStyle = vg; g.fillRect(0, 0, w, h);
 
-  if(MAP_MODE) label(t, 9.4, 13.2, tx("place"), "19.4224 N · 99.1756 W", V9, w, h);
+  if(USE_MAP) label(t, 43.6, 48.6, tx("place"), "19.4149 N · 99.1672 W", V9, w, h);
   label(t, 13.8, 18.0, tx("chaak"), tx("chaakSub"), V9, w, h);
   label(t, 18.6, 24.0, tx("wake"), tx("wakeSub"), V9, w, h);
 
   const bwX = V9 ? w/2 : w*.06, bwY = V9 ? h*.09 : h*.12, bwS = V9 ? 120 : 132, al = V9 ? "center" : "left";
+  leader(u, 22.6, 27.2, V(-.122, SMAA_Y - .0915, -.046), tx("lPM"), V9, w, h);
+  leader(u, 27.6, 32.4, V(-.089, SMAA_Y - .095, .0535), tx("lGas"), V9, w, h);
+  leader(u, 32.2, 36.4, V(-.09, SMAA_Y - .058, -.02), tx("lPcb"), V9, w, h);
   bigWord(u, 22.4, 27.0, tx("physics"), bwX, bwY, bwS, al);
   bigWord(u, 27.4, 32.0, tx("chem"), bwX, bwY, bwS, al);
   bigWord(u, 36.6, 41.6, tx("data"), bwX, bwY, bwS, al);
 
-  const pw = V9 ? w*.86 : w*.38, px = V9 ? (w - pw)/2 : w*.585, py = V9 ? h*.5 : h*.14, phh = V9 ? 340 : 320;
+  const pw = V9 ? w*.86 : w*.38, px = V9 ? (w - pw)/2 : w*.585, py = V9 ? h*.58 : h*.14, phh = V9 ? 340 : 320;
   const k1 = win(u, 22.6, 27.2, .5);
   if(k1 > 0){ panel(px, py, pw, phh, k1, tx("pd"), tx("pdSub")); scope(px + 24, py + 90, pw - 48, phh - 114, k1, tt=> spikeAt(tt)*.42, t, "#ff5a5a", 2.2); }
   const k2 = win(u, 27.6, 32.4, .5);
@@ -712,16 +745,16 @@ function drawHUD(t){
       if(n > 0 && n < l.length && Math.floor(t*4)%2) g.fillRect(px + 26 + g.measureText(s).width + 2, py + 68 + i*38, 12, 24); });
     g.restore(); }
 
-  drawPhone(u, w, h);
+  drawPhone(t - 9.4, w, h);
 
-  const end = ease(seg(u, 50.0, 51.2));
+  const ue = t - 9.6, end = ease(seg(ue, 50.0, 51.2));
   if(end > 0){
     g.save(); g.globalAlpha = end; g.fillStyle = "rgba(0,3,14,.92)"; g.fillRect(0, 0, w, h);
     const S = Math.min(w, h)*(V9 ? .2 : .16), cx = w/2, cy = h*(V9 ? .36 : .3);
     g.fillStyle = "#000"; g.fillRect(cx - S/2, cy - S/2, S, S); g.strokeStyle = "rgba(159,178,255,.4)"; g.lineWidth = 2; g.strokeRect(cx - S/2, cy - S/2, S, S);
-    const dr = eio(seg(u, 50.4, 51.8)); g.beginPath(); for(let i=0;i<=80;i++){ const uu = i/80*dr, [x,y] = logoCurve(cx, cy, S, uu); i ? g.lineTo(x,y) : g.moveTo(x,y); }
+    const dr = eio(seg(ue, 50.4, 51.8)); g.beginPath(); for(let i=0;i<=80;i++){ const uu = i/80*dr, [x,y] = logoCurve(cx, cy, S, uu); i ? g.lineTo(x,y) : g.moveTo(x,y); }
     g.strokeStyle = "#fff"; g.lineWidth = S*.085; g.lineCap = "butt"; g.shadowColor = "rgba(120,160,255,.9)"; g.shadowBlur = 16; g.stroke(); g.shadowBlur = 0;
-    const l1 = ease(seg(u, 51.0, 51.8)), l2 = ease(seg(u, 52.0, 52.8)), l3 = ease(seg(u, 53.0, 53.8)), fs = V9 ? 68 : 76;
+    const l1 = ease(seg(ue, 51.0, 51.8)), l2 = ease(seg(ue, 52.0, 52.8)), l3 = ease(seg(ue, 53.0, 53.8)), fs = V9 ? 68 : 76;
     g.textAlign = "center"; g.textBaseline = "top"; g.font = F(800, fs);
     g.globalAlpha = end*l1; g.fillStyle = "#fff"; g.fillText(tx("tag1"), cx, cy + S*.75 + (1-l1)*14);
     g.globalAlpha = end*l2; g.fillStyle = "#9FB2FF"; g.fillText(tx("tag2"), cx, cy + S*.75 + fs*1.25 + (1-l2)*14);
@@ -735,7 +768,7 @@ function drawHUD(t){
   const cue = SUBS.find(c=> t >= c[0] && t < c[1]);
   if(cue && end < .5){ const a = Math.min(seg(t, cue[0], cue[0]+.25), 1 - seg(t, cue[1]-.25, cue[1])), s = LANG === "en" ? cue[3] : cue[2];
     g.save(); g.globalAlpha = a; g.font = F(600, V9 ? 40 : 38); g.textAlign = "center"; g.textBaseline = "middle";
-    const L = wrapText(s, w*(V9 ? .84 : .7)), lh = V9 ? 54 : 50, by = V9 ? h*.86 : h*.885;
+    const L = wrapText(s, w*(V9 ? .84 : .7)), lh = V9 ? 54 : 50, by = V9 ? h*.905 : h*.885;
     L.forEach((l, i)=>{ const y = by + (i - (L.length-1)/2)*lh, tw = g.measureText(l).width; rr(w/2 - tw/2 - 18, y - lh/2 + 2, tw + 36, lh - 4, 10); g.fillStyle = "rgba(0,4,18,.62)"; g.fill(); g.fillStyle = "#fff"; g.fillText(l, w/2, y); });
     g.restore(); }
 
@@ -743,34 +776,40 @@ function drawHUD(t){
   if(fin + fout > 0){ g.fillStyle = `rgba(0,0,0,${Math.max(fin, fout)})`; g.fillRect(0, 0, w, h); }
 }
 
-/* ================= MAPBOX (versión ?map=reforma) =================
-   Mapbox dibuja Reforma con sus edificios reales; three.js dibuja encima (lienzo transparente) el combo, la onda, la lluvia y los datos,
-   con la misma cámara. Ejes locales: +Z a lo largo de la avenida (rumbo CONFIG.reforma.bearing), +X hacia la banqueta, Y arriba. */
+/* ================= MAPBOX (versión ?map=1) =================
+   Mapbox aparece solo en la revelación final (detrás del lienzo transparente de three.js), con la misma cámara.
+   El combo está en la azotea de la oficina: altura sobre la calle = CONFIG.site.roofH. Ejes locales: +Z hacia el rumbo
+   CONFIG.site.bearing, Y arriba; la azotea es y = ROOF_Y en coordenadas del reel. */
 let map = null, mapOK = false;
 function localToLngLat(x, z){
-  const b = CONFIG.reforma.bearing*Math.PI/180, E = x*Math.cos(b) + z*Math.sin(b), N = -x*Math.sin(b) + z*Math.cos(b);
-  const lat0 = CONFIG.reforma.lat, lon0 = CONFIG.reforma.lon;
+  const b = CONFIG.site.bearing*Math.PI/180, E = x*Math.cos(b) + z*Math.sin(b), N = -x*Math.sin(b) + z*Math.cos(b);
+  const lat0 = CONFIG.site.lat, lon0 = CONFIG.site.lon;
   return [lon0 + E/(111320*Math.cos(lat0*Math.PI/180)), lat0 + N/110574];
 }
-function syncMap(){
+function syncMap(p, q){
   if(!mapOK) return;
   try{
-    const p = cam.position, d = new THREE.Vector3(); cam.getWorldDirection(d);
-    const b = CONFIG.reforma.bearing*Math.PI/180, dE = d.x*Math.cos(b) + d.z*Math.sin(b), dN = -d.x*Math.sin(b) + d.z*Math.cos(b);
+    p = p || cam.position; const d = q ? q.clone().sub(p).normalize() : (()=>{ const v = new THREE.Vector3(); cam.getWorldDirection(v); return v; })();
+    const b = CONFIG.site.bearing*Math.PI/180, dE = d.x*Math.cos(b) + d.z*Math.sin(b), dN = -d.x*Math.sin(b) + d.z*Math.cos(b);
     const bearing = Math.atan2(dE, dN)*180/Math.PI, pitch = clamp(90 + Math.atan2(d.y, Math.hypot(dE, dN))*180/Math.PI, 0, 89);
     const o = map.getFreeCameraOptions();
-    o.position = mapboxgl.MercatorCoordinate.fromLngLat(localToLngLat(p.x, p.z), Math.max(1.2, p.y - ROOF_Y + CONFIG.reforma.roofH));
+    o.position = mapboxgl.MercatorCoordinate.fromLngLat(localToLngLat(p.x, p.z), Math.max(1.2, p.y - ROOF_Y + CONFIG.site.roofH));
     o.setPitchBearing(pitch, bearing); map.setFreeCameraOptions(o);
   }catch(e){ console.warn(e); }
 }
+function mapFov(){ try{ if(map && map.transform && "fov" in map.transform){ map.transform.fov = cam.fov; map.triggerRepaint(); } }catch(_){} }
 function initMap(){
-  $("map").hidden = false;
+  $("map").hidden = false; $("map").style.opacity = 0;
   mapboxgl.accessToken = CONFIG.mapboxToken;
-  map = new mapboxgl.Map({container:"map", style:"mapbox://styles/mapbox/standard", center:[CONFIG.reforma.lon, CONFIG.reforma.lat], zoom:17, pitch:60, bearing:CONFIG.reforma.bearing,
-    interactive:false, attributionControl:true, fadeDuration:0, antialias:true, preserveDrawingBuffer:RENDER_MODE, pixelRatio:1, trackResize:false, config:{basemap:{lightPreset:"night", showPointOfInterestLabels:false, showTransitLabels:false, showPlaceLabels:false, showRoadLabels:false}}});
-  map.on("style.load", ()=>{ try{ map.setFog({range:[.6, 6], color:"rgb(14,22,56)", "high-color":"#0b1d5e", "horizon-blend":.1, "space-color":"#000814", "star-intensity":0}); }catch(_){}
-    try{ if(map.transform && "fov" in map.transform){ map.transform.fov = cam.fov; map.triggerRepaint(); } }catch(_){}
-    mapOK = true; syncMap(); map.once("idle", ()=>{ mapReady = true; ready(); }); });
+  map = new mapboxgl.Map({container:"map", style:"mapbox://styles/mapbox/standard", center:[CONFIG.site.lon, CONFIG.site.lat], zoom:17, pitch:60, bearing:CONFIG.site.bearing,
+    interactive:false, attributionControl:true, fadeDuration:0, antialias:true, preserveDrawingBuffer:RENDER_MODE, pixelRatio:1, trackResize:false,
+    config:{basemap:{lightPreset:"night", showPointOfInterestLabels:false, showTransitLabels:false, showPlaceLabels:false, showRoadLabels:false}}});
+  map.on("style.load", ()=>{
+    try{ map.setFog({range:[.6, 6], color:"rgb(14,22,56)", "high-color":"#0b1d5e", "horizon-blend":.1, "space-color":"#000814", "star-intensity":0}); }catch(_){}
+    mapOK = true; mapFov();
+    const k = camAt(46); syncMap(k.p, k.q);                  // precarga la vista de la revelación
+    map.once("idle", ()=>{ mapReady = true; ready(); });
+  });
   map.on("error", e=> console.warn("Mapbox:", e && e.error && e.error.message));
   setTimeout(()=>{ if(!mapReady){ mapReady = true; ready(); } }, 15000);
 }
@@ -778,7 +817,7 @@ let mapReady = !MAP_MODE;
 if(MAP_MODE){
   const css = document.createElement("link"); css.rel = "stylesheet"; css.href = "https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css"; document.head.appendChild(css);
   const sc = document.createElement("script"); sc.src = "https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"; sc.onload = initMap;
-  sc.onerror = ()=>{ console.warn("Mapbox no cargó: se usa la ciudad estilizada"); CITY.visible = true; mast.visible = base.visible = true; tripod.visible = false; scene.fog = new THREE.FogExp2(FOG, FOGD); renderer.setClearColor(0x000510, 1); mapReady = true; ready(); };
+  sc.onerror = ()=>{ console.warn("Mapbox no cargó: se usa la ciudad simulada"); USE_MAP = false; mapReady = true; ready(); };
   document.head.appendChild(sc);
 }
 
@@ -786,7 +825,7 @@ if(MAP_MODE){
 function render(t){
   t = clamp(t, 0, CONFIG.duration);
   const c = camAt(t); cam.position.copy(c.p); cam.lookAt(c.q); cam.updateMatrixWorld();
-  if(MAP_MODE) syncMap();
+  if(USE_MAP) syncMap();
   updateScene(t);
   renderer.render(scene, cam);
   drawHUD(t);
@@ -794,7 +833,7 @@ function render(t){
 function fit(){
   const w = W(), h = H(), st = $("stage");
   glc.width = w; glc.height = h; hud.width = w; hud.height = h; renderer.setSize(w, h, false);
-  cam.aspect = w/h; cam.fov = MAP_MODE ? (FMT === "v" ? 58 : 36.87) : (FMT === "v" ? 60 : 38); cam.updateProjectionMatrix();
+  cam.aspect = w/h; cam.fov = FMT === "v" ? 60 : 38; cam.updateProjectionMatrix(); mapFov();
   PT_U.scale.value = h/(2*Math.tan(cam.fov*Math.PI/360));
   st.style.width = w + "px"; st.style.height = h + "px";
   const s = RENDER_MODE ? 1 : Math.min(innerWidth/w, innerHeight/h);

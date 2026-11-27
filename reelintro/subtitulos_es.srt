@@ -3,12 +3,12 @@
 La naturaleza habla en ondas. Nosotros la traducimos.
 
 2
-00:00:08,200 --> 00:00:12,600
+00:00:08,200 --> 00:00:12,400
 El aire no se ve. Pero se puede entender.
 
 3
 00:00:13,400 --> 00:00:17,600
-CHAAK siente el viento y la lluvia…
+CHAAK lee el viento, la lluvia y el sol…
 
 4
 00:00:18,200 --> 00:00:21,800
@@ -24,16 +24,16 @@ Un láser cuenta cada partícula que cruza su paso.
 
 7
 00:00:32,000 --> 00:00:36,600
-Los gases reaccionan en electrodos y se vuelven corriente.
+Los gases entran a los electrodos, reaccionan y se vuelven corriente.
 
 8
 00:00:37,300 --> 00:00:41,400
 Cada pulso se vuelve una medición…
 
 9
-00:00:41,600 --> 00:00:46,400
-…y cada medición, un dato abierto.
+00:00:41,600 --> 00:00:46,600
+…y cada medición, un dato abierto, en tu ciudad.
 
 10
-00:00:47,600 --> 00:00:54,200
+00:00:51,600 --> 00:00:58,200
 Así llega a AIreGPT: para que sepas qué hacer.
