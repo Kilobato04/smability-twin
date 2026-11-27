@@ -441,7 +441,7 @@ iframe{display:none!important}
       </div>
     </details>
     <div class="src" id="src">DEMO · datos simulados</div>
-    <div class="seg rseg rseg-stage" role="group" aria-label="Tipo de vista"><button type="button" data-mode="real" aria-pressed="true">Realista</button><button type="button" data-mode="xray" aria-pressed="false">Rayos X</button><button type="button" data-mode="tech" aria-pressed="false">Técnica</button><button type="button" data-mode="parts" aria-pressed="false">Componentes</button></div>
+    <div class="seg rseg rseg-stage" role="group" aria-label="Tipo de vista"><button type="button" data-mode="real" aria-pressed="true">Realista</button><button type="button" data-mode="inside" aria-pressed="false" title="Realista con las carcasas de CHAAK y SMAA translúcidas">Interior</button><button type="button" data-mode="xray" aria-pressed="false">Rayos X</button><button type="button" data-mode="tech" aria-pressed="false">Técnica</button><button type="button" data-mode="parts" aria-pressed="false">Componentes</button></div>
     <div id="partsLegend" hidden aria-label="Componentes"></div>
     <div class="cutctl cut-stage"><div class="seg cseg" role="group" aria-label="Corte"><button type="button" data-cut="none" aria-pressed="true">Sin corte</button><button type="button" data-cut="long" aria-pressed="false">Longitudinal</button><button type="button" data-cut="trans" aria-pressed="false">Transversal</button></div>
       <label class="cutpos" hidden><span>Posición</span><input type="range" min="-140" max="140" step="1" value="0" aria-label="Posición del corte"><output>0 mm</output></label></div>
@@ -480,11 +480,11 @@ iframe{display:none!important}
   <div class="dock">
     <div class="mhead"><b>Explorar</b><button class="x" type="button" data-close aria-label="Cerrar">×</button></div>
     <button class="btn tour" id="bTour" aria-pressed="false">Tour</button>
-    <div class="btngroup" role="group" aria-label="Vistas"><button class="btn" id="bExplode" aria-pressed="false">Vista explosionada</button><button class="btn" id="bInside" aria-pressed="false" title="Carcasa de SMAA translúcida para ver sensores, tarjeta y batería">Ver interior</button><button class="btn" id="bPlan" aria-pressed="false">Vista en planta</button><button class="btn" id="bReset">Reiniciar vista</button></div>
+    <div class="btngroup" role="group" aria-label="Vistas"><button class="btn" id="bExplode" aria-pressed="false">Vista explosionada</button><button class="btn" id="bPlan" aria-pressed="false">Vista en planta</button><button class="btn" id="bReset">Reiniciar vista</button></div>
     <button class="btn" id="bRain" aria-pressed="false">Simular lluvia</button>
     <button class="btn dz-right" id="bField" aria-pressed="false">Modo campo</button>
     <button class="btn primary-o" id="bSheet">Ficha de instalación</button>
-    <div class="field rfield"><span class="lbl" id="rLbl">Vista</span><div class="seg rseg" role="group" aria-labelledby="rLbl"><button type="button" data-mode="real" aria-pressed="true">Realista</button><button type="button" data-mode="xray" aria-pressed="false">Rayos X</button><button type="button" data-mode="tech" aria-pressed="false">Técnica</button><button type="button" data-mode="parts" aria-pressed="false">Componentes</button></div></div>
+    <div class="field rfield"><span class="lbl" id="rLbl">Vista</span><div class="seg rseg" role="group" aria-labelledby="rLbl"><button type="button" data-mode="real" aria-pressed="true">Realista</button><button type="button" data-mode="inside" aria-pressed="false" title="Realista con las carcasas de CHAAK y SMAA translúcidas">Interior</button><button type="button" data-mode="xray" aria-pressed="false">Rayos X</button><button type="button" data-mode="tech" aria-pressed="false">Técnica</button><button type="button" data-mode="parts" aria-pressed="false">Componentes</button></div></div>
     <div class="field cfield"><span class="lbl" id="cLbl">Corte</span><div class="seg cseg" role="group" aria-labelledby="cLbl"><button type="button" data-cut="none" aria-pressed="true">Sin corte</button><button type="button" data-cut="long" aria-pressed="false">Longitudinal</button><button type="button" data-cut="trans" aria-pressed="false">Transversal</button></div>
       <label class="cutpos" hidden><span>Posición</span><input type="range" min="-140" max="140" step="1" value="0" aria-label="Posición del corte"><output>0 mm</output></label></div>
 
@@ -783,7 +783,7 @@ function pvNow(city, frontAz){        // potencia instantánea demo del panel (W
 const state = {
   ref:"none", refAz:45, refDist:6,
   view:"chaak", city:"cdmx", load:"tipico", orient:"auto", month:new Date().getMonth(), hour:13, frontAz:0,
-  explode:0, explodeTarget:0, inside:false, rain:false, plan:false,
+  explode:0, explodeTarget:0, rain:false, plan:false,
   selected:null, hovered:null, env:{}, lastUpdate:null
 };
 state.smaaH = "arriba";   // altura de SMAA a criterio del instalador: «arriba» (bajo el cople) o «nivel» (junto a CHAAK alta)
@@ -884,7 +884,8 @@ const INFO = {
   smaa_thr:  {title:"Sensor de temperatura y humedad", sub:"Asoma por la ventana hexagonal del piso: mide el aire bajo la carcasa, a la sombra", metric:"temp"},
   smaa_gps:  {title:"GPS", sub:"Bajo el techo de la tapa, entre sus clips · ubica la estación en el mapa y fija la hora", metric:null},
   smaa_noise:{title:"Sensor de ruido", sub:"Placa sobre 4 postes del piso · micrófono en el poste libre, con salida al exterior", metric:null},
-  smaa_sw:   {title:"Interruptores", sub:"ON/OFF y modo Móvil/Fijo · redondos, en los barrenos del piso de la base", metric:null},
+  smaa_sw:   {title:"Interruptores", sub:"ON/OFF y modo Móvil/Fijo · botones Ø18 con anillo LED, a hueso en los barrenos del piso de la base", metric:null,
+              note:"Botón metálico antivandálico con anillo LED. Llena el barreno completo, sin holgura, y queda bajo la carcasa: protegido de la lluvia y fuera de la vista."},
   smaa_lipo: {title:"Batería interna LiPo", sub:"7.4 Wh de respaldo (~10 h) · parada en la cavidad de la pared frontal", metric:"batt"},
   smaa_silica:{title:"Bolsa de sílica gel", sub:"Absorbe la humedad dentro de la carcasa · va en los clips de la pared lateral; se cambia en el mantenimiento", metric:null},
   battery:   {title:"Batería Voltaic V75", sub:"72 Wh · Li-Ion NMC · 5 V / 2 A · bajo la placa del panel · deja de cargar arriba de 45 °C · más la LiPo interna de 7.4 Wh", metric:"batt"},
@@ -1128,7 +1129,6 @@ async function tryLoadGLB(owner, url, fallbackKey){
       const sens = meshes.find(o=>/smaa_bottom/i.test(o.name));
       if(sens){ sens.geometry.computeBoundingBox(); const bb = sens.geometry.boundingBox; INLET_SMAA0 = +(SMAA_BASE_Y + sens.position.y + (bb.min.y + bb.max.y)/2).toFixed(2); }
       INFO.solar.sub = "Fijo a la placa soporte · 37° de fábrica, mirando a la cara principal";
-      if(state.inside) setTimeout(applyInside, 0);
     }
     if(owner===RIG){
       RIG.real = true; MAST_TOP = CHAAK_BASE_Y; LEG = {r:.355, a0:46};
@@ -1316,21 +1316,10 @@ function setView(view){
   showSource(); refreshPanel();
 }
 function toggleExplode(){ state.explodeTarget = state.explodeTarget?0:1; setPressed($("bExplode"), !!state.explodeTarget); if(reduceMotion) state.explode = state.explodeTarget; }
-/* Ver interior: la carcasa de SMAA (tapa y base) se vuelve translúcida */
-function applyInside(){
-  const on = state.inside;
-  ["smaa_case","smaa_sens"].forEach(k=>{ const p = ST.smaa && ST.smaa.parts[k]; if(!p) return;
-    p.group.traverse(o=>{ if(!o.isMesh || o.userData.isEdge || o.userData.isCap) return;
-      const m = o.userData.origMat || o.material; m.transparent = on; m.opacity = on ? .2 : 1; m.depthWrite = !on; m.needsUpdate = true;
-      o.castShadow = !on; }); });
-  setPressed($("bInside"), on);
-}
-function toggleInside(){ state.inside = !state.inside; if(state.inside && state.view==="chaak") setView("smaa"); applyInside(); }
 function toggleRain(){ state.rain = !state.rain; setPressed($("bRain"), state.rain); rainLines.visible = state.rain; mockTick(); record(); refreshPanel(); }
 function togglePlan(){ state.plan = !state.plan; setPressed($("bPlan"), state.plan); camera = state.plan?ortho:persp; controls.enabled = !state.plan; resize(); }
 $("bExplode").onclick = ()=>{ stopTour(); toggleExplode(); };
 $("bRain").onclick = ()=>{ stopTour(); toggleRain(); };
-$("bInside").onclick = ()=>{ stopTour(); toggleInside(); };
 $("bPlan").onclick = ()=>{ stopTour(); togglePlan(); };
 $("bReset").onclick = ()=>{ stopTour(); if(state.plan) togglePlan(); resetView(); };
 
@@ -1578,7 +1567,7 @@ function tint(sel, color){
   const p = sel && ownerOf(sel.st)?.parts[sel.part]; if(!p) return;
   p.group.traverse(o=>{
     if(!o.isMesh || o.userData.isEdge || o.userData.isCap) return;
-    if(RENDER.mode === "real" || !o.userData.origMat){ if(o.material.emissive) o.material.emissive.setHex(color); }
+    if(isReal(RENDER.mode) || !o.userData.origMat){ if(o.material.emissive) o.material.emissive.setHex(color); }
     else { o.material = materialFor(o, color === 0x2046F2); if(CUT && CUT.mode !== "none") setClip(o.material, true); }
   });
 }
@@ -2030,7 +2019,9 @@ buildDial();
 
 /* ================= VISTAS DE RENDER ================= */
 var RENDER = {mode:"real", iso:null};
-const RENDER_MODES = ["real","xray","tech","parts"];
+const RENDER_MODES = ["real","inside","xray","tech","parts"];
+const SHELL_KEYS = ["smaa_case","smaa_sens","tapa","logger"];        // carcasas que se vuelven translúcidas en el modo Interior
+const isReal = m => m === "real" || m === "inside";
 const PART_GROUPS = [
   {id:"sensor",   label:"Sensores",       color:0x2f8fd8, keys:["head","pm","gas","thr","wind","rain","smaa_pm","smaa_gas","smaa_thr","smaa_noise","smaa_gps"]},
   {id:"electro",  label:"Electrónica",    color:0x23a06a, keys:["smaa_pcb","smaa_sw"]},
@@ -2087,6 +2078,10 @@ function materialFor(o, hi){
   const m = RENDER.mode, ref = !hi && meshKey(o).st === "ref";
   if(m === "xray") return hi ? xrayHi : ref ? REF_MATS.xray : xrayMat;
   if(m === "tech") return hi ? techHi : ref ? REF_MATS.tech : techMat;
+  if(m === "inside" && SHELL_KEYS.includes(meshKey(o).part) && o.userData.origMat){
+    if(!o.userData.glassMat){ const gm = o.userData.origMat.clone(); gm.transparent = true; gm.opacity = .16; gm.depthWrite = false; o.userData.glassMat = gm; }
+    return o.userData.glassMat;
+  }
   if(m === "parts"){
     const k = meshKey(o), g = groupOf(k.part);
     if(!o.userData.partsMat) o.userData.partsMat = new THREE.MeshStandardMaterial({color:g.color, roughness:.55, metalness:.05, transparent:true, flatShading:true});
@@ -2106,21 +2101,20 @@ function applyRender(){
   renderMeshes().forEach(o=>{
     if(!o.userData.origMat) o.userData.origMat = o.material;
     o.material = materialFor(o, isSelectedMesh(o));
-    if(m === "real") o.material.emissive && o.material.emissive.setHex(isSelectedMesh(o) ? 0x2046F2 : 0);
+    if(isReal(m)) o.material.emissive && o.material.emissive.setHex(isSelectedMesh(o) ? 0x2046F2 : 0);
     const needEdges = m === "xray" || m === "tech";
     if(needEdges){ const e = edgesOf(o); e.material = meshKey(o).st === "ref" ? REF_MATS.edge[m] : edgeMat[m]; e.visible = true; }
     else if(o.userData.edges) o.userData.edges.visible = false;
-    o.castShadow = m === "real" || m === "parts";
+    o.castShadow = (isReal(m) || m === "parts") && !(m === "inside" && SHELL_KEYS.includes(meshKey(o).part));
   });
-  sun.castShadow = m === "real" || m === "parts";
-  floor.visible = m === "real" || m === "parts";
+  sun.castShadow = isReal(m) || m === "parts";
+  floor.visible = isReal(m) || m === "parts";
   sunMarker.visible = m !== "tech" && state.sun && state.sun.alt > 0;
   document.body.dataset.render = m;
   document.querySelectorAll(".rseg button").forEach(b=> setPressed(b, b.dataset.mode === m));
   $("partsLegend").hidden = m !== "parts";
   document.querySelectorAll("#partsLegend button").forEach(b=> setPressed(b, RENDER.iso === b.dataset.g));
   drawGround(); if(typeof CUT !== "undefined" && CUT) applyCut();
-  if(state.inside) applyInside();
 }
 
 /* ================= CORTES (longitudinal y transversal) ================= */

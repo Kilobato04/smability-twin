@@ -7,7 +7,7 @@ Piezas (marco del gemelo en mm: X frente(−)/atrás, Y arriba, Z a lo largo de 
   - Sensores_GPS.stl          → smaa_in_gps: bajo el techo de la tapa, entre sus clips
   - Sin 3D (se modelan aquí):
       smaa_in_ruido     placa de ruido sobre 4 postes del piso + micrófono en el poste libre
-      smaa_in_switches  ON/OFF y Móvil/Fijo en los 2 barrenos redondos del piso (propuesta)
+      smaa_in_switches  ON/OFF y Móvil/Fijo: botones con anillo LED del diámetro de los barrenos del piso (Ø18), a hueso
       smaa_in_lipo      LiPo de bolsa ~8 × 50 × 40 mm (7.4 Wh) en la cavidad vertical de la pared frontal
       smaa_in_silica    bolsa de sílica gel en los clips de la pared Z−
   - Tapa: el poste entre los barriles se recorta 2.6 mm para que apoye sobre la tarjeta.
@@ -28,6 +28,39 @@ def box(mn, mx):
     f = [(0,2,1),(0,3,2),(4,5,6),(4,6,7),(0,1,5),(0,5,4),(3,7,6),(3,6,2),(0,4,7),(0,7,3),(1,2,6),(1,6,5)]
     return v[np.array(f)]
 
+
+def hole_outline(tris, y, center, rmax=12.0):
+    """Contorno (X, Z) del barreno de la base que rodea `center`, cortando la malla en el plano Y = y."""
+    segs = []
+    for t in tris:
+        d = t[:, 1] - y; pts = []
+        for i in range(3):
+            a, b = t[i], t[(i + 1) % 3]
+            if (d[i] > 0) != (d[(i + 1) % 3] > 0):
+                u = d[i] / (d[i] - d[(i + 1) % 3]); pts.append(a + u * (b - a))
+        if len(pts) == 2:
+            p, q = (np.array([pts[0][0], pts[0][2]]), np.array([pts[1][0], pts[1][2]]))
+            if max(np.hypot(*(p - center)), np.hypot(*(q - center))) < rmax: segs.append((p, q))
+    key = lambda p: (round(p[0], 3), round(p[1], 3))
+    nxt = {}
+    for p, q in segs: nxt.setdefault(key(p), []).append(q); nxt.setdefault(key(q), []).append(p)
+    start = segs[0][0]; loop = [start]; prev = None; cur = start
+    while True:
+        cands = [q for q in nxt[key(cur)] if prev is None or key(q) != key(prev)]
+        prev, cur = cur, cands[0]
+        if key(cur) == key(start) or len(loop) > 5000: break
+        loop.append(cur)
+    return np.array(loop)
+
+def prism(poly, y0, y1):
+    """Extrusión cerrada de un polígono (X, Z) en forma de estrella respecto a su centro, entre Y = y0 y y1."""
+    c = poly.mean(0); n = len(poly); T = []
+    P = lambda p, y: [p[0], y, p[1]]
+    for i in range(n):
+        a, b = poly[i], poly[(i + 1) % n]
+        T += [[P(c, y0), P(a, y0), P(b, y0)], [P(c, y1), P(b, y1), P(a, y1)], [P(a, y0), P(a, y1), P(b, y1)], [P(a, y0), P(b, y1), P(b, y0)]]
+    return np.array(T, float)
+
 # Rotación (filas: X, Y, Z del gemelo en función de x, y, z del STL) y traslación final, en mm.
 STL = {
     "pcb": ("Sensores_barriles_pcb.stl", [[0,1,0],[0,0,1],[1,0,0]],  [-133.0,  -108.5, -75.78]),
@@ -37,7 +70,7 @@ STL = {
 }
 BOARD_BOTTOM = -60.2           # cara inferior de la tarjeta (Y); abajo quedan los barriles
 
-def interior(src):
+def interior(src, bottom):
     T = {k: load_stl(f"{src}/{f}") @ np.array(R, float).T + np.array(t) for k, (f, R, t) in STL.items()}
     pcb = T["pcb"]; top = pcb[:, :, 1].mean(1) >= BOARD_BOTTOM - 0.05
     # Placa de ruido: 4 postes (tope Y −98.5) + micrófono Ø6 en el poste libre (Z 2.5, X −124.3)
@@ -46,11 +79,20 @@ def interior(src):
     ruido = [box([min(xs)-5, -98.5, min(zs)-5], [max(xs)+5, -96.9, max(zs)+5]),
              cylinder([-124.3, -98.5, 2.5], [-124.3, -103.5, 2.5], 3.0, 24)]
     ruido += [cylinder([x, -96.9, z], [x, -95.0, z], 2.75, 16) for z, x in bos]
-    # Interruptores Ø18 (propuesta): bisel Ø21 por fuera, cuerpo Ø16 por dentro, actuador Ø6
-    sw = []
+    # Interruptores: botón momentáneo antivandálico con anillo LED, del mismo diámetro que los barrenos de la base (Ø18).
+    # Entra a hueso: el tapón copia el contorno exacto de cada barreno (con sus cuñas y muescas) en todo el grueso del piso
+    # (Y −109.5 a −107.5), así que no queda holgura por donde se vea el interior. Por fuera asoma 1.5 mm la cara del botón.
+    sw, swm, led = [], [], []
     for z in (20.5, -21.25):
-        sw += [cylinder([-51.7, -109.5, z], [-51.7, -111.5, z], 10.5, 32), cylinder([-51.7, -107.5, z], [-51.7, -87.5, z], 8.0, 32),
-               cylinder([-51.7, -111.5, z], [-51.7, -117.5, z], 3.0, 16)]
+        c = lambda y: [-51.7, y, z]
+        sw += [prism(hole_outline(bottom, -108.5, (-51.7, z)), -109.5, -107.5),   # tapón a la medida del barreno
+               cylinder(c(-109.5), c(-111.0), 9.0, 48),                            # cara del botón Ø18
+               cylinder(c(-107.5), c(-88.0), 8.0, 40),                             # cuerpo roscado
+               cylinder(c(-111.0), c(-111.12), 6.4, 40)]                           # botón dentro del anillo
+        led += [cylinder(c(-111.0), c(-111.06), 7.6, 48)]                          # anillo LED
+        swm += [cylinder(c(-107.5), c(-104.5), 10.4, 6)]                           # tuerca hexagonal
+        swm += [box([-51.7 + dx - 1.4, -88.0 - 6.0, z - .25], [-51.7 + dx + 1.4, -88.0, z + .25]) for dx in (-3.2, 3.2)]
+        swm += [box([-51.7 - .25, -88.0 - 6.0, z + dx - 1.4], [-51.7 + .25, -88.0, z + dx + 1.4]) for dx in (-3.2, 3.2)]
     # LiPo en la pared frontal: hueco X −151.0..−141.3, Z 0..54.8, piso Y −99.6
     xc = (-151.0 - 141.3) / 2
     lipo = [box([xc-4, -99.5, 2.4], [xc+4, -61.5, 52.4]), box([xc-1.2, -61.5, 4.4], [xc+1.2, -60.0, 50.4]),
@@ -66,7 +108,9 @@ def interior(src):
         ("smaa_in_temphum",  T["th"],   [0.93, 0.93, 0.90, 1], 0.0, 0.6),
         ("smaa_in_gps",      T["gps"],  [0.12, 0.30, 0.45, 1], 0.1, 0.5),
         ("smaa_in_ruido",    v(ruido),  [0.16, 0.36, 0.24, 1], 0.2, 0.5),
-        ("smaa_in_switches", v(sw),     [0.08, 0.08, 0.09, 1], 0.1, 0.5),
+        ("smaa_in_switches", v(sw),     [0.07, 0.07, 0.08, 1], 0.3, 0.45),
+        ("smaa_in_switches_led", v(led), [0.95, 0.10, 0.08, 1], 0.0, 0.3),
+        ("smaa_in_switches_metal", v(swm), [0.72, 0.73, 0.75, 1], 0.8, 0.3),
         ("smaa_in_lipo",     v(lipo),   [0.80, 0.82, 0.86, 1], 0.5, 0.35),
         ("smaa_in_silica",   v(silica), [0.95, 0.96, 0.97, 1], 0.0, 0.9),
     ]
@@ -111,7 +155,8 @@ def main(src, glb, out=None):
             p = pos * 1000
             m = (p[:, 2] > 63) & (p[:, 2] < 74) & (p[:, 0] > -95) & (p[:, 0] < -84) & (p[:, 1] < -58.4) & (p[:, 1] > -62)
             pos[m, 1] = -0.0584; print(f"smaa_top: poste recortado ({m.sum()} vértices)")
-    for name, tris, color, metal, rough in interior(src):
+    bottom = next(pos * 1000 for name, pos, idx, mat in items if name == "smaa_bottom")[next(idx for name, pos, idx, mat in items if name == "smaa_bottom")]
+    for name, tris, color, metal, rough in interior(src, bottom):
         pos, idx = cluster(tris, 0)
         items.append((name, pos * 0.001, idx, {"name": name, "pbrMetallicRoughness": {"baseColorFactor": color, "metallicFactor": metal, "roughnessFactor": rough}, "doubleSided": True}))
         print(f"{name:18s} {len(idx):6d} triángulos")
