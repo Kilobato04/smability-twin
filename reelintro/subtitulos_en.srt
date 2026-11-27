@@ -1,0 +1,31 @@
+1
+00:00:08,200 --> 00:00:12,200
+A cold December evening in Mexico City.
+
+2
+00:00:13,000 --> 00:00:16,600
+On a pole, SMAA wakes up…
+
+3
+00:00:16,800 --> 00:00:20,600
+…and starts to breathe.
+
+4
+00:00:21,600 --> 00:00:26,400
+A laser counts every particle that crosses its beam.
+
+5
+00:00:27,000 --> 00:00:31,600
+Gases react on electrodes and become current.
+
+6
+00:00:32,300 --> 00:00:36,400
+Every pulse becomes a measurement…
+
+7
+00:00:36,600 --> 00:00:41,400
+…and every measurement, open data.
+
+8
+00:00:42,600 --> 00:00:49,200
+That's how it reaches AIreGPT, so you know what to do.

@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smability · Reel intro · De la física y la química a tu mano</title>
+<meta name="description" content="Reel intro de 55 s: SMAA despierta en la Ciudad de México, respira el aire y lo convierte en datos que llegan a AIreGPT. Subtítulos en español e inglés.">
+<meta name="theme-color" content="#000510">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;color:#fff;overflow:hidden;font-family:Inter,system-ui,sans-serif}
+#stage{position:absolute;left:0;top:0;transform-origin:0 0;background:#000510;overflow:hidden}
+#stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#ctl{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:12px;
+  background:rgba(4,10,30,.72);backdrop-filter:blur(8px);border:1px solid rgba(159,178,255,.25);z-index:5;transition:opacity .4s}
+#ctl button{font:600 13px Inter,sans-serif;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:6px 10px;cursor:pointer;min-width:40px}
+#ctl button:hover{border-color:#9FB2FF}
+#ctl .t{font:500 12px "JetBrains Mono",ui-monospace,monospace;color:#C7D2FF;min-width:92px;text-align:center}
+#ctl input{width:min(38vw,420px);accent-color:#2046F2}
+body.idle #ctl{opacity:0}
+body.render #ctl,body.render #play{display:none!important}
+#play{position:fixed;inset:0;display:grid;place-items:center;z-index:6;background:rgba(0,5,16,.35);border:0;cursor:pointer;color:#fff}
+#play span{display:block;margin-top:10px;font:600 14px Inter,sans-serif;letter-spacing:.14em;color:#C7D2FF}
+#load{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font:500 12px "JetBrains Mono",monospace;letter-spacing:.2em;color:#7C9BFF;z-index:4}
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="gl"></canvas><canvas id="hud"></canvas></div>
+<div id="load">CARGANDO…</div>
+<button id="play" type="button" aria-label="Reproducir" hidden><div><svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="46" fill="rgba(0,43,173,.85)" stroke="#9FB2FF" stroke-width="2"/><path d="M39 30l30 18-30 18z" fill="#fff"/></svg><span id="playLbl">REPRODUCIR · 0:55</span></div></button>
+<div id="ctl">
+  <button id="bPlay" type="button" aria-label="Pausa">❚❚</button>
+  <button id="bLang" type="button" aria-label="Idioma de subtítulos">ES</button>
+  <button id="bFmt" type="button" aria-label="Formato">16:9</button>
+  <button id="bFs" type="button" aria-label="Pantalla completa">⛶</button>
+  <span class="t" id="tOut">0:00 / 0:55</span>
+  <input id="scrub" type="range" min="0" max="55" step="0.02" value="0" aria-label="Posición">
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+/* =====================================================================
+   Smability · Reel intro (55 s, una sola toma, 16:9 y 9:16, subtítulos ES/EN)
+   1. Sintonía de TV de los 90: la onda se vuelve la «S» del logo.
+   2. La onda cruza una tarde fría de diciembre en la Ciudad de México hasta SMAA, sola en su poste.
+   3. SMAA despierta, respira; entramos: láser (física), electrodos (química), pulsos → mediciones → API.
+   4. Los datos suben hasta AIreGPT, en tu mano. Cierre: «De la física y la química… a tu mano».
+   Todo se dibuja en función de t (render(t) es determinista): se puede adelantar, pausar y exportar cuadro a cuadro.
+   Parámetros: ?lang=es|en  ?format=h|v  ?t=20  ?autoplay=1  ?render=1 (sin controles; expone window.REEL)
+   Datos simulados: CDMX, jueves 3 de diciembre de 2026, 18:24 h, tarde fría.
+   ===================================================================== */
+const CONFIG = { duration: 55, model: "../models/smaa.glb", logo: "../images/logo_smability.png" };
+const Q = new URLSearchParams(location.search);
+const $ = id => document.getElementById(id);
+const clamp = (x,a=0,b=1)=> Math.min(b, Math.max(a, x));
+const seg = (t,a,b)=> clamp((t-a)/(b-a));
+const ease = x => x*x*(3-2*x);
+const eio = x => x<.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2;
+const lerp = (a,b,x)=> a+(b-a)*x;
+const win = (t,a,b,f=.5)=> Math.min(ease(seg(t,a,a+f)), 1-ease(seg(t,b-f,b)));     // aparece en a, se va en b
+const RENDER_MODE = Q.has("render");
+if(RENDER_MODE) document.body.classList.add("render");
+
+/* ---------- textos y subtítulos ---------- */
+let LANG = (Q.get("lang") || "es").toLowerCase().startsWith("en") ? "en" : "es";
+const T = {
+  es:{ physics:"FÍSICA", chem:"QUÍMICA", data:"DATOS", pd:"FOTODIODO · DISPERSIÓN LÁSER", pdSub:"cada pico es una partícula", el1:"ELECTRODO · CO", el2:"ELECTRODO · O₃", elSub:"corriente de la reacción, en nanoamperes",
+       meas:"MEDICIÓN · CDMX · 18:24", sim:"DATOS SIMULADOS", api:"API ABIERTA", online:"● en línea", q:"¿Cómo está el aire en la Miguel Hidalgo?",
+       a1:"Calidad del aire: <b>regular</b>. PM2.5 en 38 µg/m³ y subiendo.", a2:"Tarde fría (13.6 °C) con inversión térmica: el aire se estanca al anochecer.", a3:"Si vas a correr, mejor mañana después de las 11.",
+       tag1:"De la física y la química…", tag2:"…a tu mano.", tag3:"Entendemos el aire para ponerlo en tu mano.", wake:"SMAA · EN LÍNEA", type:"escribiendo…", ask:"Pregunta a AIreGPT" },
+  en:{ physics:"PHYSICS", chem:"CHEMISTRY", data:"DATA", pd:"PHOTODIODE · LASER SCATTERING", pdSub:"every peak is a particle", el1:"ELECTRODE · CO", el2:"ELECTRODE · O₃", elSub:"reaction current, in nanoamps",
+       meas:"MEASUREMENT · MEXICO CITY · 6:24 PM", sim:"SIMULATED DATA", api:"OPEN API", online:"● online", q:"How's the air in Miguel Hidalgo?",
+       a1:"Air quality: <b>moderate</b>. PM2.5 at 38 µg/m³ and rising.", a2:"Cold evening (13.6 °C) with a thermal inversion: the air stalls after sunset.", a3:"If you're going for a run, wait until tomorrow after 11 a.m.",
+       tag1:"From physics and chemistry…", tag2:"…to your hand.", tag3:"We understand the air to put it in your hand.", wake:"SMAA · ONLINE", type:"typing…", ask:"Ask AIreGPT" }
+};
+const SUBS = [
+  [8.2, 12.2, "Una tarde fría de diciembre, en la Ciudad de México.", "A cold December evening in Mexico City."],
+  [13.0, 16.6, "En un poste, SMAA despierta…", "On a pole, SMAA wakes up…"],
+  [16.8, 20.6, "…y empieza a respirar.", "…and starts to breathe."],
+  [21.6, 26.4, "Un láser cuenta cada partícula que cruza su paso.", "A laser counts every particle that crosses its beam."],
+  [27.0, 31.6, "Los gases reaccionan en electrodos y se vuelven corriente.", "Gases react on electrodes and become current."],
+  [32.3, 36.4, "Cada pulso se vuelve una medición…", "Every pulse becomes a measurement…"],
+  [36.6, 41.4, "…y cada medición, un dato abierto.", "…and every measurement, open data."],
+  [42.6, 49.2, "Así llega a AIreGPT: para que sepas qué hacer.", "That's how it reaches AIreGPT, so you know what to do."]
+];
+const tx = k => T[LANG][k];
+
+/* ---------- formato ---------- */
+let FMT = Q.get("format") === "v" ? "v" : "h";
+const W = () => FMT === "v" ? 1080 : 1920, H = () => FMT === "v" ? 1920 : 1080;
+
+/* ---------- azar determinista ---------- */
+function rng(seed){ let a = seed >>> 0; return ()=>{ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const hash = (n)=>{ const s = Math.sin(n*127.1 + 311.7)*43758.5453; return s - Math.floor(s); };
+
+/* ================= THREE ================= */
+const glc = $("gl"), hud = $("hud"), g = hud.getContext("2d");
+const renderer = new THREE.WebGLRenderer({canvas:glc, antialias:true, logarithmicDepthBuffer:true, preserveDrawingBuffer:RENDER_MODE});
+renderer.setPixelRatio(1); renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
+const scene = new THREE.Scene();
+const FOG = new THREE.Color(0x0b1430), FOGD = .0042;
+scene.fog = new THREE.FogExp2(FOG, FOGD);
+const cam = new THREE.PerspectiveCamera(38, 16/9, .003, 9000);
+const V = (x,y,z)=> new THREE.Vector3(x,y,z);
+
+/* luz de anochecer */
+scene.add(new THREE.HemisphereLight(0x6f86c8, 0x0a0c14, .55));
+const key = new THREE.DirectionalLight(0xffc49a, .9); key.position.set(-60, 25, -80); scene.add(key);
+const rim = new THREE.DirectionalLight(0x8fb0ff, .7); rim.position.set(40, 30, 60); scene.add(rim);
+const smaaSpot = new THREE.PointLight(0xbfd0ff, 0, 3.5, 2); smaaSpot.position.set(-.6, 3.6, .35); scene.add(smaaSpot);
+const ledLight = new THREE.PointLight(0xff3020, 0, .3, 2); ledLight.position.set(-.052, 3.12, 0); scene.add(ledLight);
+const laserLight = new THREE.PointLight(0xff2a2a, 0, .12, 2); laserLight.position.set(-.128, 3.158, -.046); scene.add(laserLight);
+
+/* cielo: degradado de anochecer, resplandor al poniente y los volcanes al oriente */
+const sky = new THREE.Mesh(new THREE.SphereGeometry(6000, 48, 24), new THREE.ShaderMaterial({
+  side:THREE.BackSide, depthWrite:false, depthTest:false, fog:false,
+  vertexShader:`varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+  fragmentShader:`varying vec3 vD;
+    float bump(float a, float c, float w, float h){ float d = (a-c)/w; return h*exp(-d*d); }
+    void main(){
+      float y = vD.y, az = atan(vD.z, vD.x);
+      vec3 top = vec3(.008,.016,.055), mid = vec3(.03,.06,.17), hor = vec3(.16,.17,.33);
+      vec3 c = mix(hor, mid, smoothstep(0.0,.18,y)); c = mix(c, top, smoothstep(.18,.7,y));
+      float west = pow(max(0.0, dot(normalize(vec2(vD.x,vD.z)), normalize(vec2(-1.0,-.35)))), 6.0);
+      c += vec3(.55,.22,.10)*west*exp(-max(y,0.0)*14.0)*.9;                      // último resplandor del sol
+      float m = bump(az, .55, .10, .045) + bump(az, .78, .16, .03) + bump(az, .70, .05, .012);   // Popocatépetl e Iztaccíhuatl
+      if(y < m && y > -.02) c = mix(c, vec3(.045,.055,.11), .85);
+      if(y < .0) c = vec3(.02,.025,.05);
+      gl_FragColor = vec4(c, 1.0);
+    }`
+}));
+sky.renderOrder = -10; scene.add(sky);
+
+/* suelo y avenida */
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(8000, 8000), new THREE.MeshStandardMaterial({color:0x05070d, roughness:.95}));
+ground.rotation.x = -Math.PI/2; scene.add(ground);
+const road = new THREE.Mesh(new THREE.PlaneGeometry(1600, 22), new THREE.MeshStandardMaterial({color:0x0b0f1a, roughness:.6, metalness:.1}));
+road.rotation.x = -Math.PI/2; road.position.set(0,.01,0); scene.add(road);
+const walk = new THREE.Mesh(new THREE.PlaneGeometry(1600, 4), new THREE.MeshStandardMaterial({color:0x151a26, roughness:.9}));
+walk.rotation.x = -Math.PI/2; walk.position.set(0,.02,-13); scene.add(walk);
+
+/* ciudad: siluetas con ventanas (sombreador por posición, sin texturas) */
+const bMat = new THREE.ShaderMaterial({
+  uniforms:{ fogColor:{value:FOG}, fogDensity:{value:FOGD} },
+  vertexShader:`#include <common>
+    #include <logdepthbuf_pars_vertex>
+    varying vec3 vW; varying vec3 vN; varying float vSeed;
+    void main(){
+      vec4 wp = modelMatrix * instanceMatrix * vec4(position,1.0);
+      vW = wp.xyz; vN = normalize(mat3(modelMatrix * instanceMatrix) * normal); vSeed = instanceMatrix[3].x*.013 + instanceMatrix[3].z*.071;
+      vec4 mv = viewMatrix * wp; gl_Position = projectionMatrix * mv;
+      #include <logdepthbuf_vertex>
+    }`,
+  fragmentShader:`#include <logdepthbuf_pars_fragment>
+    uniform vec3 fogColor; uniform float fogDensity;
+    varying vec3 vW; varying vec3 vN; varying float vSeed;
+    float h(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+    void main(){
+      #include <logdepthbuf_fragment>
+      vec3 base = vec3(.020,.026,.048);
+      vec3 c = base * (.6 + .4*max(0.0, dot(vN, normalize(vec3(-.4,.5,-.6)))));
+      if(abs(vN.y) < .5){
+        float along = abs(vN.x) > .5 ? vW.z : vW.x;
+        vec2 cell = floor(vec2(along/2.4, vW.y/3.3)); vec2 f = fract(vec2(along/2.4, vW.y/3.3));
+        float win = step(.18, f.x)*step(f.x, .82)*step(.25, f.y)*step(f.y, .78);
+        float r = h(cell + vSeed*31.0);
+        float lit = step(.80, r) * step(2.0, vW.y);
+        vec3 warm = mix(vec3(1.0,.72,.42), vec3(.72,.82,1.0), step(.93, r));
+        c += win*lit*warm*(.55 + .6*h(cell*1.7 + 3.0));
+        c += win*(1.0-lit)*vec3(.012,.018,.035);
+      }
+      float d = length(vW - cameraPosition);
+      float fog = 1.0 - exp(-fogDensity*fogDensity*d*d);
+      gl_FragColor = vec4(mix(c, fogColor, fog), 1.0);
+    }`
+});
+(function buildCity(){
+  const R = rng(7), boxes = [];
+  for(let gx=-16; gx<=16; gx++) for(let gz=-16; gz<=16; gz++){
+    const cx = gx*42, cz = gz*42 + 21;
+    if(Math.abs(cz) < 30) continue;                                      // la avenida y la banqueta del poste
+    const n = 2 + Math.floor(R()*3);
+    for(let k=0;k<n;k++){
+      const w = 10 + R()*16, d = 10 + R()*16, dist = Math.hypot(cx, cz);
+      let hgt = 12 + R()*R()*60; if(R() < .07) hgt = 90 + R()*130;          // torres tipo Reforma
+      if(dist > 500) hgt *= .7;
+      boxes.push([cx + (R()-.5)*18, cz + (R()-.5)*18, w, d, hgt]);
+    }
+  }
+  const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1), bMat, boxes.length), m = new THREE.Matrix4();
+  boxes.forEach(([x,z,w,d,hh],i)=>{ m.makeScale(w,hh,d); m.setPosition(x, hh/2, z); im.setMatrixAt(i, m); });
+  scene.add(im);
+})();
+
+/* el poste de SMAA */
+const pole = new THREE.Mesh(new THREE.CylinderGeometry(.0225,.03,3.55,20), new THREE.MeshStandardMaterial({color:0x8a919c, metalness:.6, roughness:.4, transparent:true}));
+pole.position.set(0, 3.55/2, 0); scene.add(pole);
+const cap = new THREE.Mesh(new THREE.CylinderGeometry(.03,.0225,.04,20), pole.material); cap.position.set(0,3.57,0); scene.add(cap);
+
+/* ---------- partículas (un solo sombreador para la onda, el aire, la ciudad y los datos) ---------- */
+const PT_VS = `#include <common>
+  #include <logdepthbuf_pars_vertex>
+  attribute float size; attribute vec4 col; varying vec4 vC; uniform float scale;
+  void main(){ vC = col; vec4 mv = modelViewMatrix*vec4(position,1.0); gl_Position = projectionMatrix*mv;
+    gl_PointSize = clamp(size*scale/max(-mv.z,.0001), 0.0, 90.0);
+    #include <logdepthbuf_vertex>
+  }`;
+const PT_FS = `#include <logdepthbuf_pars_fragment>
+  varying vec4 vC;
+  void main(){
+    #include <logdepthbuf_fragment>
+    vec2 p = gl_PointCoord*2.0-1.0; float r = dot(p,p); if(r > 1.0) discard;
+    float a = exp(-r*3.2); gl_FragColor = vec4(vC.rgb*a, vC.a*a);
+  }`;
+const PT_U = { scale:{value:1000} };
+function points(n){
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n*3), 3));
+  geo.setAttribute("size", new THREE.BufferAttribute(new Float32Array(n), 1));
+  geo.setAttribute("col", new THREE.BufferAttribute(new Float32Array(n*4), 4));
+  const p = new THREE.Points(geo, new THREE.ShaderMaterial({uniforms:PT_U, vertexShader:PT_VS, fragmentShader:PT_FS, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending}));
+  p.frustumCulled = false; scene.add(p);
+  return {n, p, pos:geo.attributes.position, size:geo.attributes.size, col:geo.attributes.col,
+    set(i,x,y,z,s,r,gg,b,a){ this.pos.array[i*3]=x; this.pos.array[i*3+1]=y; this.pos.array[i*3+2]=z; this.size.array[i]=s; const c=this.col.array; c[i*4]=r; c[i*4+1]=gg; c[i*4+2]=b; c[i*4+3]=a; },
+    done(){ this.pos.needsUpdate = this.size.needsUpdate = this.col.needsUpdate = true; } };
+}
+const LAMPS = points(160), CARS = points(240), WAVE = points(900), HAZE = points(700), AIR = points(520), STREAM = points(900), GLOW = points(40), BEAM = points(30);
+
+/* luminarias de la avenida y su poste */
+const LAMP_POS = [];
+for(let i=-26;i<=26;i++) for(const z of [-12, 12]) LAMP_POS.push([i*30 + (z>0?15:0), 8.5, z]);
+{ const geo = new THREE.CylinderGeometry(.08,.1,8.5,6), mat = new THREE.MeshStandardMaterial({color:0x1a1f2b}); const im = new THREE.InstancedMesh(geo, mat, LAMP_POS.length), m = new THREE.Matrix4();
+  LAMP_POS.forEach(([x,y,z],i)=>{ m.makeTranslation(x, 4.25, z + (z>0?.5:-.5)); im.setMatrixAt(i, m); }); scene.add(im); }
+
+/* ---------- datos SMAA (coordenadas del modelo, en metros; el modelo cuelga del poste) ---------- */
+const SMAA_Y = 3.25;
+const P = {                                   // puntos de interés (mundo)
+  inlet: V(-.152, SMAA_Y-.0835, -.0465),      // toma del PM2.5 en la pared frontal
+  fan:   V(-.104, SMAA_Y-.0915, -.0545),      // ventilador → túnel extractor
+  exit:  V(-.028, SMAA_Y-.0915, -.0545),      // salida trasera del túnel
+  beamX: -.128, beamY: SMAA_Y-.0915,          // láser del PM2.5 (cruza el flujo a lo largo de Z)
+  gasA:  V(-.0668, SMAA_Y-.1075, .0535), gasB: V(-.1114, SMAA_Y-.1075, .0535),
+  pcb:   V(-.0896, SMAA_Y-.0584, 0),
+  led1:  V(-.0517, SMAA_Y-.1112, .0205), led2: V(-.0517, SMAA_Y-.1112, -.02125),
+};
+const smaa = new THREE.Group(); smaa.position.set(0, SMAA_Y, 0); scene.add(smaa);
+const NODE = {};
+let modelReady = false;
+new THREE.GLTFLoader().load(CONFIG.model, gltf=>{
+  gltf.scene.traverse(o=>{ if(!o.isMesh) return; o.material = o.material.clone(); o.material.envMapIntensity = 1; NODE[o.name] = o; });
+  smaa.add(gltf.scene);
+  for(const k of ["smaa_top","smaa_bottom"]) if(NODE[k]){ const m = NODE[k].material; m.transparent = true; m.color.set(0xe9ecf2); m.roughness = .38; }
+  for(const k in NODE) if(!k.startsWith("smaa_")){ NODE[k].material.transparent = true; }
+  if(NODE.smaa_in_switches_led){ NODE.smaa_in_switches_led.material.emissive = new THREE.Color(0xff2a14); }
+  if(NODE.smaa_in_pm25) NODE.smaa_in_pm25.material.transparent = true;
+  modelReady = true; ready();
+}, undefined, e=>{ console.warn("modelo", e); modelReady = true; ready(); });
+
+/* láser del PM2.5 */
+const laser = new THREE.Mesh(new THREE.CylinderGeometry(.0003,.0003,.042,8), new THREE.MeshBasicMaterial({color:0xff1a1a, transparent:true, opacity:0, depthWrite:false, toneMapped:false}));
+laser.rotation.x = Math.PI/2; laser.position.set(P.beamX, P.beamY, -.046); scene.add(laser);
+/* ondas de «despertar» */
+const pings = [0,1,2].map(()=>{ const m = new THREE.Mesh(new THREE.RingGeometry(.96,1,96), new THREE.MeshBasicMaterial({color:0x9FB2FF, transparent:true, opacity:0, side:THREE.DoubleSide, blending:THREE.AdditiveBlending, depthWrite:false})); m.rotation.x = -Math.PI/2; scene.add(m); return m; });
+
+/* ---------- cámara: una sola toma (curva suave por fotogramas clave) ---------- */
+const KEYS = [   // t, posición, mira a
+  [0,   [-150, 55, 70],      [0, 12, 0]],
+  [7,   [-112, 42, 53],      [0, 9, 0]],
+  [10,  [-46, 16, 22],       [0, 4.6, 0]],
+  [12.6,[-8.5, 5.0, 4.2],    [0, 3.25, 0]],
+  [15,  [-1.9, 3.55, 1.25],  [-.08, 3.16, 0]],
+  [17.6,[-1.05, 2.78, -.85], [-.08, 3.12, 0]],
+  [20.2,[-.72, 3.17, -.34],  [-.152, 3.166, -.046]],
+  [22.8,[-.34, 3.185, -.12], [-.13, 3.16, -.046]],
+  [26,  [-.19, 3.18, -.08],  [-.125, 3.158, -.046]],
+  [29,  [-.21, 3.2, .13],    [-.09, 3.142, .0535]],
+  [32.4,[-.27, 3.3, .17],    [-.09, 3.18, .02]],
+  [36.2,[-.4, 3.47, .33],    [-.09, 3.27, 0]],
+  [40.2,[-1.25, 3.6, .95],  [-.2, 3.95, 0]],
+  [44.4,[-5.0, 7.4, 4.2],    [-.9, 9.6, 0]],
+  [50,  [-8.6, 13, 7],       [-1.3, 18, 0]],
+  [55,  [-9.6, 14.2, 8],     [-1.4, 19.6, 0]],
+].map(([t,p,q])=>({t, p:V(...p), q:V(...q)}));
+function cr(p0,p1,p2,p3,u){ const u2=u*u, u3=u2*u; return p1.clone().multiplyScalar(2).add(p2.clone().sub(p0).multiplyScalar(u)).add(p0.clone().multiplyScalar(2).sub(p1.clone().multiplyScalar(5)).add(p2.clone().multiplyScalar(4)).sub(p3).multiplyScalar(u2)).add(p1.clone().multiplyScalar(3).sub(p0).sub(p2.clone().multiplyScalar(3)).add(p3).multiplyScalar(u3)).multiplyScalar(.5); }
+function logLerp(k, i, u){       // posiciones en escala logarítmica respecto a SMAA: la cámara se acerca de forma pareja de 150 m a 15 cm
+  const c = V(-.09, SMAA_Y-.09, 0), at = j=> KEYS[clamp(j,0,KEYS.length-1)][k].clone().sub(c);
+  const enc = v=>{ const L = v.length(); return L < 1e-6 ? v : v.multiplyScalar(Math.log1p(L/.05)/L); };
+  const dec = v=>{ const L = v.length(); if(L < 1e-6) return v; const R = (Math.exp(L)-1)*.05; return v.multiplyScalar(R/L); };
+  return dec(cr(enc(at(i-1)), enc(at(i)), enc(at(i+1)), enc(at(i+2)), u)).add(c);
+}
+function camAt(t){
+  let i = 0; while(i < KEYS.length-2 && t > KEYS[i+1].t) i++;
+  const u = clamp((t - KEYS[i].t)/(KEYS[i+1].t - KEYS[i].t));
+  return {p: logLerp("p", i, u), q: logLerp("q", i, u)};
+}
+
+/* ---------- pulsos del fotodiodo (deterministas) ---------- */
+const AIRN = AIR.n;
+const AIR_SEED = Array.from({length:AIRN}, (_,i)=>{ const R = rng(1000+i); return {ph:R(), r:R(), a:R()*Math.PI*2, b:R(), sz:.3 + R()*R()*1.4, sp:.8 + R()*.5}; });
+const AIR_T = 5.2;                       // segundos que tarda cada partícula en entrar, cruzar el láser y salir
+function airPos(i, t){                   // trayectoria de una partícula de aire; u: 0→1
+  const s = AIR_SEED[i], u = ((t*s.sp/AIR_T + s.ph) % 1 + 1) % 1;
+  const far = V(-.9 - s.r*1.4, SMAA_Y - .5 + s.b*1.0, -.05 + Math.cos(s.a)*1.1);
+  if(u < .66){                            // se acerca en remolino hacia la toma
+    const k = eio(u/.66), sw = (1-k)*.25;
+    const p = far.clone().lerp(P.inlet, k); p.y += Math.sin(s.a + u*9)*sw; p.z += Math.cos(s.a + u*7)*sw;
+    return {p, u, zone:0};
+  }
+  if(u < .84){                            // cruza el PM2.5 y el láser
+    const k = (u-.66)/.18, p = V(lerp(P.inlet.x, P.fan.x, k), lerp(P.inlet.y, P.fan.y, ease(k)), lerp(P.inlet.z, P.fan.z, ease(k)) + (s.r-.5)*.008);
+    return {p, u, zone:1};
+  }
+  const k = (u-.84)/.16; return {p: P.fan.clone().lerp(P.exit, k), u, zone:2};
+}
+function spikeAt(tt){                     // señal del fotodiodo: un pico por cada partícula que cruza el láser
+  let v = 0;
+  for(let i=0;i<AIRN;i+=3){ const s = AIR_SEED[i], per = AIR_T/s.sp, u0 = ((.66 + .18*((P.beamX - P.inlet.x)/(P.fan.x - P.inlet.x))) - s.ph);
+    const tc = ((u0 % 1)+1)%1 * per; const dt = ((tt - tc) % per + per) % per; const d = Math.min(dt, per - dt);
+    v += s.sz * Math.exp(-(d*d)/(2*.012*.012)); }
+  return v;
+}
+
+/* ================= ESCENA EN FUNCIÓN DE t ================= */
+function updateScene(t){
+  const wake = ease(seg(t, 13.4, 14.4));                 // la onda llega y SMAA despierta
+  const breathe = seg(t, 15.6, 18.5);
+  const inside = ease(seg(t, 20.6, 23.4)) * (1 - ease(seg(t, 39.5, 42.5)));
+
+  /* carcasa translúcida y LEDs */
+  for(const k of ["smaa_top","smaa_bottom"]) if(NODE[k]){ const m = NODE[k].material, o = 1 - .9*inside; m.opacity = o; m.depthWrite = o > .99; }
+  for(const k in NODE) if(!k.startsWith("smaa_")){ const m = NODE[k].material, o = 1 - .96*inside; m.opacity = o; m.depthWrite = o > .99; NODE[k].visible = o > .02; }
+  { const o = 1 - .93*inside; pole.material.opacity = o; pole.material.depthWrite = o > .99; }
+  if(NODE.smaa_in_pm25){ const m = NODE.smaa_in_pm25.material, o = 1 - .72*ease(seg(t,22.4,24))*(1-ease(seg(t,27.5,29))); m.opacity = o; m.depthWrite = o > .99; }
+  const flick = t < 13.4 ? 0 : (t < 14.2 ? (hash(Math.floor(t*22)) > .4 ? 1 : .15) : 1);
+  if(NODE.smaa_in_switches_led) NODE.smaa_in_switches_led.material.emissiveIntensity = 3.5*flick*wake;
+  ledLight.intensity = .35*flick*wake;
+  smaaSpot.intensity = .2 + 1.6*ease(seg(t, 11, 15));
+  pings.forEach((m,i)=>{ const a = seg(t, 13.6 + i*.55, 15.6 + i*.55); m.position.set(-.08, SMAA_Y - .12, 0); const r = .05 + a*2.6; m.scale.set(r,r,r); m.material.opacity = (a > 0 && a < 1) ? (1-a)*.55 : 0; });
+
+  /* láser y su luz */
+  const las = ease(seg(t, 21.8, 22.8)) * (1 - ease(seg(t, 31.5, 33)));
+  laser.material.opacity = .95*las; laserLight.intensity = .5*las;
+  for(let i=0;i<BEAM.n;i++){ const z = -.067 + .042*i/(BEAM.n-1); BEAM.set(i, P.beamX, P.beamY, z, .0026*(.8 + .2*Math.sin(t*20 + i)), 1, .12, .1, .55*las); }
+  BEAM.done();
+
+  /* luminarias y coches */
+  LAMP_POS.forEach(([x,y,z],i)=> LAMPS.set(i, x, y, z + (z>0?-.6:.6), 2.2, 1.0, .68, .35, .9));
+  LAMPS.done();
+  for(let i=0;i<CARS.n;i++){ const R = rng(500+i), dir = i%2 ? 1 : -1, lane = (dir>0 ? -2.5 - R()*5 : 2.5 + R()*5), L = 1400, sp = 9 + R()*8;
+    const x = (((R()*L + dir*sp*t) % L) + L) % L - L/2, head = i%4 < 2;
+    if(dir > 0) CARS.set(i, x, .7, lane, head ? .9 : .7, head?1:.9, head?.95:.12, head?.85:.08, .9); else CARS.set(i, x, .7, lane, head ? .9 : .7, head?1:.9, head?.95:.12, head?.85:.08, .9); }
+  CARS.done();
+
+  /* la onda: de la «S» del logo a la toma de SMAA */
+  const S0 = V(-97, 38.2, 45.6), dirv = P.inlet.clone().sub(S0), Lw = dirv.length(); dirv.normalize();
+  const side = V(0,1,0).cross(dirv).normalize(), upv = dirv.clone().cross(side).normalize();
+  const head = eio(seg(t, 7, 13.6)), waveOn = seg(t, 6.6, 7.6) * (1 - seg(t, 15.5, 17));
+  for(let i=0;i<WAVE.n;i++){
+    const s = i/(WAVE.n-1), d = Math.pow(s, .55);                      // más puntos cerca de SMAA
+    const base = S0.clone().addScaledVector(dirv, d*Lw);
+    const amp = 3.2*Math.pow(1-d, 1.6) + .02, lam = lerp(14, .35, Math.pow(d,.8));
+    const ph = (d*Lw)/lam*Math.PI*2 - t*5;
+    base.addScaledVector(upv, Math.sin(ph)*amp).addScaledVector(side, Math.cos(ph*.5)*amp*.15);
+    const vis = d <= head ? 1 : 0, nearHead = Math.exp(-Math.pow((head - d)*30, 2));
+    const sz = lerp(1.1, .006, Math.pow(d,.6))*(1 + 2.5*nearHead);
+    WAVE.set(i, base.x, base.y, base.z, sz*vis*waveOn, .45 + .55*nearHead, .62 + .38*nearHead, 1, vis*waveOn);
+  }
+  WAVE.done();
+
+  /* polvo y partículas suspendidas alrededor del poste */
+  for(let i=0;i<HAZE.n;i++){ const R = rng(3000+i), x = -4 + R()*8, y = .3 + R()*7, z = -4 + R()*8, sp = .05 + R()*.1;
+    const px = x + Math.sin(t*sp + i)*.4, pz = z + Math.cos(t*sp*1.3 + i)*.4, py = y + Math.sin(t*.2 + i*.7)*.15;
+    const sz = (.004 + R()*.012), warm = R() < .3;
+    HAZE.set(i, px, py, pz, sz, warm?.9:.6, warm?.7:.7, warm?.5:1, .55*(1 - .7*seg(t,40,46))); }
+  HAZE.done();
+
+  /* el aire que entra: toma → láser (destello) → ventilador → túnel */
+  const airOn = breathe * (1 - ease(seg(t, 33, 36)));
+  for(let i=0;i<AIRN;i++){
+    const s = AIR_SEED[i], q = airPos(i, t), p = q.p;
+    let sz = s.sz*(q.zone === 0 ? lerp(.012, .0016, ease(q.u/.66)) : .0011), r = .65, gg = .8, b = 1, a = .9;
+    if(q.zone === 1){ const dx = Math.abs(p.x - P.beamX), f = Math.exp(-dx*dx/(2*.0016*.0016)) * las;
+      sz *= 1 + 7*f; r = lerp(.7, 1, f); gg = lerp(.85, .45, f); b = lerp(1, .4, f); }
+    if(q.zone === 2) a = .5;
+    AIR.set(i, p.x, p.y, p.z, sz*airOn, r, gg, b, a*airOn);
+  }
+  AIR.done();
+
+  /* brillo de los electrodos de gas y de la tarjeta */
+  const gas = ease(seg(t, 26.6, 27.8)) * (1 - ease(seg(t, 33, 35)));
+  const pcbOn = ease(seg(t, 31.6, 33));
+  let gi = 0;
+  for(const [c, ph] of [[P.gasA, 0], [P.gasB, 1.7]]){
+    for(let k=0;k<12;k++){ const a = k/12*Math.PI*2 + t*1.5 + ph, rr = .012 + .004*Math.sin(t*3 + k);
+      GLOW.set(gi++, c.x + Math.cos(a)*rr, c.y + .001, c.z + Math.sin(a)*rr, .0035*(.6 + .4*Math.sin(t*6 + k + ph)), .35, 1, .7, gas); }
+  }
+  for(let k=0;k<16;k++){ const R = rng(9000+k), x = P.pcb.x + (R()-.5)*.08, z = (R()-.5)*.14, blink = .5 + .5*Math.sin(t*(4 + R()*6) + k);
+    GLOW.set(gi++, x, P.pcb.y + .0025, z, .0022*blink, .4, .7, 1, pcbOn*(1 - ease(seg(t,44,47)))); }
+  GLOW.done();
+
+  /* los datos suben de la tarjeta al cielo, hacia AIreGPT */
+  const sh = eio(seg(t, 36.2, 46.5)), sOn = seg(t, 35.8, 36.8) * (1 - ease(seg(t, 50, 52.5)));
+  for(let i=0;i<STREAM.n;i++){
+    const s = i/(STREAM.n-1), y = P.pcb.y + Math.pow(s, 2.1)*26, rr = .008 + .9*Math.pow(s, 1.5), ang = s*28 - t*3.2 + (i%3)*2.094;
+    const vis = s <= sh ? 1 : 0, nearH = Math.exp(-Math.pow((sh - s)*25, 2)), pkt = (Math.sin(s*90 - t*14) > .93) ? 1 : 0;
+    const sz = lerp(.004, .3, Math.pow(s,1.1))*(1 + 2.5*nearH + 1.5*pkt);
+    STREAM.set(i, P.pcb.x - 1.6*Math.pow(s, 1.3) + Math.cos(ang)*rr, y, Math.sin(ang)*rr, sz*vis*sOn, .35 + .5*pkt, .55 + .4*pkt, 1, vis*sOn);
+  }
+  STREAM.done();
+}
+
+/* ================= HUD (2D) ================= */
+const LOGO = new Image(); let logoOK = false; LOGO.onload = ()=>{ logoOK = true; }; LOGO.src = CONFIG.logo;
+const F = (w, s, fam="Inter") => `${w} ${Math.round(s)}px ${fam === "mono" ? '"JetBrains Mono","DejaVu Sans Mono",ui-monospace,monospace' : 'Inter,"Inter Display",system-ui,sans-serif'}`;
+const NZ = document.createElement("canvas"); NZ.width = 240; NZ.height = 136; const nz = NZ.getContext("2d"); const NZI = nz.createImageData(240, 136);
+function rr(x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+function logoCurve(x, y, s, u){            // la «S» de Smability: medio periodo de una senoide dentro del cuadro
+  const xn = u, yn = .09 + .82*(1 - Math.cos(Math.PI*xn))/2; return [x + (xn - .5)*s, y + (yn - .5)*s];
+}
+
+function drawTuning(t, w, h){
+  const on = 1 - ease(seg(t, 7.2, 8.6));
+  if(on <= 0) return;
+  g.save(); g.globalAlpha = on;
+  g.fillStyle = "#020611"; g.fillRect(0, 0, w, h);
+  /* estática de TV (determinista por cuadro) */
+  const fr = Math.floor(t*30), R = rng(fr*7919 + 13), snow = 1 - ease(seg(t, 2.2, 6.0));
+  if(snow > .01){
+    const d = NZI.data; for(let i=0;i<d.length;i+=4){ const v = R()*255; d[i] = v*.85; d[i+1] = v*.9; d[i+2] = v; d[i+3] = 255; }
+    nz.putImageData(NZI, 0, 0); g.imageSmoothingEnabled = false; g.globalAlpha = on*snow*.55; g.drawImage(NZ, 0, 0, w, h); g.imageSmoothingEnabled = true; g.globalAlpha = on;
+  }
+  /* barra de sincronía que rueda */
+  const roll = (t*.37 % 1)*h*1.3 - h*.15; const gr = g.createLinearGradient(0, roll-90, 0, roll+90);
+  gr.addColorStop(0,"rgba(160,180,255,0)"); gr.addColorStop(.5,`rgba(160,180,255,${.12*snow + .02})`); gr.addColorStop(1,"rgba(160,180,255,0)"); g.fillStyle = gr; g.fillRect(0, roll-90, w, 180);
+  /* la onda: ruido → senoide limpia → la «S» del logo */
+  const lock = ease(seg(t, .8, 4.0)), morph = eio(seg(t, 3.8, 5.6)), flat = ease(seg(t, 6.6, 7.6));
+  const S = Math.min(w, h)*.3, cx = w/2, cy = h/2 - (FMT === "v" ? h*.04 : 0);
+  const box = ease(seg(t, 5.0, 6.0)) * (1 - ease(seg(t, 6.4, 7.2)));
+  if(box > 0){ g.globalAlpha = on*box; g.fillStyle = "#000"; g.fillRect(cx - S*.5, cy - S*.5, S, S); g.strokeStyle = "rgba(159,178,255,.35)"; g.lineWidth = 2; g.strokeRect(cx - S*.5, cy - S*.5, S, S); g.globalAlpha = on; }
+  const N = 260, jitterAmp = (1 - lock)*h*.09, split = 14*(1 - morph) + 3*(1 - lock);
+  for(const [off, col] of [[-split, "rgba(255,60,90,.75)"], [split, "rgba(60,220,255,.75)"], [0, "#ffffff"]]){
+    g.beginPath();
+    for(let i=0;i<=N;i++){
+      const u = i/N, xw = u*w, k = 2*Math.PI*u*lerp(5.5, 1, lock);
+      let yw = cy + Math.sin(k + t*(1 - lock)*9)*h*lerp(.16, .1, lock) + (hash(i*3.1 + fr) - .5)*jitterAmp + Math.sin(u*60 + t*30)*h*.012*(1-lock);
+      const [lx, ly] = logoCurve(cx, cy, S, u);
+      let x = lerp(xw, lx, morph), y = lerp(yw, ly, morph);
+      y = lerp(y, cy, flat); x = lerp(x, lerp(-w*.1, w*1.1, u), flat);
+      i ? g.lineTo(x + off, y) : g.moveTo(x + off, y);
+    }
+    g.strokeStyle = col; g.lineWidth = Math.max(2, S*.085*morph*(1 - flat*.85)) + 3*(1-morph); g.lineCap = "round";
+    g.globalCompositeOperation = off ? "lighter" : "source-over"; g.shadowColor = "rgba(120,160,255,.9)"; g.shadowBlur = off ? 0 : 18*(1 - morph*.5);
+    g.stroke();
+  }
+  g.globalCompositeOperation = "source-over"; g.shadowBlur = 0;
+  /* marca */
+  const wm = ease(seg(t, 5.5, 6.4)) * (1 - ease(seg(t, 6.5, 7.2)));
+  if(wm > 0){ g.globalAlpha = on*wm; g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "top";
+    g.font = F(800, S*.22); const sp = S*.035*(1 - wm) + S*.012; drawSpaced("SMABILITY", cx, cy + S*.62, sp); g.globalAlpha = on; }
+  /* líneas de barrido */
+  g.globalAlpha = on*.14; g.fillStyle = "#000"; for(let y=0;y<h;y+=4) g.fillRect(0, y, w, 2);
+  g.restore();
+}
+function drawSpaced(s, cx, y, sp){ const ws = [...s].map(c=> g.measureText(c).width), tot = ws.reduce((a,b)=>a+b,0) + sp*(s.length-1); let x = cx - tot/2; g.textAlign = "left"; [...s].forEach((c,i)=>{ g.fillText(c, x, y); x += ws[i] + sp; }); g.textAlign = "center"; }
+
+function bigWord(t, a, b, word, x, y, size, align="left"){
+  const k = win(t, a, b, .6); if(k <= 0) return;
+  g.save(); g.globalAlpha = k; g.font = F(900, size); g.textAlign = align; g.textBaseline = "top"; g.fillStyle = "#fff";
+  g.shadowColor = "rgba(32,70,242,.8)"; g.shadowBlur = 30; const sp = size*.12*(1 - ease(seg(t, a, a+1.2)));
+  g.letterSpacing && (g.letterSpacing = `${sp}px`); g.fillText(word, x, y + (1-k)*20); g.restore();
+}
+function panel(x, y, w, h, k, title, sub){
+  g.save(); g.globalAlpha = k; rr(x, y, w, h, 18); g.fillStyle = "rgba(3,10,36,.72)"; g.fill(); g.strokeStyle = "rgba(159,178,255,.35)"; g.lineWidth = 1.5; g.stroke();
+  g.fillStyle = "#9FB2FF"; g.font = F(700, 21, "mono"); g.textAlign = "left"; g.textBaseline = "top"; g.fillText(title, x + 24, y + 20);
+  if(sub){ g.fillStyle = "rgba(199,210,255,.75)"; g.font = F(500, 21); g.fillText(sub, x + 24, y + 50); }
+  g.restore();
+}
+function scope(x, y, w, h, k, fn, t, color, span=3){
+  g.save(); g.globalAlpha = k; g.strokeStyle = "rgba(159,178,255,.12)"; g.lineWidth = 1;
+  for(let i=1;i<6;i++){ g.beginPath(); g.moveTo(x, y + h*i/6); g.lineTo(x + w, y + h*i/6); g.stroke(); }
+  g.beginPath(); const N = 360;
+  for(let i=0;i<=N;i++){ const tt = t - span + span*i/N, v = fn(tt); const px = x + w*i/N, py = y + h - 8 - clamp(v)*(h - 16); i ? g.lineTo(px, py) : g.moveTo(px, py); }
+  g.strokeStyle = color; g.lineWidth = 2.4; g.shadowColor = color; g.shadowBlur = 12; g.stroke(); g.restore();
+}
+const READ = [["PM2.5", 38, "µg/m³", 0], ["PM10", 64, "µg/m³", 0], ["CO", 1.6, "ppm", 1], ["O₃", 21, "ppb", 0], ["TEMP", 13.6, "°C", 1], ["HR", 47, "%", 0], ["RUIDO", 63, "dB", 0]];
+const READ_EN = {RUIDO:"NOISE", HR:"RH"};
+const JSON_LINES = ['GET /v1/stations/SMAA-CDMX-01/latest', '', '{', '  "city": "CDMX · Miguel Hidalgo",', '  "ts": "2026-12-03T18:24:00-06:00",', '  "pm25": 38,  "pm10": 64,', '  "co_ppm": 1.6,  "o3_ppb": 21,', '  "temp_c": 13.6,  "rh": 47,', '  "noise_db": 63,', '  "aqi": "regular"', '}'];
+
+function wrapText(s, maxW){ const out = []; let line = ""; for(const wd of s.split(" ")){ const tst = line ? line + " " + wd : wd; if(g.measureText(tst.replace(/<\/?b>/g,"")).width > maxW && line){ out.push(line); line = wd; } else line = tst; } if(line) out.push(line); return out; }
+function richLine(s, x, y){ let cx = x; for(const part of s.split(/(<b>.*?<\/b>)/)){ if(!part) continue; const b = part.startsWith("<b>"), tt = part.replace(/<\/?b>/g,""); const fnt = g.font; if(b) g.font = fnt.replace(/^\d+/, "800"); g.fillText(tt, cx, y); cx += g.measureText(tt).width; g.font = fnt; } }
+
+function drawPhone(t, w, h){
+  const k = ease(seg(t, 42.4, 43.6)) * (1 - ease(seg(t, 49.6, 50.6))); if(k <= 0) return;
+  const ph = FMT === "v" ? h*.6 : h*.8, pw = ph*.49, cx = w*.5, cy = h*.48 + (1-k)*h*.25;
+  const x = cx - pw/2, y = cy - ph/2, sc = ph/880;
+  g.save(); g.globalAlpha = k;
+  g.shadowColor = "rgba(32,70,242,.55)"; g.shadowBlur = 60; rr(x, y, pw, ph, 54*sc); g.fillStyle = "#0b0f1c"; g.fill(); g.shadowBlur = 0;
+  g.strokeStyle = "rgba(159,178,255,.45)"; g.lineWidth = 3; g.stroke();
+  const ix = x + 14*sc, iy = y + 14*sc, iw = pw - 28*sc, ih = ph - 28*sc;
+  rr(ix, iy, iw, ih, 44*sc); g.save(); g.clip();
+  const bg = g.createLinearGradient(0, iy, 0, iy+ih); bg.addColorStop(0, "#061238"); bg.addColorStop(1, "#020818"); g.fillStyle = bg; g.fillRect(ix, iy, iw, ih);
+  g.fillStyle = "#000"; rr(cx - 60*sc, iy + 10*sc, 120*sc, 30*sc, 15*sc); g.fill();
+  /* encabezado */
+  const hy = iy + 58*sc; g.fillStyle = "rgba(255,255,255,.06)"; g.fillRect(ix, hy, iw, 74*sc);
+  g.save(); g.beginPath(); g.arc(ix + 46*sc, hy + 37*sc, 24*sc, 0, 7); g.fillStyle = "#000"; g.fill(); g.strokeStyle = "#2046F2"; g.lineWidth = 2; g.stroke(); g.clip();
+  if(logoOK) g.drawImage(LOGO, ix + 22*sc, hy + 13*sc, 48*sc, 48*sc); g.restore();
+  g.fillStyle = "#fff"; g.font = F(800, 26*sc); g.textAlign = "left"; g.textBaseline = "middle"; g.fillText("AIreGPT", ix + 82*sc, hy + 28*sc);
+  g.fillStyle = "#4ade80"; g.font = F(600, 17*sc); g.fillText(tx("online"), ix + 82*sc, hy + 52*sc);
+  /* conversación */
+  let by = hy + 104*sc; const bw = iw*.8, pad = 18*sc, fs = 21*sc, lh = fs*1.32;
+  const q = seg(t, 43.4, 43.9);
+  if(q > 0){ g.globalAlpha = k*q; g.font = F(600, fs); const L = wrapText(tx("q"), bw - 2*pad), bh = L.length*lh + 2*pad, bx = ix + iw - 16*sc - bw*.86;
+    rr(bx, by, bw*.86, bh, 22*sc); g.fillStyle = "#2046F2"; g.fill(); g.fillStyle = "#fff"; g.textBaseline = "top"; L.forEach((l,i)=> g.fillText(l, bx + pad, by + pad + i*lh)); by += bh + 16*sc; g.globalAlpha = k; }
+  const typing = t >= 44.1 && t < 45.3;
+  if(typing){ rr(ix + 16*sc, by, 96*sc, 50*sc, 22*sc); g.fillStyle = "rgba(255,255,255,.1)"; g.fill(); for(let i=0;i<3;i++){ const a = .35 + .65*Math.max(0, Math.sin(t*9 - i*.9)); g.fillStyle = `rgba(199,210,255,${a})`; g.beginPath(); g.arc(ix + (40 + i*22)*sc, by + 25*sc, 6*sc, 0, 7); g.fill(); } }
+  const ans = [["a1", 45.3], ["a2", 46.3], ["a3", 47.4]];
+  for(const [kk, ta] of ans){ const a = seg(t, ta, ta + .45); if(a <= 0) continue; g.globalAlpha = k*a; g.font = F(500, fs);
+    const L = wrapText(tx(kk), bw - 2*pad), bh = L.length*lh + 2*pad, bx = ix + 16*sc; rr(bx, by + (1-a)*12, bw, bh, 22*sc); g.fillStyle = "rgba(255,255,255,.1)"; g.fill();
+    g.fillStyle = "#fff"; g.textBaseline = "top"; L.forEach((l,i)=> richLine(l, bx + pad, by + (1-a)*12 + pad + i*lh)); by += bh + 12*sc; g.globalAlpha = k; }
+  /* barra de escritura */
+  g.fillStyle = "rgba(255,255,255,.07)"; rr(ix + 16*sc, iy + ih - 76*sc, iw - 32*sc, 54*sc, 27*sc); g.fill();
+  g.fillStyle = "rgba(199,210,255,.5)"; g.font = F(500, 19*sc); g.textBaseline = "middle"; g.fillText(tx("ask"), ix + 40*sc, iy + ih - 49*sc);
+  g.restore(); g.restore();
+}
+
+function drawHUD(t){
+  const w = W(), h = H(), V9 = FMT === "v";
+  g.clearRect(0, 0, w, h);
+  /* viñeta cinematográfica */
+  const vg = g.createRadialGradient(w/2, h/2, Math.min(w,h)*.35, w/2, h/2, Math.max(w,h)*.75); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,2,10,.55)"); g.fillStyle = vg; g.fillRect(0, 0, w, h);
+
+  /* SMAA en línea */
+  const wk = win(t, 14.0, 19.0, .4);
+  if(wk > 0){ g.save(); g.globalAlpha = wk; g.font = F(700, V9 ? 28 : 24, "mono"); g.textAlign = "left"; g.textBaseline = "top";
+    const x = V9 ? w*.08 : w*.06, y = V9 ? h*.1 : h*.08; g.fillStyle = "#ff4a3a"; g.beginPath(); g.arc(x + 8, y + 10, 7 + 2*Math.sin(t*8), 0, 7); g.fill();
+    g.fillStyle = "#fff"; g.fillText(tx("wake"), x + 26, y); g.fillStyle = "rgba(199,210,255,.65)"; g.font = F(500, V9 ? 24 : 20, "mono"); g.fillText("CDMX · 19.4236 N, 99.1750 W · 13.6 °C", x + 28, y + 36); g.restore(); }
+
+  /* palabras grandes */
+  const bwX = V9 ? w/2 : w*.06, bwY = V9 ? h*.09 : h*.12, bwS = V9 ? 120 : 132, al = V9 ? "center" : "left";
+  bigWord(t, 22.4, 27.0, tx("physics"), bwX, bwY, bwS, al);
+  bigWord(t, 27.4, 32.0, tx("chem"), bwX, bwY, bwS, al);
+  bigWord(t, 36.6, 41.6, tx("data"), bwX, bwY, bwS, al);
+
+  /* fotodiodo */
+  const pw = V9 ? w*.86 : w*.38, px = V9 ? (w - pw)/2 : w*.585, py = V9 ? h*.5 : h*.14, phh = V9 ? 340 : 320;
+  const k1 = win(t, 22.6, 27.2, .5);
+  if(k1 > 0){ panel(px, py, pw, phh, k1, tx("pd"), tx("pdSub")); scope(px + 24, py + 90, pw - 48, phh - 114, k1, tt=> spikeAt(tt)*.42, t, "#ff5a5a", 2.2); }
+  /* electrodos */
+  const k2 = win(t, 27.6, 32.4, .5);
+  if(k2 > 0){ panel(px, py, pw, phh + 90, k2, `${tx("el1")}  ·  ${tx("el2")}`, tx("elSub"));
+    const sig1 = tt=> .25 + .45*ease(seg(tt, 27.6, 30)) + .04*Math.sin(tt*9) + .03*Math.sin(tt*23 + 1), sig2 = tt=> .12 + .22*ease(seg(tt, 28, 30.4)) + .03*Math.sin(tt*7 + 2) + .02*Math.sin(tt*31);
+    const sh2 = (phh + 90 - 114)/2 - 6; scope(px + 24, py + 90, pw - 48, sh2, k2, sig1, t, "#5cf2b0", 3); scope(px + 24, py + 90 + sh2 + 12, pw - 48, sh2, k2, sig2, t, "#7cc4ff", 3); }
+  /* mediciones */
+  const k3 = win(t, 32.4, 37.4, .5);
+  if(k3 > 0){ const ph3 = 96 + READ.length*58; panel(px, py, pw, ph3, k3, tx("meas"), null);
+    g.save(); g.globalAlpha = k3; READ.forEach(([lab, val, u, dd], i)=>{ const a = ease(seg(t, 32.6 + i*.25, 33.6 + i*.25)), v = val*a, y = py + 70 + i*58;
+      g.globalAlpha = k3*a; g.font = F(600, 24, "mono"); g.fillStyle = "rgba(199,210,255,.8)"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(LANG === "en" ? (READ_EN[lab] || lab) : lab, px + 26, y + 10);
+      g.font = F(700, 40, "mono"); g.fillStyle = "#fff"; g.textAlign = "right"; g.fillText(v.toFixed(dd), px + pw - 130, y); g.font = F(500, 22, "mono"); g.fillStyle = "#9FB2FF"; g.textAlign = "left"; g.fillText(u, px + pw - 116, y + 14);
+      g.fillStyle = "rgba(159,178,255,.14)"; g.fillRect(px + 26, y + 52, pw - 52, 1); });
+    g.globalAlpha = k3; g.font = F(600, 16, "mono"); g.fillStyle = "rgba(199,210,255,.55)"; g.textAlign = "right"; g.fillText(tx("sim"), px + pw - 24, py + 24); g.restore(); }
+  /* API */
+  const k4 = win(t, 37.2, 42.4, .5);
+  if(k4 > 0){ const ph4 = 100 + JSON_LINES.length*38; panel(px, py, pw, ph4, k4, tx("api"), null);
+    g.save(); g.globalAlpha = k4; g.font = F(500, V9 ? 25 : 24, "mono"); g.textAlign = "left"; g.textBaseline = "top";
+    const chars = Math.floor(seg(t, 37.4, 40.6)*JSON_LINES.join("").length); let used = 0;
+    JSON_LINES.forEach((l, i)=>{ const n = clamp(chars - used, 0, l.length); used += l.length; const s = l.slice(0, n);
+      g.fillStyle = i === 0 ? "#5cf2b0" : /"\w+":/.test(l) ? "#C7D2FF" : "#fff"; g.fillText(s, px + 26, py + 66 + i*38);
+      if(n > 0 && n < l.length && Math.floor(t*4)%2) g.fillRect(px + 26 + g.measureText(s).width + 2, py + 68 + i*38, 12, 24); });
+    g.restore(); }
+
+  drawPhone(t, w, h);
+
+  /* cierre */
+  const end = ease(seg(t, 50.0, 51.2));
+  if(end > 0){
+    g.save(); g.globalAlpha = end; g.fillStyle = "rgba(0,3,14,.9)"; g.fillRect(0, 0, w, h);
+    const S = Math.min(w, h)*(V9 ? .2 : .16), cx = w/2, cy = h*(V9 ? .36 : .3);
+    g.fillStyle = "#000"; g.fillRect(cx - S/2, cy - S/2, S, S); g.strokeStyle = "rgba(159,178,255,.4)"; g.lineWidth = 2; g.strokeRect(cx - S/2, cy - S/2, S, S);
+    const dr = eio(seg(t, 50.4, 51.8)); g.beginPath(); for(let i=0;i<=80;i++){ const u = i/80*dr, [x,y] = logoCurve(cx, cy, S, u); i ? g.lineTo(x,y) : g.moveTo(x,y); }
+    g.strokeStyle = "#fff"; g.lineWidth = S*.085; g.lineCap = "butt"; g.shadowColor = "rgba(120,160,255,.9)"; g.shadowBlur = 16; g.stroke(); g.shadowBlur = 0;
+    const l1 = ease(seg(t, 51.0, 51.8)), l2 = ease(seg(t, 52.0, 52.8)), l3 = ease(seg(t, 53.0, 53.8)), fs = V9 ? 68 : 76;
+    g.textAlign = "center"; g.textBaseline = "top"; g.font = F(800, fs);
+    g.globalAlpha = end*l1; g.fillStyle = "#fff"; g.fillText(tx("tag1"), cx, cy + S*.75 + (1-l1)*14);
+    g.globalAlpha = end*l2; g.fillStyle = "#9FB2FF"; g.fillText(tx("tag2"), cx, cy + S*.75 + fs*1.25 + (1-l2)*14);
+    g.globalAlpha = end*l3; g.font = F(500, V9 ? 30 : 28); g.fillStyle = "rgba(199,210,255,.85)"; g.fillText(tx("tag3"), cx, cy + S*.75 + fs*2.7);
+    g.font = F(700, V9 ? 26 : 22, "mono"); g.fillStyle = "rgba(159,178,255,.75)"; g.fillText("smability.io  ·  AIreGPT", cx, h*(V9 ? .86 : .88));
+    g.restore();
+  }
+
+  /* subtítulos */
+  const cue = SUBS.find(c=> t >= c[0] && t < c[1]);
+  if(cue && end < .5){ const a = Math.min(seg(t, cue[0], cue[0]+.25), 1 - seg(t, cue[1]-.25, cue[1])), s = LANG === "en" ? cue[3] : cue[2];
+    g.save(); g.globalAlpha = a; g.font = F(600, V9 ? 40 : 38); g.textAlign = "center"; g.textBaseline = "middle";
+    const L = wrapText(s, w*(V9 ? .84 : .7)), lh = V9 ? 54 : 50, by = V9 ? h*.86 : h*.885;
+    L.forEach((l, i)=>{ const y = by + (i - (L.length-1)/2)*lh, tw = g.measureText(l).width; rr(w/2 - tw/2 - 18, y - lh/2 + 2, tw + 36, lh - 4, 10); g.fillStyle = "rgba(0,4,18,.62)"; g.fill(); g.fillStyle = "#fff"; g.fillText(l, w/2, y); });
+    g.restore(); }
+
+  drawTuning(t, w, h);
+  /* entrada y salida a negro */
+  const fin = 1 - ease(seg(t, 0, .6)), fout = ease(seg(t, 54.3, 55));
+  if(fin + fout > 0){ g.fillStyle = `rgba(0,0,0,${Math.max(fin, fout)})`; g.fillRect(0, 0, w, h); }
+}
+
+/* ================= RENDER ================= */
+function render(t){
+  t = clamp(t, 0, CONFIG.duration);
+  const c = camAt(t); cam.position.copy(c.p); cam.lookAt(c.q);
+  updateScene(t);
+  renderer.render(scene, cam);
+  drawHUD(t);
+}
+function fit(){
+  const w = W(), h = H(), st = $("stage");
+  glc.width = w; glc.height = h; hud.width = w; hud.height = h; renderer.setSize(w, h, false);
+  cam.aspect = w/h; cam.fov = FMT === "v" ? 60 : 38; cam.updateProjectionMatrix();
+  PT_U.scale.value = h/(2*Math.tan(cam.fov*Math.PI/360));
+  st.style.width = w + "px"; st.style.height = h + "px";
+  const s = RENDER_MODE ? 1 : Math.min(innerWidth/w, innerHeight/h);
+  st.style.transform = RENDER_MODE ? "none" : `translate(${(innerWidth - w*s)/2}px,${(innerHeight - h*s)/2}px) scale(${s})`;
+  $("bFmt").textContent = FMT === "v" ? "9:16" : "16:9"; $("bLang").textContent = LANG.toUpperCase();
+  render(cur);
+}
+addEventListener("resize", fit);
+
+/* ================= REPRODUCCIÓN ================= */
+let cur = clamp(+(Q.get("t") || 0) || 0, 0, CONFIG.duration), playing = false, last = 0;
+const fmtT = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
+function loop(now){
+  if(playing){ cur += Math.min(.1, (now - last)/1000); if(cur >= CONFIG.duration){ cur = CONFIG.duration; playing = false; } }
+  last = now; render(cur);
+  $("scrub").value = cur; $("tOut").textContent = `${fmtT(cur)} / ${fmtT(CONFIG.duration)}`; $("bPlay").textContent = playing ? "❚❚" : "▶";
+  if(!RENDER_MODE) requestAnimationFrame(loop);
+}
+function play(){ if(cur >= CONFIG.duration) cur = 0; playing = true; $("play").hidden = true; }
+$("play").onclick = play;
+$("bPlay").onclick = ()=>{ playing ? (playing = false) : play(); };
+$("bLang").onclick = ()=>{ LANG = LANG === "es" ? "en" : "es"; document.documentElement.lang = LANG; fit(); };
+$("bFmt").onclick = ()=>{ FMT = FMT === "v" ? "h" : "v"; fit(); };
+$("bFs").onclick = ()=>{ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.(); };
+$("scrub").oninput = e=>{ cur = +e.target.value; };
+addEventListener("keydown", e=>{ if(e.key === " "){ e.preventDefault(); $("bPlay").click(); } else if(e.key === "l" || e.key === "L") $("bLang").click(); else if(e.key === "f" || e.key === "F") $("bFs").click(); else if(e.key === "ArrowRight") cur = clamp(cur + 2, 0, CONFIG.duration); else if(e.key === "ArrowLeft") cur = clamp(cur - 2, 0, CONFIG.duration); });
+let idleT; addEventListener("pointermove", ()=>{ document.body.classList.remove("idle"); clearTimeout(idleT); idleT = setTimeout(()=> document.body.classList.add("idle"), 2200); });
+
+function ready(){
+  if(!modelReady) return;
+  Promise.resolve(document.fonts && document.fonts.ready).then(()=>{
+    $("load").hidden = true; document.documentElement.lang = LANG; fit();
+    if(RENDER_MODE){ window.REEL = { ready:true, duration:CONFIG.duration, seek(t){ render(t); return true; } }; return; }
+    if(Q.get("autoplay") === "1") play(); else $("play").hidden = false;
+    requestAnimationFrame(t=>{ last = t; loop(t); });
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+1
+00:00:08,200 --> 00:00:12,200
+Una tarde fría de diciembre, en la Ciudad de México.
+
+2
+00:00:13,000 --> 00:00:16,600
+En un poste, SMAA despierta…
+
+3
+00:00:16,800 --> 00:00:20,600
+…y empieza a respirar.
+
+4
+00:00:21,600 --> 00:00:26,400
+Un láser cuenta cada partícula que cruza su paso.
+
+5
+00:00:27,000 --> 00:00:31,600
+Los gases reaccionan en electrodos y se vuelven corriente.
+
+6
+00:00:32,300 --> 00:00:36,400
+Cada pulso se vuelve una medición…
+
+7
+00:00:36,600 --> 00:00:41,400
+…y cada medición, un dato abierto.
+
+8
+00:00:42,600 --> 00:00:49,200
+Así llega a AIreGPT: para que sepas qué hacer.
