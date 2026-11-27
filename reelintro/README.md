@@ -29,3 +29,5 @@ y lecturas → los datos suben a AIreGPT → cierre.
 - v7 (27 nov): panel solar y su batería en la lista de componentes (se resaltan antes del interior); CHAAK con su cabezal de estado
   sólido y 3 variables críticas (viento, lluvia, radiación solar); lluvia desde el acercamiento al combo, más tenue dentro de SMAA,
   y se retira por completo al alejarse hacia el cierre.
+- v8 (27 nov): logo igual al oficial (cuadro con la onda y «smability» en Arial Bold a la derecha, con ©); la lluvia se retira
+  entre 50 y 53 s y las tomas siguientes (API, ciudad, AIreGPT, cierre) van sin lluvia.

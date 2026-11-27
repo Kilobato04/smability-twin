@@ -404,7 +404,7 @@ function updateScene(t){
   WAVE.done();
 
   /* lluvia y rebotes: solo cuando aparece la ciudad */
-  const rain = sm(seg(t, 9.5, 12.5)) * (1 - .7*win(t, 22.5, 52.5, 1.5)) * (1 - ease(seg(t, 61.5, 64.0))), farRain = sm(seg(t, 10.0, 14.0));
+  const rain = sm(seg(t, 9.5, 12.5)) * (1 - .7*sm(seg(t, 22.5, 24.0))) * (1 - ease(seg(t, 50.0, 53.0))), farRain = sm(seg(t, 10.0, 14.0));
   const rp = RAIN.geometry.attributes.position.array, rc = RAIN.geometry.attributes.color.array;
   let sp = 0;
   for(let i=0;i<RAIN_N;i++){
@@ -486,8 +486,21 @@ const LOGO = new Image(); let logoOK = false; LOGO.onload = ()=>{ logoOK = true;
 const F = (w, s, fam="Inter") => `${w} ${Math.round(s)}px ${fam === "mono" ? '"JetBrains Mono","DejaVu Sans Mono",ui-monospace,monospace' : 'Inter,"Inter Display",system-ui,sans-serif'}`;
 const NZ = document.createElement("canvas"); NZ.width = 240; NZ.height = 136; const nz = NZ.getContext("2d"); const NZI = nz.createImageData(240, 136);
 function rr(x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
-function logoCurve(x, y, s, u){            // la «S» de Smability: medio periodo de una senoide dentro del cuadro
-  const xn = u, yn = .09 + .82*(1 - Math.cos(Math.PI*xn))/2; return [x + (xn - .5)*s, y + (yn - .5)*s];
+const LOGO_H = .93;                         // el cuadro del logo es un poco más ancho que alto (169 × 157)
+function logoCurve(x, y, s, u){            // la «S» de Smability: medio periodo de una senoide, entra y sale plana por los bordes
+  const xn = u, yn = .099 + .805*(1 - Math.cos(Math.PI*xn))/2; return [x + (xn - .5)*s, y + (yn - .5)*s*LOGO_H];
+}
+const LOGO_FONT = fs => `bold ${Math.round(fs)}px Arial, "Liberation Sans", Helvetica, sans-serif`;
+const LOGO_TW = 1.745, LOGO_GAP = .035, LOGO_CG = .025, LOGO_CD = .115;   // proporciones del logo oficial, en unidades del ancho del cuadro
+const logoDX = S => S*(LOGO_GAP + LOGO_TW + LOGO_CG + LOGO_CD)/2;          // corrimiento del cuadro para centrar todo el logo
+function logoText(sqx, sqy, S){            // «smability» en Arial Bold a la derecha del cuadro, sobre su borde inferior, y ©
+  g.font = LOGO_FONT(100); const k = 100*LOGO_TW*S/g.measureText("smability").width;
+  g.font = LOGO_FONT(k); g.textAlign = "left"; g.textBaseline = "alphabetic";
+  const x = sqx + S/2 + LOGO_GAP*S, base = sqy + S*LOGO_H/2 + .02*S;
+  g.fillText("smability", x, base);
+  const cr = LOGO_CD*S/2, ccx = x + LOGO_TW*S + LOGO_CG*S + cr, ccy = base - cr; const fill = g.fillStyle;
+  g.save(); g.globalAlpha *= .8; g.strokeStyle = fill; g.lineWidth = cr*.2; g.beginPath(); g.arc(ccx, ccy, cr*.9, 0, 7); g.stroke();
+  g.font = LOGO_FONT(cr*1.45); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("c", ccx, ccy - cr*.05); g.restore();
 }
 
 
@@ -507,9 +520,9 @@ function drawTuning(t, w, h){
   gr.addColorStop(0,"rgba(160,180,255,0)"); gr.addColorStop(.5,`rgba(160,180,255,${.12*snow + .02})`); gr.addColorStop(1,"rgba(160,180,255,0)"); g.fillStyle = gr; g.fillRect(0, roll-90, w, 180);
   /* la onda: ruido → senoide limpia → la «S» del logo */
   const lock = ease(seg(t, .8, 4.0)), morph = eio(seg(t, 3.8, 5.6)), flat = ease(seg(t, 6.6, 7.6));
-  const S = Math.min(w, h)*.3, cx = w/2, cy = h/2 - (FMT === "v" ? h*.04 : 0);
+  const S = Math.min(w, h)*(FMT === "v" ? .28 : .3), cx = w/2 - logoDX(S), cy = h/2 - (FMT === "v" ? h*.04 : 0);
   const box = ease(seg(t, 5.0, 6.0)) * (1 - ease(seg(t, 6.4, 7.2)));
-  if(box > 0){ g.globalAlpha = on*box; g.fillStyle = "#000"; g.fillRect(cx - S*.5, cy - S*.5, S, S); g.strokeStyle = "rgba(159,178,255,.35)"; g.lineWidth = 2; g.strokeRect(cx - S*.5, cy - S*.5, S, S); g.globalAlpha = on; }
+  if(box > 0){ g.globalAlpha = on*box; g.fillStyle = "#000"; g.fillRect(cx - S*.5, cy - S*.5*LOGO_H, S, S*LOGO_H); g.strokeStyle = "rgba(159,178,255,.35)"; g.lineWidth = 2; g.strokeRect(cx - S*.5, cy - S*.5*LOGO_H, S, S*LOGO_H); g.globalAlpha = on; }
   const N = 260, jitterAmp = (1 - lock)*h*.09, split = 14*(1 - morph) + 3*(1 - lock);
   for(const [off, col] of [[-split, "rgba(255,60,90,.75)"], [split, "rgba(60,220,255,.75)"], [0, "#ffffff"]]){
     g.beginPath();
@@ -521,7 +534,7 @@ function drawTuning(t, w, h){
       y = lerp(y, cy, flat); x = lerp(x, lerp(-w*.1, w*1.1, u), flat);
       i ? g.lineTo(x + off, y) : g.moveTo(x + off, y);
     }
-    g.strokeStyle = col; g.lineWidth = Math.max(2, S*.085*morph*(1 - flat*.85)) + 3*(1-morph); g.lineCap = morph > .5 ? "butt" : "round";   // al fijarse, la onda corta al ras del cuadrado
+    g.strokeStyle = col; g.lineWidth = Math.max(2, S*.095*morph*(1 - flat*.85)) + 3*(1-morph); g.lineCap = morph > .5 ? "butt" : "round";   // al fijarse, la onda corta al ras del cuadrado
     g.globalCompositeOperation = off ? "lighter" : "source-over"; g.shadowColor = "rgba(120,160,255,.9)"; g.shadowBlur = off ? 0 : 18*(1 - morph*.5);
     g.stroke();
   }
@@ -529,19 +542,10 @@ function drawTuning(t, w, h){
   /* marca */
   const wm = ease(seg(t, 5.5, 6.4)) * (1 - ease(seg(t, 6.5, 7.2)));
   if(wm > 0){ g.globalAlpha = on*wm; g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "top";
-    drawWordmark(cx, cy + S*.5 + S*.045, S); g.globalAlpha = on; }
+    logoText(cx, cy, S); g.globalAlpha = on; }
   /* líneas de barrido */
   g.globalAlpha = on*.14; g.fillStyle = "#000"; for(let y=0;y<h;y+=4) g.fillRect(0, y, w, 2);
   g.restore();
-}
-function drawWordmark(cx, top, S){        // SMABILITY© del ancho del cuadrado, justo al pie de su borde inferior
-  const N = "SMABILITY", spF = .07;
-  const widthAt = fs=>{ g.font = F(800, fs); return [...N].reduce((a,c)=> a + g.measureText(c).width, 0) + spF*fs*(N.length - 1); };
-  const fs = S*.2*S/widthAt(S*.2); g.font = F(800, fs); g.textAlign = "left"; g.textBaseline = "top";
-  let x = cx - S/2; const y = top - fs*.1;
-  for(const c of N){ g.fillText(c, x, y); x += g.measureText(c).width + spF*fs; }
-  g.font = F(700, fs*.38); g.fillText("©", x - spF*fs + fs*.08, y + fs*.02);
-  return fs;
 }
 function drawSpaced(s, cx, y, sp){ const ws = [...s].map(c=> g.measureText(c).width), tot = ws.reduce((a,b)=>a+b,0) + sp*(s.length-1); let x = cx - tot/2; g.textAlign = "left"; [...s].forEach((c,i)=>{ g.fillText(c, x, y); x += ws[i] + sp; }); g.textAlign = "center"; }
 
@@ -704,12 +708,12 @@ function drawHUD(t){
   const ue = t - 20.4, end = ease(seg(ue, 50.0, 51.2));
   if(end > 0){
     g.save(); g.globalAlpha = end; g.fillStyle = "rgba(0,3,14,.94)"; g.fillRect(0, 0, w, h);
-    const S = Math.min(w, h)*(V9 ? .2 : .15), cx = w/2, cy = h*(V9 ? .3 : .25);
-    g.fillStyle = "#000"; g.fillRect(cx - S/2, cy - S/2, S, S); g.strokeStyle = "rgba(159,178,255,.4)"; g.lineWidth = 2; g.strokeRect(cx - S/2, cy - S/2, S, S);
-    const dr = eio(seg(ue, 50.4, 51.8)); g.beginPath(); for(let i=0;i<=80;i++){ const uu = i/80*dr, [x,y] = logoCurve(cx, cy, S, uu); i ? g.lineTo(x,y) : g.moveTo(x,y); }
-    g.strokeStyle = "#fff"; g.lineWidth = S*.085; g.lineCap = "butt"; g.shadowColor = "rgba(120,160,255,.9)"; g.shadowBlur = 16; g.stroke(); g.shadowBlur = 0;
-    g.globalAlpha = end*ease(seg(ue, 50.8, 51.6)); g.fillStyle = "#fff"; const wf = drawWordmark(cx, cy + S*.5 + S*.045, S);
-    const ty = cy + S*.5 + wf*1.25 + (V9 ? 70 : 56);
+    const S = Math.min(w, h)*(V9 ? .22 : .15), cx = w/2, sx = cx - logoDX(S), cy = h*(V9 ? .3 : .25);
+    g.fillStyle = "#000"; g.fillRect(sx - S/2, cy - S*LOGO_H/2, S, S*LOGO_H); g.strokeStyle = "rgba(159,178,255,.4)"; g.lineWidth = 2; g.strokeRect(sx - S/2, cy - S*LOGO_H/2, S, S*LOGO_H);
+    const dr = eio(seg(ue, 50.4, 51.8)); g.beginPath(); for(let i=0;i<=80;i++){ const uu = i/80*dr, [x,y] = logoCurve(sx, cy, S, uu); i ? g.lineTo(x,y) : g.moveTo(x,y); }
+    g.strokeStyle = "#fff"; g.lineWidth = S*.095; g.lineCap = "butt"; g.shadowColor = "rgba(120,160,255,.9)"; g.shadowBlur = 16; g.stroke(); g.shadowBlur = 0;
+    g.globalAlpha = end*ease(seg(ue, 50.8, 51.6)); g.fillStyle = "#fff"; logoText(sx, cy, S);
+    const ty = cy + S*LOGO_H/2 + S*.12 + (V9 ? 80 : 64);
     const l1 = ease(seg(ue, 51.6, 52.4)), l2 = ease(seg(ue, 52.5, 53.3)), l3 = ease(seg(ue, 53.4, 54.0)), fs = V9 ? 68 : 72;
     g.textAlign = "center"; g.textBaseline = "top"; g.font = F(800, fs);
     g.globalAlpha = end*l1; g.fillStyle = "#fff"; g.fillText(tx("tag1"), cx, ty + (1-l1)*14);
