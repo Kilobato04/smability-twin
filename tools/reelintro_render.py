@@ -1,10 +1,12 @@
 """Exporta reelintro/ a MP4 cuadro a cuadro (render(t) es determinista).
-Uso: python3 tools/reelintro_render.py <url_base> <h|v> <es|en> <fps> <salida.mp4>
+Uso: python3 tools/reelintro_render.py <url_base> <h|v> <es|en> <fps> <salida.mp4> [audio.mp3]
+  audio.mp3 (opcional): p. ej. reelintro/audio/musica.mp3; se agrega como pista de audio (AAC 192k)
   url_base: p. ej. http://localhost:8765/reelintro/index.html (servir el repo con cualquier servidor estático)
 Requiere: playwright (chromium) y ffmpeg."""
 import asyncio, subprocess, sys
 from playwright.async_api import async_playwright
 base, fmt, lang, fps, out = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), sys.argv[5]
+audio = sys.argv[6] if len(sys.argv) > 6 else None
 W, H = (1920, 1080) if fmt == "h" else (1080, 1920)
 async def main():
     async with async_playwright() as p:
@@ -14,6 +16,7 @@ async def main():
         await pg.wait_for_function("window.REEL && REEL.ready", timeout=120000)
         dur = await pg.evaluate("REEL.duration"); n = int(round(dur * fps))
         ff = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "image2pipe", "-framerate", str(fps), "-c:v", "mjpeg", "-i", "-",
+                               *(["-i", audio, "-map", "0:v", "-map", "1:a", "-c:a", "aac", "-b:a", "192k", "-shortest"] if audio else []),
                                "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out], stdin=subprocess.PIPE)
         for i in range(n):
             await pg.evaluate(f"REEL.seek({i / fps:.5f})")
