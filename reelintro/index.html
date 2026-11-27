@@ -42,6 +42,7 @@ body.render #ctl,body.render #play,body.render #load{display:none!important}
   <button id="bPlay" type="button" aria-label="Reproducir o pausar">▶</button>
   <button id="bLang" type="button" aria-label="Idioma de subtítulos">ES</button>
   <button id="bFmt" type="button" aria-label="Formato">16:9</button>
+  <button id="bSnd" type="button" aria-label="Silenciar música" aria-pressed="false">♪</button>
   <button id="bFs" type="button" aria-label="Pantalla completa">⛶</button>
   <span class="t" id="tOut">0:00 / 1:18</span>
   <input id="scrub" type="range" min="0" max="78" step="0.02" value="0" aria-label="Posición">
@@ -871,13 +872,26 @@ addEventListener("resize", fit);
 /* ================= REPRODUCCIÓN ================= */
 let cur = clamp(+(Q.get("t") || 0) || 0, 0, CONFIG.duration), playing = false, last = 0;
 const fmtT = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
+/* música: «Neon Drive» (Artur Aravidi · Pixabay), editada a 78 s sobre el ritmo (100 BPM):
+   intro 0–8 s · entra el ritmo con la onda (≈8 s) · pausa ambiental dentro de SMAA (≈26–47 s) · vuelve al cerrar la vista explosionada (≈48.6 s) · final natural en el logo */
+const music = new Audio(); music.preload = "auto";
+// se descarga completa (≈1.9 MB) para poder adelantar y atrasar en cualquier servidor
+fetch("audio/musica.mp3").then(r=> r.ok ? r.blob() : Promise.reject()).then(bl=>{ music.src = URL.createObjectURL(bl); }).catch(()=>{ music.src = "audio/musica.mp3"; });
+let muted = Q.get("mute") === "1";
+function syncAudio(){
+  const ok = playing && !muted && !RENDER_MODE && cur < CONFIG.duration - .05;
+  if(ok){ if(music.paused){ try{ music.currentTime = cur; }catch(_){} music.play().catch(()=>{}); }
+    else if(Math.abs(music.currentTime - cur) > .25){ try{ music.currentTime = cur; }catch(_){} } }
+  else if(!music.paused) music.pause();
+}
+function setMute(m){ muted = m; const b = $("bSnd"); b.setAttribute("aria-pressed", m ? "true" : "false"); b.textContent = m ? "♪̸" : "♪"; b.setAttribute("aria-label", m ? "Activar música" : "Silenciar música"); }
 function setPlaying(on){
   playing = on; document.body.classList.toggle("playing", on); $("bPlay").textContent = on ? "❚❚" : "▶";
   if(on){ $("play").hidden = true; poke(); } else document.body.classList.remove("idle");
 }
 function loop(now){
   if(playing){ cur += Math.min(.1, (now - last)/1000); if(cur >= CONFIG.duration){ cur = CONFIG.duration; setPlaying(false); } }
-  last = now; render(cur);
+  last = now; syncAudio(); render(cur);
   $("scrub").value = cur; $("tOut").textContent = `${fmtT(cur)} / ${fmtT(CONFIG.duration)}`;
   if(!RENDER_MODE) requestAnimationFrame(loop);
 }
@@ -886,9 +900,10 @@ $("play").onclick = play;
 $("bPlay").onclick = ()=>{ playing ? setPlaying(false) : play(); };
 $("bLang").onclick = ()=>{ LANG = LANG === "es" ? "en" : "es"; document.documentElement.lang = LANG; fit(); };
 $("bFmt").onclick = ()=>{ FMT = FMT === "v" ? "h" : "v"; fit(); };
+$("bSnd").onclick = ()=> setMute(!muted); setMute(muted);
 $("bFs").onclick = ()=>{ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.(); };
 $("scrub").oninput = e=>{ cur = +e.target.value; $("play").hidden = true; };
-addEventListener("keydown", e=>{ if(e.key === " "){ e.preventDefault(); $("bPlay").click(); } else if(e.key === "l" || e.key === "L") $("bLang").click(); else if(e.key === "f" || e.key === "F") $("bFs").click(); else if(e.key === "ArrowRight") cur = clamp(cur + 2, 0, CONFIG.duration); else if(e.key === "ArrowLeft") cur = clamp(cur - 2, 0, CONFIG.duration); poke(); });
+addEventListener("keydown", e=>{ if(e.key === " "){ e.preventDefault(); $("bPlay").click(); } else if(e.key === "l" || e.key === "L") $("bLang").click(); else if(e.key === "f" || e.key === "F") $("bFs").click(); else if(e.key === "m" || e.key === "M") $("bSnd").click(); else if(e.key === "ArrowRight") cur = clamp(cur + 2, 0, CONFIG.duration); else if(e.key === "ArrowLeft") cur = clamp(cur - 2, 0, CONFIG.duration); poke(); });
 /* los controles se esconden solos mientras corre el reel; vuelven al mover el mouse o tocar la pantalla */
 let idleT; function poke(){ document.body.classList.remove("idle"); clearTimeout(idleT); idleT = setTimeout(()=>{ if(playing) document.body.classList.add("idle"); }, 2000); }
 addEventListener("pointermove", poke); addEventListener("pointerdown", poke);

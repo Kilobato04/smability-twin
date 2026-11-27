@@ -11,10 +11,13 @@ y lecturas → los datos suben a AIreGPT → cierre.
 - Versión Mapbox: `/reelintro/?map=1` — al abrirse la toma (53–62 s) aparece Mapbox con el combo en la azotea de la oficina
   (casa de 2 pisos, 6 m; 19.414878, −99.167249). Altura y rumbo en `CONFIG.site` (`roofH`, `bearing`). Si Mapbox no carga, sigue en limbo.
 - Parámetros: `?lang=es|en` · `?format=h|v` (16:9 o 9:16) · `?t=20` · `?autoplay=1` · `?render=1` (sin controles, para exportar).
-- Teclas: espacio (pausa), L (idioma), F (pantalla completa), ← → (±2 s). Los controles se esconden solos mientras corre el reel.
+- Teclas: espacio (pausa), L (idioma), M (música), F (pantalla completa), ← → (±2 s). Los controles se esconden solos mientras corre el reel.
 - Subtítulos: botón ES/EN en la página; para video, `subtitulos_es.srt` y `subtitulos_en.srt`.
 - Datos simulados, sin ciudad ni hora en el texto.
-- Exportar a MP4: `python3 tools/reelintro_render.py http://localhost:8000/reelintro/index.html h es 30 salida.mp4`
+- Música: `audio/musica.mp3` — «Neon Drive» de Artur Aravidi (Pixabay, licencia de contenido de Pixabay), editada a 78 s sobre el ritmo
+  (100 BPM): intro 0–8 s, entra el ritmo con la onda, pausa ambiental dentro de SMAA (≈26–47 s), vuelve al cerrar la vista
+  explosionada (≈48.6 s) y termina con el logo. Botón ♪ para silenciar; `?mute=1` la apaga.
+- Exportar a MP4 (con música): `python3 tools/reelintro_render.py http://localhost:8000/reelintro/index.html h es 30 salida.mp4 reelintro/audio/musica.mp3`
 
 ## Versiones
 - v1 (26 nov): primera versión completa, sin música.
@@ -34,3 +37,4 @@ y lecturas → los datos suben a AIreGPT → cierre.
 - v9 (27 nov): nueva conversación de AIreGPT con el estilo de airegpt.ai (Telegram): pregunta del usuario, tarjeta «Aire ahora · casa»
   (IAS regular 62, PM2.5 38 µg/m³, ozono 21 ppb, clima), notificación «Regresa la lluvia · trabajo» y alerta de lluvia; el teléfono
   dura ~11 s; duración 78 s.
+- v10 (27 nov): música de fondo («Neon Drive», editada al ritmo del reel), botón ♪ y exportación con audio.
