@@ -1,31 +1,39 @@
 1
-00:00:08,200 --> 00:00:12,200
-Una tarde fría de diciembre, en la Ciudad de México.
+00:00:01,200 --> 00:00:06,500
+La naturaleza habla en ondas. Nosotros la traducimos.
 
 2
-00:00:13,000 --> 00:00:16,600
-En un poste, SMAA despierta…
+00:00:08,200 --> 00:00:12,600
+El aire no se ve. Pero se puede entender.
 
 3
-00:00:16,800 --> 00:00:20,600
-…y empieza a respirar.
+00:00:13,400 --> 00:00:17,600
+CHAAK siente el viento y la lluvia…
 
 4
-00:00:21,600 --> 00:00:26,400
-Un láser cuenta cada partícula que cruza su paso.
+00:00:18,200 --> 00:00:21,800
+…y SMAA despierta…
 
 5
-00:00:27,000 --> 00:00:31,600
-Los gases reaccionan en electrodos y se vuelven corriente.
+00:00:22,000 --> 00:00:25,600
+…para respirar el aire.
 
 6
-00:00:32,300 --> 00:00:36,400
-Cada pulso se vuelve una medición…
+00:00:26,600 --> 00:00:31,400
+Un láser cuenta cada partícula que cruza su paso.
 
 7
-00:00:36,600 --> 00:00:41,400
-…y cada medición, un dato abierto.
+00:00:32,000 --> 00:00:36,600
+Los gases reaccionan en electrodos y se vuelven corriente.
 
 8
-00:00:42,600 --> 00:00:49,200
+00:00:37,300 --> 00:00:41,400
+Cada pulso se vuelve una medición…
+
+9
+00:00:41,600 --> 00:00:46,400
+…y cada medición, un dato abierto.
+
+10
+00:00:47,600 --> 00:00:54,200
 Así llega a AIreGPT: para que sepas qué hacer.

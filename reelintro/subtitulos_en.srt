@@ -1,31 +1,39 @@
 1
-00:00:08,200 --> 00:00:12,200
-A cold December evening in Mexico City.
+00:00:01,200 --> 00:00:06,500
+Nature speaks in waves. We translate it.
 
 2
-00:00:13,000 --> 00:00:16,600
-On a pole, SMAA wakes up…
+00:00:08,200 --> 00:00:12,600
+You can't see the air. But you can understand it.
 
 3
-00:00:16,800 --> 00:00:20,600
-…and starts to breathe.
+00:00:13,400 --> 00:00:17,600
+CHAAK feels the wind and the rain…
 
 4
-00:00:21,600 --> 00:00:26,400
-A laser counts every particle that crosses its beam.
+00:00:18,200 --> 00:00:21,800
+…and SMAA wakes up…
 
 5
-00:00:27,000 --> 00:00:31,600
-Gases react on electrodes and become current.
+00:00:22,000 --> 00:00:25,600
+…to breathe the air.
 
 6
-00:00:32,300 --> 00:00:36,400
-Every pulse becomes a measurement…
+00:00:26,600 --> 00:00:31,400
+A laser counts every particle that crosses its beam.
 
 7
-00:00:36,600 --> 00:00:41,400
-…and every measurement, open data.
+00:00:32,000 --> 00:00:36,600
+Gases react on electrodes and become current.
 
 8
-00:00:42,600 --> 00:00:49,200
+00:00:37,300 --> 00:00:41,400
+Every pulse becomes a measurement…
+
+9
+00:00:41,600 --> 00:00:46,400
+…and every measurement, open data.
+
+10
+00:00:47,600 --> 00:00:54,200
 That's how it reaches AIreGPT, so you know what to do.
