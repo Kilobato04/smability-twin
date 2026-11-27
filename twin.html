@@ -186,6 +186,7 @@ body.field-open .cut-stage{display:none}
 #partsLegend button[aria-pressed="true"]{background:var(--bg);font-weight:700}
 #partsLegend button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 #partsLegend i{width:12px;height:12px;border-radius:3px;flex:none}
+#partsLegend[hidden]{display:none}
 body[data-render="xray"] #stage{background:radial-gradient(120% 90% at 50% 30%,#0d2a3e 0%,#04101a 72%)}
 body[data-render="tech"] #stage{background-color:#fbfbf8;background-image:linear-gradient(#e4e8e6 1px,transparent 1px),linear-gradient(90deg,#e4e8e6 1px,transparent 1px);background-size:24px 24px}
 .src{position:absolute;right:14px;top:12px;font-family:var(--f-mono);font-size:10px;letter-spacing:.06em;padding:3px 7px;border-radius:5px;border:1px solid var(--line);background:var(--surface);color:var(--muted)}
@@ -479,7 +480,7 @@ iframe{display:none!important}
   <div class="dock">
     <div class="mhead"><b>Explorar</b><button class="x" type="button" data-close aria-label="Cerrar">×</button></div>
     <button class="btn tour" id="bTour" aria-pressed="false">Tour</button>
-    <div class="btngroup" role="group" aria-label="Vistas"><button class="btn" id="bExplode" aria-pressed="false">Vista explosionada</button><button class="btn" id="bPlan" aria-pressed="false">Vista en planta</button><button class="btn" id="bReset">Reiniciar vista</button></div>
+    <div class="btngroup" role="group" aria-label="Vistas"><button class="btn" id="bExplode" aria-pressed="false">Vista explosionada</button><button class="btn" id="bInside" aria-pressed="false" title="Carcasa de SMAA translúcida para ver sensores, tarjeta y batería">Ver interior</button><button class="btn" id="bPlan" aria-pressed="false">Vista en planta</button><button class="btn" id="bReset">Reiniciar vista</button></div>
     <button class="btn" id="bRain" aria-pressed="false">Simular lluvia</button>
     <button class="btn dz-right" id="bField" aria-pressed="false">Modo campo</button>
     <button class="btn primary-o" id="bSheet">Ficha de instalación</button>
@@ -782,7 +783,7 @@ function pvNow(city, frontAz){        // potencia instantánea demo del panel (W
 const state = {
   ref:"none", refAz:45, refDist:6,
   view:"chaak", city:"cdmx", load:"tipico", orient:"auto", month:new Date().getMonth(), hour:13, frontAz:0,
-  explode:0, explodeTarget:0, rain:false, plan:false,
+  explode:0, explodeTarget:0, inside:false, rain:false, plan:false,
   selected:null, hovered:null, env:{}, lastUpdate:null
 };
 state.smaaH = "arriba";   // altura de SMAA a criterio del instalador: «arriba» (bajo el cople) o «nivel» (junto a CHAAK alta)
@@ -869,18 +870,33 @@ const INFO = {
   screws:    {title:"Tornillos de la carcasa", sub:"2 × M3 · atraviesan el tubo y fijan las abrazaderas", metric:null},
   // SMAA real (models/smaa.glb)
   smaa_case: {title:"Carcasa SMAA · tapa superior", sub:"Fija a la pestaña de la placa soporte con 2 tornillos · electrónica, módem 2G/4G (SIM Hologram), GPS y batería interna LiPo 7.4 Wh de respaldo (~10 h)", metric:"rssi"},
-  smaa_sens: {title:"Módulo de sensores SMAA", sub:"PM2.5 y PM10 (cálculo) · 2 gases intercambiables · temperatura y humedad · ruido · GPS · resolución de 1 a 5 min", metric:"pm25",
+  smaa_sens: {title:"Carcasa SMAA · base con sensores", sub:"PM2.5 y PM10 (cálculo) · 2 gases intercambiables · temperatura y humedad · ruido · GPS · resolución de 1 a 5 min", metric:"pm25",
               note:"Tomas de aire en la parte baja de la carcasa: el panel y la pestaña las cubren de la lluvia directa sin cerrar el paso del aire. Gases disponibles: CO, O₃, NO₂, SO₂, H₂S, CH₄, NH₃ y TRS (una 3.ª ranura si se necesita). Calibración remota por SMS; O₃ publicado: R² 0.72 → 0.91 contra la red oficial (CCA)."},
   screws_smaa:{title:"Tornillos mango ↔ pestaña", sub:"2 × M5 · atraviesan la barra del mango de SMAA y las ranuras de la pestaña del soporte; rondana y tuerca por debajo", metric:null},
   screws_bat:{title:"Tornillos de la batería", sub:"4 × M3 avellanados · fijan las orejas de la batería a los barrenos internos de la placa; tuerca por debajo", metric:null},
   screws_panel:{title:"Tornillos del panel", sub:"4 × M4 · fijan el panel a la placa inclinada del soporte; rondana y tuerca por debajo", metric:null},
+  // Interior de SMAA (models/smaa.glb, piezas smaa_in_*)
+  smaa_pcb:  {title:"Tarjeta principal SMAA", sub:"Apoya en las costillas de la base y en el poste de la tapa · lleva los 2 sensores de gas, el módem 2G/4G y la carga de la batería", metric:null},
+  smaa_gas:  {title:"Sensores de gas", sub:"2 sensores electroquímicos intercambiables · asentados en sus aros del piso, con toma de aire por abajo", metric:"o3",
+              note:"Gases disponibles: CO, O₃, NO₂, SO₂, H₂S, CH₄, NH₃ y TRS. Se cambian sin abrir la tarjeta; calibración remota por SMS."},
+  smaa_pm:   {title:"Sensor de partículas", sub:"PM2.5 y PM10 (cálculo) · dispersión láser · su ventilador descarga por el túnel extractor hacia la cara trasera", metric:"pm25",
+              note:"Descansa sobre el pretil del bolsillo frontal, entre los postes de la base. La toma más chica es la que respira; el ventilador queda alineado con la boca del túnel."},
+  smaa_thr:  {title:"Sensor de temperatura y humedad", sub:"Asoma por la ventana hexagonal del piso: mide el aire bajo la carcasa, a la sombra", metric:"temp"},
+  smaa_gps:  {title:"GPS", sub:"Bajo el techo de la tapa, entre sus clips · ubica la estación en el mapa y fija la hora", metric:null},
+  smaa_noise:{title:"Sensor de ruido", sub:"Placa sobre 4 postes del piso · micrófono en el poste libre, con salida al exterior", metric:null},
+  smaa_sw:   {title:"Interruptores", sub:"ON/OFF y modo Móvil/Fijo · redondos, en los barrenos del piso de la base", metric:null},
+  smaa_lipo: {title:"Batería interna LiPo", sub:"7.4 Wh de respaldo (~10 h) · parada en la cavidad de la pared frontal", metric:"batt"},
+  smaa_silica:{title:"Bolsa de sílica gel", sub:"Absorbe la humedad dentro de la carcasa · va en los clips de la pared lateral; se cambia en el mantenimiento", metric:null},
   battery:   {title:"Batería Voltaic V75", sub:"72 Wh · Li-Ion NMC · 5 V / 2 A · bajo la placa del panel · deja de cargar arriba de 45 °C · más la LiPo interna de 7.4 Wh", metric:"batt"},
 };
 /* CHAAK real: altura a la que se monta su base sobre el mástil del trípode (m) */
 const CHAAK_BASE_Y = 1.12;          // tope del mástil de 1.25" del trípode (models/montaje.glb)
 const SMAA_DY = 0;                 // SMAA provisional ya colocada a la altura de la carcasa original de CHAAK
 const SMAA_BASE_Y = CHAAK_BASE_Y + .335;   // SMAA real: cara inferior de la pestaña de la placa soporte, sobre el tubo de CHAAK
-const SMAA_EXPLODE = {arms:[0,0,0], smaa_case:[-.1,-.06,0], smaa_sens:[-.1,-.22,0], solar:[-.22,.2,0], battery:[-.04,.04,.3], screws_smaa:[-.1,.06,0], screws_panel:[-.3,.3,0], screws_bat:[-.04,.04,.42]};
+const SMAA_EXPLODE = {arms:[0,0,0], smaa_case:[-.1,-.06,0], smaa_sens:[-.1,-.22,0], solar:[-.22,.2,0], battery:[-.04,.04,.3], screws_smaa:[-.1,.06,0], screws_panel:[-.3,.3,0], screws_bat:[-.04,.04,.42],
+  // interior: sale de la base (base −.22, tapa −.06); T/H e interruptores bajan por sus barrenos del piso
+  smaa_gps:[-.1,-.11,0], smaa_pcb:[-.1,-.15,0], smaa_gas:[-.1,-.15,0], smaa_pm:[-.2,-.19,-.02], smaa_noise:[-.1,-.2,0],
+  smaa_thr:[-.1,-.29,0], smaa_sw:[-.1,-.3,0], smaa_lipo:[-.25,-.2,.02], smaa_silica:[-.1,-.2,-.1]};
 let LEG = {r:.95, a0:30};           // patas para la ficha (se actualiza con el trípode real)
 const CHAAK_EXPLODE = {head:[0,.34,0], cabezal:[0,.22,0], cople_sup:[0,.12,0], tubo:[0,0,0], cople_base:[0,-.18,0], tapa:[.5,0,0], logger:[.22,0,0], screws:[-.18,0,0], screws_head:[0,.34,0]};
 const INLET = {chaak:1.74, smaa:1.25};   // altura de tomas (m); CHAAK se recalcula con el modelo real
@@ -1071,7 +1087,8 @@ function refreshRefCheck(){
 
 /* Modelos reales: los tres .glb comparten el mismo sistema de coordenadas (el del ensamble en AutoCAD):
    Y arriba, metros, origen en la base del trípode, brazos de sensores hacia +X, cara principal hacia −X. */
-const KEYMAP = [["tornillos_bateria","screws_bat"],["tornillos_mango","screws_smaa"],["tornillos_panel","screws_panel"],["soporte_panel","arms"],["smaa_top","smaa_case"],["smaa_bottom","smaa_sens"],["panel_solar","solar"],["bateria","battery"],["tornillos_sensor","screws_head"],["tornillo","screws"],["sensorsolido","head"],["tapa_carcasa","tapa"],["base_carcasa","logger"],["cabezal","cabezal"],["cople_rosca_base","cople_base"],["cople_rosca_soporte","cople_sup"],["tubo_soporte","tubo"],["pm","pm"],["particul","pm"],["gas","gas"],["thr","thr"],["escudo","thr"],["anem","wind"],["vele","wind"],["wind","wind"],
+const KEYMAP = [["smaa_in_tarjeta","smaa_pcb"],["smaa_in_gases","smaa_gas"],["smaa_in_pm25","smaa_pm"],["smaa_in_temphum","smaa_thr"],["smaa_in_gps","smaa_gps"],["smaa_in_ruido","smaa_noise"],["smaa_in_switches","smaa_sw"],["smaa_in_lipo","smaa_lipo"],["smaa_in_silica","smaa_silica"],
+  ["tornillos_bateria","screws_bat"],["tornillos_mango","screws_smaa"],["tornillos_panel","screws_panel"],["soporte_panel","arms"],["smaa_top","smaa_case"],["smaa_bottom","smaa_sens"],["panel_solar","solar"],["bateria","battery"],["tornillos_sensor","screws_head"],["tornillo","screws"],["sensorsolido","head"],["tapa_carcasa","tapa"],["base_carcasa","logger"],["cabezal","cabezal"],["cople_rosca_base","cople_base"],["cople_rosca_soporte","cople_sup"],["tubo_soporte","tubo"],["pm","pm"],["particul","pm"],["gas","gas"],["thr","thr"],["escudo","thr"],["anem","wind"],["vele","wind"],["wind","wind"],
   ["pluv","rain"],["rain","rain"],["solar","solar"],["panel","solar"],["gabinete","logger"],["logger","logger"],["brazo","arms"],["tripod","tripod"],["mast","mast"]];
 async function tryLoadGLB(owner, url, fallbackKey){
   if(!THREE.GLTFLoader) return;
@@ -1111,6 +1128,7 @@ async function tryLoadGLB(owner, url, fallbackKey){
       const sens = meshes.find(o=>/smaa_bottom/i.test(o.name));
       if(sens){ sens.geometry.computeBoundingBox(); const bb = sens.geometry.boundingBox; INLET_SMAA0 = +(SMAA_BASE_Y + sens.position.y + (bb.min.y + bb.max.y)/2).toFixed(2); }
       INFO.solar.sub = "Fijo a la placa soporte · 37° de fábrica, mirando a la cara principal";
+      if(state.inside) setTimeout(applyInside, 0);
     }
     if(owner===RIG){
       RIG.real = true; MAST_TOP = CHAAK_BASE_Y; LEG = {r:.355, a0:46};
@@ -1298,10 +1316,21 @@ function setView(view){
   showSource(); refreshPanel();
 }
 function toggleExplode(){ state.explodeTarget = state.explodeTarget?0:1; setPressed($("bExplode"), !!state.explodeTarget); if(reduceMotion) state.explode = state.explodeTarget; }
+/* Ver interior: la carcasa de SMAA (tapa y base) se vuelve translúcida */
+function applyInside(){
+  const on = state.inside;
+  ["smaa_case","smaa_sens"].forEach(k=>{ const p = ST.smaa && ST.smaa.parts[k]; if(!p) return;
+    p.group.traverse(o=>{ if(!o.isMesh || o.userData.isEdge || o.userData.isCap) return;
+      const m = o.userData.origMat || o.material; m.transparent = on; m.opacity = on ? .2 : 1; m.depthWrite = !on; m.needsUpdate = true;
+      o.castShadow = !on; }); });
+  setPressed($("bInside"), on);
+}
+function toggleInside(){ state.inside = !state.inside; if(state.inside && state.view==="chaak") setView("smaa"); applyInside(); }
 function toggleRain(){ state.rain = !state.rain; setPressed($("bRain"), state.rain); rainLines.visible = state.rain; mockTick(); record(); refreshPanel(); }
 function togglePlan(){ state.plan = !state.plan; setPressed($("bPlan"), state.plan); camera = state.plan?ortho:persp; controls.enabled = !state.plan; resize(); }
 $("bExplode").onclick = ()=>{ stopTour(); toggleExplode(); };
 $("bRain").onclick = ()=>{ stopTour(); toggleRain(); };
+$("bInside").onclick = ()=>{ stopTour(); toggleInside(); };
 $("bPlan").onclick = ()=>{ stopTour(); togglePlan(); };
 $("bReset").onclick = ()=>{ stopTour(); if(state.plan) togglePlan(); resetView(); };
 
@@ -1466,6 +1495,13 @@ const ROWS = {
   logger:[["Cara principal",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 2G/4G",v=>f(v.rssi),"dBm"]],
   smaa_case:[["Mira hacia",()=>`${cardinal(state.frontAz)} ${state.frontAz}`,"°"],["Señal 2G/4G",v=>f(v.rssi),"dBm"],["GPS",()=>c().lat.toFixed(4)+", "+c().lon.toFixed(4),""],["Última calibración",(v,st)=>calTxt(st),""]],
   smaa_sens:[["PM2.5",v=>f(v.pm25),"µg/m³"],["PM10",v=>f(v.pm10),"µg/m³"],...[0,1].map(i=>[`<span class="gslot">Ranura ${i+1}</span> `+GASES[SMAA_GASES[i]].label, v=>f(v[SMAA_GASES[i]], GASES[SMAA_GASES[i]].d), GASES[SMAA_GASES[i]].u]),["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh),"%"],["Ruido",v=>f(v.noise),"dB"],["Altura de toma",(v,st)=>INLET[st.key],"m"]],
+  smaa_gas:[...[0,1].map(i=>[`<span class="gslot">Ranura ${i+1}</span> `+GASES[SMAA_GASES[i]].label, v=>f(v[SMAA_GASES[i]], GASES[SMAA_GASES[i]].d), GASES[SMAA_GASES[i]].u])],
+  smaa_pm:[["PM2.5",v=>f(v.pm25),"µg/m³"],["PM10",v=>f(v.pm10),"µg/m³"],["Altura de toma",(v,st)=>INLET[st.key],"m"]],
+  smaa_thr:[["Temperatura",v=>f(v.temp,1),"°C"],["Humedad relativa",v=>f(v.rh),"%"]],
+  smaa_noise:[["Ruido",v=>f(v.noise),"dB"]],
+  smaa_gps:[["Posición",()=>c().lat.toFixed(4)+", "+c().lon.toFixed(4),""]],
+  smaa_pcb:[["Señal 2G/4G",v=>f(v.rssi),"dBm"],["Última calibración",(v,st)=>calTxt(st),""]],
+  smaa_lipo:[["Capacidad",()=>`${PV.intWh} Wh`,""],["Carga",v=>f(v.batt),"%"]],
   battery:[["Carga",v=>f(v.batt),"%"],["Panel",v=>f(v.solarW,1),"W"],["Capacidad",()=>`${PV.battWh} Wh externa + ${PV.intWh} Wh interna`,""],["Autonomía sin sol",()=> state.energy ? state.energy.autonomy.toFixed(1) : "—","días"],["Consumo supuesto",()=>`${LOADS[state.load].w} W (${LOADS[state.load].label.toLowerCase()})`,""]],
   screws_smaa:[["Cantidad",()=>"2",""],["Medida",()=>"M5",""],["Separación entre barrenos",()=>"50","mm"]],
   screws_bat:[["Cantidad",()=>"4",""],["Medida",()=>"M3",""],["Lado",()=>"derecho, de frente al panel",""]],
@@ -1487,7 +1523,7 @@ function statusFor(key, st){
   const band = (val,b)=> b.find(x=>val<=x[0]);
   if(key==="smaa_sens" && v.pm25!=null){ const s = band(v.pm25,BANDS.pm25); return `<span class="pill ${s[2]}">Aire: ${s[1]}</span>`; }
   if(key==="battery" && v.batt!=null) return v.batt>=40 ? `<span class="pill ok">Batería ${f(v.batt)}%</span>` : `<span class="pill warn">Batería baja</span>`;
-  if(key==="pm" && v.pm25!=null){ const s = band(v.pm25,BANDS.pm25); return `<span class="pill ${s[2]}">${pre}Aire: ${s[1]}</span>`; }
+  if((key==="pm" || key==="smaa_pm") && v.pm25!=null){ const s = band(v.pm25,BANDS.pm25); return `<span class="pill ${s[2]}">${pre}Aire: ${s[1]}</span>`; }
   if(key==="gas" && v.o3!=null){ const s = band(v.o3,BANDS.o3); return `<span class="pill ${s[2]}">${pre}Ozono: ${s[1]}</span>`; }
   if(key==="head") return v.rain>0 ? `<span class="pill info">${v.ptype||"Lluvia"} · viento del ${cardinal(v.wd)}</span>` : `<span class="pill ok">Sin lluvia · viento del ${cardinal(v.wd)}</span>`;
   if((key==="logger"||key==="tapa"||key==="smaa_case") && v.rssi!=null) return v.rssi>=-85 ? `<span class="pill ok">${pre}Señal celular buena</span>` : v.rssi>=-100 ? `<span class="pill warn">${pre}Señal débil · revisa cobertura</span>` : `<span class="pill bad">${pre}Sin señal suficiente</span>`;
@@ -1896,6 +1932,7 @@ async function runTour(){
   const steps = [
     [pick(["chaak","head"],["chaak","wind"]), "Clima en tiempo real: viento, temperatura, humedad, presión y lluvia"],
     [pick(["smaa","smaa_sens"],["smaa","pm"]), "Calidad del aire en tiempo real: PM2.5, PM10, 2 gases intercambiables y ruido"],
+    [pick(["smaa","smaa_pm"]), "Por dentro de SMAA: partículas, 2 gases, temperatura y humedad, ruido, GPS y batería de respaldo"],
     [pick(["smaa","solar"]), "Panel fijo a 37°: carga la batería y cubre las tomas de la lluvia"],
     [pick(["chaak","tapa"],["chaak","logger"]), "Electrónica protegida en la cara principal"],
   ];
@@ -1995,11 +2032,12 @@ buildDial();
 var RENDER = {mode:"real", iso:null};
 const RENDER_MODES = ["real","xray","tech","parts"];
 const PART_GROUPS = [
-  {id:"sensor",   label:"Sensores",       color:0x2f8fd8, keys:["head","pm","gas","thr","wind","rain","smaa_sens"]},
-  {id:"carcasa",  label:"Carcasa",        color:0xe0a030, keys:["tapa","logger","smaa_case"]},
+  {id:"sensor",   label:"Sensores",       color:0x2f8fd8, keys:["head","pm","gas","thr","wind","rain","smaa_pm","smaa_gas","smaa_thr","smaa_noise","smaa_gps"]},
+  {id:"electro",  label:"Electrónica",    color:0x23a06a, keys:["smaa_pcb","smaa_sw"]},
+  {id:"carcasa",  label:"Carcasa",        color:0xe0a030, keys:["tapa","logger","smaa_case","smaa_sens","smaa_silica"]},
   {id:"soporte",  label:"Soporte",        color:0x8b929c, keys:["cabezal","cople_sup","tubo","cople_base","arms"]},
   {id:"torni",    label:"Tornillería",    color:0xd8455c, keys:["screws","screws_head","screws_smaa","screws_panel","screws_bat"]},
-  {id:"energia",  label:"Energía",        color:0x7a5fd6, keys:["solar","battery"]},
+  {id:"energia",  label:"Energía",        color:0x7a5fd6, keys:["solar","battery","smaa_lipo"]},
   {id:"montaje",  label:"Montaje",        color:0x2fa37c, keys:["tripod","mast"]},
   {id:"ref",      label:"Referencia",     color:0xb7b2a8, keys:["__landmark"]},
 ];
@@ -2082,6 +2120,7 @@ function applyRender(){
   $("partsLegend").hidden = m !== "parts";
   document.querySelectorAll("#partsLegend button").forEach(b=> setPressed(b, RENDER.iso === b.dataset.g));
   drawGround(); if(typeof CUT !== "undefined" && CUT) applyCut();
+  if(state.inside) applyInside();
 }
 
 /* ================= CORTES (longitudinal y transversal) ================= */
