@@ -68,7 +68,7 @@ const CONFIG = {
   // Versión Mapbox: el combo en su trípode, en la azotea del antiguo edificio de la Secretaría de Salud (Reforma y Lieja).
   // roofH: altura de la azotea sobre la calle (m, estimada: 4 niveles altos + basamento). Si el trípode flota o se hunde en el
   // edificio de Mapbox, se ajusta aquí. bearing: hacia dónde mira el eje +Z local (grados desde el norte; 58° = a lo largo de Reforma).
-  reforma: {lat:19.422432228118673, lon:-99.17561381529838, bearing:58, roofH:19}
+  reforma: {lat:19.422432228118673, lon:-99.17561381529838, bearing:58, roofH:17}
 };
 const Q = new URLSearchParams(location.search);
 const $ = id => document.getElementById(id);
@@ -477,17 +477,18 @@ function updateScene(t){
   WAVE.done();
 
   /* lluvia y rebotes */
-  const rain = ease(seg(t, 13.6, 15.4)) * (1 - ease(seg(t, 50, 53))), inMacro = 1 - .75*inside;
+  /* la lluvia empieza ya en el acercamiento a CHAAK (antes se veía como «basurita» cayendo sobre la ciudad lejana) */
+  const rain = ease(seg(t, 14.4, 16.0)) * (1 - ease(seg(t, 50, 53))), farRain = ease(seg(t, 16.0, 18.5)), inMacro = 1 - .75*inside;
   const rp = RAIN.geometry.attributes.position.array, rc = RAIN.geometry.attributes.color.array;
   let sp = 0;
   for(let i=0;i<RAIN_N;i++){
     const d = RAIN_DROP[i], per = d.H/d.v, top = (d.near ? SMAA_Y + 2.2 : 14), surf = surfaceAt(d);
     const fall = ((t/per + d.ph) % 1) * d.H, y = top - fall, dt = (top - y)/d.v;
     const x = d.x + WIND.x*(dt - (top - surf)/d.v), z = d.z + WIND.z*(dt - (top - surf)/d.v);   // cae justo sobre su punto de impacto
-    const L = d.near ? .09 : .32, vis = (y > surf ? 1 : 0) * rain * (d.near ? inMacro : 1);
-    const o = i*6, k = WIND.clone().multiplyScalar(L/d.v);
-    rp[o] = x; rp[o+1] = y; rp[o+2] = z; rp[o+3] = x - k.x; rp[o+4] = y + L; rp[o+5] = z - k.z;
-    const c = vis*(d.near ? .75 : .45); for(let j=0;j<6;j+=3){ rc[o+j] = c*.75; rc[o+j+1] = c*.85; rc[o+j+2] = c; }
+    const L = d.near ? .09 : .32, vis = (y > surf ? 1 : 0) * rain * (d.near ? inMacro : farRain);
+    const o = i*6, k = WIND.clone().multiplyScalar(L/d.v), Lv = vis > .02 ? L : 0;          // gota apagada = segmento de largo cero
+    rp[o] = x; rp[o+1] = y; rp[o+2] = z; rp[o+3] = x - (Lv ? k.x : 0); rp[o+4] = y + Lv; rp[o+5] = z - (Lv ? k.z : 0);
+    const c = vis*(d.near ? .8 : .6); for(let j=0;j<6;j+=3){ rc[o+j] = c*.82; rc[o+j+1] = c*.9; rc[o+j+2] = c; }
     /* rebote: cada impacto suelta gotitas en arco durante 0.45 s */
     if(!d.near || sp >= SPLASH.n - 6) continue;
     let tImp = ((Math.floor(t/per + d.ph) - d.ph) + (top - surf)/d.H)*per; if(t - tImp < 0) tImp -= per; const age = t - tImp;

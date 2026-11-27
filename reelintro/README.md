@@ -22,3 +22,4 @@ y respira → láser (física) → electrodos (química) → mediciones → API 
   controles que se esconden; versión `?map=reforma` con Mapbox. Duración 60 s.
 - v3 (26 nov 2026): Mapbox en la azotea (trípode, altura del edificio, llegada desde Chapultepec y paneo de la ciudad alrededor
   del combo); transición sólido → translúcido más suave y escalonada (primero CHAAK, panel y poste; luego la carcasa de SMAA).
+- v4 (26 nov 2026): azotea 2 m más abajo (`roofH` 17 m); la lluvia empieza en el acercamiento a CHAAK y la lejana entra después.
